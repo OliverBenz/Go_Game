@@ -1,0 +1,3 @@
+[submodule "cmake"]
+	path = lib/cmake
+	url = https://github.com/OliverBenz/cmake_files.git
