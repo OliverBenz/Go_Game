@@ -3,19 +3,26 @@ set(targetName goUi)
 
 # External libraries
 find_package(glfw3 REQUIRED)
+find_package(SDL2 REQUIRED)
+find_package(SDL2_image REQUIRED)
 
 # Get files to build
-set(headers ${CMAKE_CURRENT_LIST_DIR}/window.hpp)
-set(sources ${CMAKE_CURRENT_LIST_DIR}/window.cpp)
+set(headers)
+set(sources
+    ${CMAKE_CURRENT_LIST_DIR}/main.cpp
+)
 
+# TODO: Make this a library included in the game.
 # Create target
-add_library(${targetName} STATIC
+add_executable(${targetName}
     ${headers}
     ${sources}
 )
 
 target_link_libraries(${targetName} PRIVATE
     glfw
+    ${SDL2_LIBRARIES}
+    SDL2_image
 )
 
 # Setup project settings
