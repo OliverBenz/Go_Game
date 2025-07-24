@@ -18,7 +18,7 @@ bool moveToId(std::string& move, std::size_t& id) {
 	
 	try{
 		const int vertical = size - std::stoi(move.substr(1)); // User inputs 1-size
-		if(vertical > size || vertical < 1) {
+		if(vertical > size || vertical < 0) {
 			return false;
 		}
 
@@ -47,7 +47,7 @@ std::size_t input(const bool turnBlack) {
 
 // TODO: Check move valid. Needs board
 bool isValidMove(const bool turnBlack, const std::size_t moveId, const std::array<int, size*size>& board) {
-	if (moveId >= size*size - 1) {
+	if (moveId >= size*size) {
 		return false;
 	}
 
