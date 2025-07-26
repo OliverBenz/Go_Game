@@ -11,7 +11,9 @@ constexpr int SCREEN_HEIGHT = 800;
 // Make space for GAME_SIZE many stones exactly
 constexpr int BOARD_SIZE = static_cast<int>(std::min(SCREEN_WIDTH, SCREEN_HEIGHT) / GAME_SIZE) * GAME_SIZE;
 constexpr int STONE_SIZE = BOARD_SIZE / GAME_SIZE; // TODO: Could still be a pixel off due to rounding int division
-                                                              //
+
+bool end_application = false;
+
 SDL_Texture* load_texture(const char* path, SDL_Renderer* renderer){
     SDL_Surface* surface = IMG_Load(path);
     if (!surface) {
@@ -68,6 +70,7 @@ void drawBoard(SDL_Renderer* renderer) {
     }
 }
 
+
 int main() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cerr << "Failed to initialize SDL: " << SDL_GetError() << "\n";
@@ -96,6 +99,15 @@ int main() {
     if(!white || !black) {
         return -1;
     }
+
+
+    // These events are not useful for Go. Only want mouse klick and some keyboard presses.
+    SDL_EventState(SDL_MOUSEMOTION, SDL_IGNORE);
+    SDL_EventState(SDL_MOUSEBUTTONDOWN, SDL_IGNORE);
+    SDL_EventState(SDL_MOUSEWHEEL, SDL_IGNORE);
+
+    SDL_EventState(SDL_FINGERMOTION, SDL_IGNORE);
+    SDL_EventState(SDL_JOYAXISMOTION, SDL_IGNORE);
 
     // int board_width, board_height;
     // SDL_QueryTexture(board, nullptr, nullptr, &board_width, &board_height); 
@@ -129,18 +141,25 @@ int main() {
 
     SDL_RenderPresent(renderer);
 
-    char inp = ' ';
-    do {
+    SDL_Event event;
+    while(SDL_WaitEvent(&event) && !end_application) {
         SDL_RenderClear(renderer);
         drawBoard(renderer);
         SDL_RenderCopy(renderer, black, nullptr, &dest_black);
         SDL_RenderCopy(renderer, white, nullptr, &dest_white);
-
         SDL_RenderPresent(renderer);
-        inp = ' ';
-        std::cin >> inp;
-    } while(inp != 'e');
 
+        std::cerr << "Event: " << event.type << "\n";
+
+        switch(event.type) {
+        case SDL_QUIT:
+            end_application = true;
+            break;
+        case SDL_KEYUP:
+        default:
+            break;
+        }
+    }
 
     // SDL_DestroyTexture(board);
     SDL_DestroyTexture(black);
