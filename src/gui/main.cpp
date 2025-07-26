@@ -3,7 +3,7 @@
 #include <SDL_image.h>
 #include <iostream>
 
-constexpr int GAME_SIZE = 13;
+constexpr int GAME_SIZE = 9;
 
 constexpr int SCREEN_WIDTH = 800;
 constexpr int SCREEN_HEIGHT = 800;
@@ -77,6 +77,8 @@ int main() {
         std::cerr << "Failed to init webp module.\n";
     }
 
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");
+
     SDL_Window* window = SDL_CreateWindow("Go Board", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
     if (!window){
         std::cerr << "Failed to create window\n";
@@ -88,8 +90,8 @@ int main() {
         return -1;
     }
 
-    SDL_Texture* black = load_texture("/home/oliver/Data/dev/Go_Game/assets/black.png", renderer);
-    SDL_Texture* white = load_texture("/home/oliver/Data/dev/Go_Game/assets/white.png", renderer);
+    SDL_Texture* black = load_texture("/home/oliver/Data/dev/Go_Game/assets/anime_black.png", renderer);
+    SDL_Texture* white = load_texture("/home/oliver/Data/dev/Go_Game/assets/anime_white.png", renderer);
     if(!white || !black) {
         return -1;
     }
