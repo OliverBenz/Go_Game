@@ -13,6 +13,7 @@ constexpr int BOARD_SIZE = static_cast<int>(std::min(SCREEN_WIDTH, SCREEN_HEIGHT
 constexpr int STONE_SIZE = BOARD_SIZE / GAME_SIZE; // TODO: Could still be a pixel off due to rounding int division
 
 bool end_application = false;
+bool redraw = true;
 
 SDL_Texture* load_texture(const char* path, SDL_Renderer* renderer){
     SDL_Surface* surface = IMG_Load(path);
@@ -138,17 +139,11 @@ int main() {
     drawBoard(renderer);
     SDL_RenderCopy(renderer, black, nullptr, &dest_black);
     SDL_RenderCopy(renderer, white, nullptr, &dest_white);
-
     SDL_RenderPresent(renderer);
+    redraw = false;
 
     SDL_Event event;
     while(SDL_WaitEvent(&event) && !end_application) {
-        SDL_RenderClear(renderer);
-        drawBoard(renderer);
-        SDL_RenderCopy(renderer, black, nullptr, &dest_black);
-        SDL_RenderCopy(renderer, white, nullptr, &dest_white);
-        SDL_RenderPresent(renderer);
-
         std::cerr << "Event: " << event.type << "\n";
 
         switch(event.type) {
@@ -156,8 +151,23 @@ int main() {
             end_application = true;
             break;
         case SDL_KEYUP:
+            switch(event.key.keysym.sym) {
+            case SDLK_r:
+                  redraw = true;
+                  break;
+            }
+            break;
         default:
             break;
+        }
+
+        if(redraw) {
+            SDL_RenderClear(renderer);
+            drawBoard(renderer);
+            SDL_RenderCopy(renderer, black, nullptr, &dest_black);
+            SDL_RenderCopy(renderer, white, nullptr, &dest_white);
+            SDL_RenderPresent(renderer);
+            redraw = false;
         }
     }
 
