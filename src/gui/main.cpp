@@ -15,13 +15,13 @@ constexpr int STONE_SIZE = BOARD_SIZE / GAME_SIZE; // TODO: Could still be a pix
 SDL_Texture* load_texture(const char* path, SDL_Renderer* renderer){
     SDL_Surface* surface = IMG_Load(path);
     if (!surface) {
-        std::cerr << "Failed to load " << path << ": " << IMG_GetError() << "\n";
+        std::cerr << "Failed to load '" << path << "': " << IMG_GetError() << "\n";
         return nullptr;
     }
 
     SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer, surface);
     if (!tex) {
-        std::cerr << "No texture loaded";
+        std::cerr << "Could not load texture: " << SDL_GetError() << "\n";
     }
     SDL_FreeSurface(surface);
     return tex;
@@ -70,23 +70,24 @@ void drawBoard(SDL_Renderer* renderer) {
 
 int main() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        std::cerr << "Failed to initialize SDL.\n";
+        std::cerr << "Failed to initialize SDL: " << SDL_GetError() << "\n";
         return -1;
     }
     if(!(IMG_Init(IMG_INIT_WEBP | IMG_INIT_PNG) & (IMG_INIT_WEBP|IMG_INIT_PNG))) {
-        std::cerr << "Failed to init webp module.\n";
+        std::cerr << "Failed to init webp module: " << IMG_GetError() << "\n";
     }
 
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");
 
     SDL_Window* window = SDL_CreateWindow("Go Board", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
     if (!window){
-        std::cerr << "Failed to create window\n";
+        std::cerr << "Failed to create window: " << SDL_GetError() << "\n";
         return -1;
     }
 
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if(!renderer){
+        std::cerr << "Could not create renderer: " << SDL_GetError() << "\n";
         return -1;
     }
 
