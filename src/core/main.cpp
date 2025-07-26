@@ -46,7 +46,7 @@ std::size_t input(const bool turnBlack) {
 }
 
 // TODO: Check move valid. Needs board
-bool isValidMove(const bool turnBlack, const std::size_t moveId, const std::array<int, size*size>& board) {
+bool isValidMove(const bool turnBlack, const std::size_t moveId, const std::array<char, size*size>& board) {
 	if (moveId >= size*size) {
 		return false;
 	}
@@ -57,7 +57,7 @@ bool isValidMove(const bool turnBlack, const std::size_t moveId, const std::arra
 }
 
 //! Try to get a user move and return once it's valid.
-std::size_t getMove(const bool turnBlack, const std::array<int, size*size>& board) {
+std::size_t getMove(const bool turnBlack, const std::array<char, size*size>& board) {
 	std::size_t moveId = 0;
 	do {
 		moveId = input(turnBlack);
@@ -69,7 +69,7 @@ std::size_t getMove(const bool turnBlack, const std::array<int, size*size>& boar
 
 
 
-void drawBoard(const std::array<int, size*size>& board){
+void drawBoard(const std::array<char, size*size>& board){
 	std::cout << "\033[2J\033[1;1H" << std::flush;
 
 	std::cout << "   ";
@@ -100,7 +100,7 @@ void drawBoard(const std::array<int, size*size>& board){
 
 
 void play() {
-	std::array<int, size*size> board{};
+	std::array<char, size*size> board{};
 
 	bool end = false;
 	bool turnBlack = true;
