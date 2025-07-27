@@ -1,6 +1,8 @@
 #pragma once
 
 #include "board.hpp"
+
+#include <memory>
 #include <SDL.h>
 
 // TODO: Board in unique ptr.
@@ -18,7 +20,7 @@ private:
     bool m_exit = false;   //!< Stop game execution.
     bool m_redraw = true;  //!< Redraw window content.
 
-    Board m_board;
+    std::unique_ptr<Board> m_board = nullptr;
 
     int m_windowWidth;
     int m_windowHeight;

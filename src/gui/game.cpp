@@ -6,12 +6,12 @@
 Game::Game(int wndHeight, int wndWidth) : m_windowHeight{wndHeight}, m_windowWidth{wndWidth}
 {
     if(InitializeSDL()) {
-        m_board = Board(9, std::min(m_windowWidth, m_windowHeight), m_renderer);
+        m_board = std::make_unique<Board>(9, std::min(m_windowWidth, m_windowHeight), m_renderer);
     }
 }
 
 Game::~Game() {
-    m_board.~Board(); // TODO: Use texture manager or add cleanup function?
+    m_board.reset(); // TODO: Use texture manager or add cleanup function?
 
     SDL_DestroyRenderer(m_renderer);
     SDL_DestroyWindow(m_window);
@@ -86,7 +86,7 @@ void Game::run() {
 
         if(m_redraw) {
             SDL_RenderClear(m_renderer);
-            m_board.draw(m_renderer);
+            m_board->draw(m_renderer);
             SDL_RenderPresent(m_renderer);
             m_redraw = false;
         }
