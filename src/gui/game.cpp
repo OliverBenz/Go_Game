@@ -11,7 +11,7 @@ Game::Game(int wndHeight, int wndWidth) : m_windowHeight{wndHeight}, m_windowWid
 }
 
 Game::~Game() {
-    m_board.reset(); // TODO: Use texture manager or add cleanup function?
+    m_board.reset();
 
     SDL_DestroyRenderer(m_renderer);
     SDL_DestroyWindow(m_window);
