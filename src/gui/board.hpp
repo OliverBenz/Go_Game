@@ -11,6 +11,7 @@
 // - Wrap raw pointer in smart pointers?
 class Board{
 public:
+    Board() = default;
     Board(int nodes, int boardSizePx, SDL_Renderer* renderer);
     ~Board();
 
@@ -39,8 +40,9 @@ private:
 
     std::vector<char> m_board;
 
-    int m_drawStepSize = m_stoneSize / 2;             //!< Half a stone offset from border
-    int m_coordStart   = m_drawStepSize;              //!< (x,y) starting coordinate of lines
+    // TODO: Check stones dont overlap by 1 pixel
+    int m_drawStepSize = m_stoneSize / 2;               //!< Half a stone offset from border
+    int m_coordStart   = m_drawStepSize;                //!< (x,y) starting coordinate of lines
     int m_coordEnd     = m_boardSize - m_drawStepSize;  //!< (x,y) ending coordinate of lines
 
     SDL_Texture* m_textureBlack = nullptr;

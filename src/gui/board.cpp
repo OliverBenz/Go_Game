@@ -51,7 +51,7 @@ SDL_Texture* Board::load_texture(const char* path, SDL_Renderer* renderer){
 }
 
 void Board::drawBackground(SDL_Renderer* renderer) {
-    static constexpr int LW = 2;                             //!< Line width for grid
+    static constexpr int LW = 2;            //!< Line width for grid
     static constexpr Uint8 COL_BG_R = 220;
     static constexpr Uint8 COL_BG_G = 179;
     static constexpr Uint8 COL_BG_B = 92;
@@ -60,7 +60,7 @@ void Board::drawBackground(SDL_Renderer* renderer) {
 
 
     SDL_Rect dest_board{.x=0, .y=0, .w=m_boardSize, .h=m_boardSize};
-    SDL_SetRenderDrawColor(renderer, COL_BG_R, COL_BG_G, COL_BG_B, 255);  // TODO: Define color
+    SDL_SetRenderDrawColor(renderer, COL_BG_R, COL_BG_G, COL_BG_B, 255);
     SDL_RenderFillRect(renderer, &dest_board);
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
