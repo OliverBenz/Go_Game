@@ -1,6 +1,8 @@
 #include "board.hpp"
 
 #include <cassert>
+#include <iostream>
+#include <SDL_image.h>
 
 Board::Board(int nodes, int boardSizePx, SDL_Renderer* renderer) :
     m_boardSize{static_cast<int>(boardSizePx / nodes) * nodes}, 
