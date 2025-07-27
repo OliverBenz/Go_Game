@@ -4,6 +4,8 @@
 #include <SDL_image.h>
 #include <iostream>
 
+#include "board.hpp"
+
 constexpr int GAME_SIZE = 9;
 
 constexpr int SCREEN_WIDTH = 800;
@@ -13,106 +15,8 @@ constexpr int SCREEN_HEIGHT = 800;
 constexpr int BOARD_SIZE = static_cast<int>(std::min(SCREEN_WIDTH, SCREEN_HEIGHT) / GAME_SIZE) * GAME_SIZE;
 constexpr int STONE_SIZE = BOARD_SIZE / GAME_SIZE; // TODO: Could still be a pixel off due to rounding int division
 
-
-
 bool end_application = false;
 bool redraw = true;
-
-SDL_Texture* load_texture(const char* path, SDL_Renderer* renderer){
-    SDL_Surface* surface = IMG_Load(path);
-    if (!surface) {
-        std::cerr << "Failed to load '" << path << "': " << IMG_GetError() << "\n";
-        return nullptr;
-    }
-
-    SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer, surface);
-    if (!tex) {
-        std::cerr << "Could not load texture: " << SDL_GetError() << "\n";
-    }
-    SDL_FreeSurface(surface);
-    return tex;
-}
-
-// TODO: Move to own class and only construct board textures once.
-// Draw function should not include texture loading, coordinate construction, size calc, etc
-void drawBoard(SDL_Renderer* renderer) {
-    static constexpr int LW = 2;
-    static constexpr int DRAW_STEP_SIZE = STONE_SIZE/2;
-
-    static constexpr int coordStart    = DRAW_STEP_SIZE;             //!< (x,y) starting coordinate of lines
-    static constexpr int coordEnd      = BOARD_SIZE-DRAW_STEP_SIZE;  //!< (x,y) ending coordinate of lines
-    static constexpr int effBoardWidth = coordEnd - coordStart;      //!< Board width between outer lines
-
-
-    SDL_Rect dest_board{.x=0, .y=0, .w=BOARD_SIZE, .h=BOARD_SIZE};
-    SDL_SetRenderDrawColor(renderer, 220, 179, 92, 255);
-    SDL_RenderFillRect(renderer, &dest_board);
-
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    for (int i = 0; i != GAME_SIZE; ++i) {
-        SDL_Rect dest_line {
-            .x = coordStart,
-            .y = coordStart + i * STONE_SIZE,
-            .w = effBoardWidth,
-            .h = LW
-        };
-        SDL_RenderFillRect(renderer, &dest_line);
-
-        //SDL_RenderDrawLine(renderer, DRAW_STEP_SIZE, pos, BOARD_SIZE-DRAW_STEP_SIZE, pos);
-    }
-    for (int i = 0; i != GAME_SIZE; ++i) {
-        SDL_Rect dest_line {
-            .x = coordStart + i * STONE_SIZE,
-            .y = coordStart,
-            .w = LW,
-            .h = effBoardWidth
-        };
-        SDL_RenderFillRect(renderer, &dest_line);
-
-        // const int pos = i*STONE_SIZE - DRAW_STEP_SIZE;
-        // SDL_RenderDrawLine(renderer, pos, DRAW_STEP_SIZE, pos, BOARD_SIZE-DRAW_STEP_SIZE);
-    }
-
-
-
-    // TODO: Move stone rendering to own function 
-    // TODO: Dont redraw background every time stones are updated. Only when stones are beaten
-    // TODO: Only load textures once on startup.
-    SDL_Texture* black = load_texture("/home/oliver/Data/dev/Go_Game/assets/anime_black.png", renderer);
-    SDL_Texture* white = load_texture("/home/oliver/Data/dev/Go_Game/assets/anime_white.png", renderer);
-    if(!white || !black) {
-        return;
-    }
-
-    std::array<char, GAME_SIZE*GAME_SIZE> board{};
-
-    // Manually set some stones for render testing
-    board[0] = -1;
-    board[4*GAME_SIZE + 2] = 1;
-    board[5*GAME_SIZE + 1] = -1;
-    board[GAME_SIZE*GAME_SIZE-1] = 1;
-
-    for (std::size_t i = 0; i != board.size(); ++i) {
-        if(board[i] == 0) {
-            continue;
-        }
-
-        int x = i % GAME_SIZE;
-        int y = i / GAME_SIZE;
-
-        SDL_Rect dest;
-        dest.w = STONE_SIZE;
-        dest.h = STONE_SIZE;
-        dest.x = (coordStart-DRAW_STEP_SIZE) + x * STONE_SIZE;
-        dest.y = (coordStart-DRAW_STEP_SIZE) + y * STONE_SIZE;
-        
-        SDL_RenderCopy(renderer, (board[i] == 1 ? black : white), nullptr, &dest);
-    }
-
-    SDL_DestroyTexture(black);
-    SDL_DestroyTexture(white);
-}
-
 
 int main() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -146,10 +50,6 @@ int main() {
     SDL_EventState(SDL_FINGERMOTION, SDL_IGNORE);
     SDL_EventState(SDL_JOYAXISMOTION, SDL_IGNORE);
 
-    // int board_width, board_height;
-    // SDL_QueryTexture(board, nullptr, nullptr, &board_width, &board_height); 
-    // assert(board_width == board_height);
-
     // int black_width, black_height;
     // SDL_QueryTexture(black, nullptr, nullptr, &black_width, &black_height); 
 
@@ -158,9 +58,10 @@ int main() {
     // assert(white_width == black_width);
     // assert(white_height == black_height);
 
+    Board board(9, std::min(SCREEN_WIDTH, SCREEN_HEIGHT), renderer);
 
     SDL_RenderClear(renderer);
-    drawBoard(renderer);
+    board.draw(renderer);
     SDL_RenderPresent(renderer);
     redraw = false;
 
@@ -195,11 +96,14 @@ int main() {
 
         if(redraw) {
             SDL_RenderClear(renderer);
-            drawBoard(renderer);
+            board.draw(renderer);
             SDL_RenderPresent(renderer);
             redraw = false;
         }
     }
+
+    // TODO: Remove explicit call once we have game class.
+    board.~Board();
 
     // SDL_DestroyTexture(board);
     SDL_DestroyRenderer(renderer);

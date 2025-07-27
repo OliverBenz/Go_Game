@@ -10,6 +10,7 @@ find_package(SDL2_image REQUIRED)
 set(headers)
 set(sources
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/board.cpp
 )
 
 # TODO: Make this a library included in the game.
