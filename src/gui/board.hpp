@@ -10,6 +10,7 @@
 // - Cleanup function and variable names(board name redundant, specify pixel or type)
 // - Cleanup board.size() / 2 -> replace with gameSize
 // - Move all game logic to core library.
+// - Wrap raw pointer in smart pointers?
 class Board{
 public:
     Board(int nodes, int boardSizePx, SDL_Renderer* renderer);
@@ -34,16 +35,16 @@ private:
     // TODO: BoardLogic instance from Core
     // Then this class only handles GUI stuff. Logic in core.
 
-    int boardSize = 0;  //!< Pixels for the whole board (without coordinate text).
-    int stoneSize = 0;  //!< Pixel Radius of a stone.
-    int nodes = 0;
+    int m_boardSize = 0;  //!< Pixels for the whole board (without coordinate text).
+    int m_stoneSize = 0;  //!< Pixel Radius of a stone.
+    int m_nodes = 0;
 
-    std::vector<char> board;
+    std::vector<char> m_board;
 
-    int drawStepSize = stoneSize / 2;             //!< Half a stone offset from border
-    int coordStart   = drawStepSize;              //!< (x,y) starting coordinate of lines
-    int coordEnd     = boardSize - drawStepSize;  //!< (x,y) ending coordinate of lines
+    int m_drawStepSize = m_stoneSize / 2;             //!< Half a stone offset from border
+    int m_coordStart   = m_drawStepSize;              //!< (x,y) starting coordinate of lines
+    int m_coordEnd     = m_boardSize - m_drawStepSize;  //!< (x,y) ending coordinate of lines
 
-    SDL_Texture* textureBlack = nullptr;
-    SDL_Texture* textureWhite = nullptr;
+    SDL_Texture* m_textureBlack = nullptr;
+    SDL_Texture* m_textureWhite = nullptr;
 };
