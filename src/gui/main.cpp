@@ -1,3 +1,4 @@
+#include <array>
 #include <cassert>
 #include <SDL.h>
 #include <SDL_image.h>
@@ -11,6 +12,8 @@ constexpr int SCREEN_HEIGHT = 800;
 // Make space for GAME_SIZE many stones exactly
 constexpr int BOARD_SIZE = static_cast<int>(std::min(SCREEN_WIDTH, SCREEN_HEIGHT) / GAME_SIZE) * GAME_SIZE;
 constexpr int STONE_SIZE = BOARD_SIZE / GAME_SIZE; // TODO: Could still be a pixel off due to rounding int division
+
+
 
 bool end_application = false;
 bool redraw = true;
@@ -69,6 +72,45 @@ void drawBoard(SDL_Renderer* renderer) {
         // const int pos = i*STONE_SIZE - DRAW_STEP_SIZE;
         // SDL_RenderDrawLine(renderer, pos, DRAW_STEP_SIZE, pos, BOARD_SIZE-DRAW_STEP_SIZE);
     }
+
+
+
+    // TODO: Move stone rendering to own function 
+    // TODO: Dont redraw background every time stones are updated. Only when stones are beaten
+    // TODO: Only load textures once on startup.
+    SDL_Texture* black = load_texture("/home/oliver/Data/dev/Go_Game/assets/anime_black.png", renderer);
+    SDL_Texture* white = load_texture("/home/oliver/Data/dev/Go_Game/assets/anime_white.png", renderer);
+    if(!white || !black) {
+        return;
+    }
+
+    std::array<char, GAME_SIZE*GAME_SIZE> board{};
+
+    // Manually set some stones for render testing
+    board[0] = -1;
+    board[4*GAME_SIZE + 2] = 1;
+    board[5*GAME_SIZE + 1] = -1;
+    board[GAME_SIZE*GAME_SIZE-1] = 1;
+
+    for (std::size_t i = 0; i != board.size(); ++i) {
+        if(board[i] == 0) {
+            continue;
+        }
+
+        int x = i % GAME_SIZE;
+        int y = i / GAME_SIZE;
+
+        SDL_Rect dest;
+        dest.w = STONE_SIZE;
+        dest.h = STONE_SIZE;
+        dest.x = (coordStart-DRAW_STEP_SIZE) + x * STONE_SIZE;
+        dest.y = (coordStart-DRAW_STEP_SIZE) + y * STONE_SIZE;
+        
+        SDL_RenderCopy(renderer, (board[i] == 1 ? black : white), nullptr, &dest);
+    }
+
+    SDL_DestroyTexture(black);
+    SDL_DestroyTexture(white);
 }
 
 
@@ -95,12 +137,6 @@ int main() {
         return -1;
     }
 
-    SDL_Texture* black = load_texture("/home/oliver/Data/dev/Go_Game/assets/anime_black.png", renderer);
-    SDL_Texture* white = load_texture("/home/oliver/Data/dev/Go_Game/assets/anime_white.png", renderer);
-    if(!white || !black) {
-        return -1;
-    }
-
 
     // These events are not useful for Go. Only want mouse klick and some keyboard presses.
     SDL_EventState(SDL_MOUSEMOTION, SDL_IGNORE);
@@ -123,22 +159,8 @@ int main() {
     // assert(white_height == black_height);
 
 
-    SDL_Rect dest_white;
-    dest_white.w = STONE_SIZE;
-    dest_white.h = STONE_SIZE;
-    dest_white.x = (SCREEN_WIDTH - STONE_SIZE) / 2 + STONE_SIZE;
-    dest_white.y = (SCREEN_HEIGHT - STONE_SIZE) / 2;
-
-    SDL_Rect dest_black;
-    dest_black.w = STONE_SIZE;
-    dest_black.h = STONE_SIZE;
-    dest_black.x = (SCREEN_WIDTH - STONE_SIZE) / 2;
-    dest_black.y = (SCREEN_HEIGHT - STONE_SIZE) / 2;
-
     SDL_RenderClear(renderer);
     drawBoard(renderer);
-    SDL_RenderCopy(renderer, black, nullptr, &dest_black);
-    SDL_RenderCopy(renderer, white, nullptr, &dest_white);
     SDL_RenderPresent(renderer);
     redraw = false;
 
@@ -150,6 +172,15 @@ int main() {
         case SDL_QUIT:
             end_application = true;
             break;
+
+        case SDL_MOUSEBUTTONUP:
+            if (event.button.button == SDL_BUTTON_LEFT) {
+                int x = event.button.x;
+                int y = event.button.y;
+                std::cout << "Left click released at (" << x << ", " << y << ")\n";
+            }
+            break;
+
         case SDL_KEYUP:
             switch(event.key.keysym.sym) {
             case SDLK_r:
@@ -157,6 +188,7 @@ int main() {
                   break;
             }
             break;
+
         default:
             break;
         }
@@ -164,15 +196,12 @@ int main() {
         if(redraw) {
             SDL_RenderClear(renderer);
             drawBoard(renderer);
-            SDL_RenderCopy(renderer, black, nullptr, &dest_black);
-            SDL_RenderCopy(renderer, white, nullptr, &dest_white);
             SDL_RenderPresent(renderer);
             redraw = false;
         }
     }
 
     // SDL_DestroyTexture(board);
-    SDL_DestroyTexture(black);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
 
