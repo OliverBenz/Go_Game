@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <format>
 #include <SDL_image.h>
 
 Board::Board(int nodes, int boardSizePx, SDL_Renderer* renderer) :
@@ -109,7 +110,8 @@ void Board::drawStones(SDL_Renderer* renderer) {
 
 // TODO: Use unsigned types.
 int Board::coordToId(int x, int y) {
-    assert(0 <= x <= m_nodes-1 && 0 <= y <= m_nodes-1);
+    assert(0 <= x && x <= m_nodes-1);
+    assert(0 <= y && y <= m_nodes-1);
 
     return y * m_nodes + x;
 }
@@ -128,4 +130,39 @@ bool Board::addStone(char x, int y, bool black, SDL_Renderer* renderer) {
     drawStone(xTrafo, yTrafo, black ? 1 : -1, renderer);
 
     return true;
+}
+
+// TODO: Optimize
+bool Board::pixelToCoord(int px, int& coord) {
+    const int tolerance = m_stoneSize / 3;
+    
+    for (int i = 0; i < m_nodes; ++i) {
+        const int nodePos = m_coordStart + i * m_stoneSize;
+
+        if(nodePos - tolerance <= px  && px <= nodePos + tolerance) {
+            coord = i;
+            return true;
+        }
+    }
+
+    std::cerr << "Could not assign mouse coordinats to a field.\n";
+    return false;
+}
+
+bool Board::addStone(int xPx, int yPx, bool black, SDL_Renderer* renderer) {
+    int xTrafo, yTrafo;
+    if(pixelToCoord(xPx, xTrafo) && pixelToCoord(yPx, yTrafo)) {
+        if(!(0 <= xTrafo <= m_nodes-1 && 0 <= yTrafo <= m_nodes-1)) {
+            std::cerr << "Invalid coordinates for board size.\n";
+            return false;
+        }
+
+        m_board[coordToId(xTrafo, yTrafo)] = (black ? 1 : -1);
+
+        drawStone(xTrafo, yTrafo, black ? 1 : -1, renderer);
+
+        return true;
+    }
+
+    return false;
 }

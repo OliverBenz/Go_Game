@@ -66,9 +66,12 @@ void Game::run() {
 
         case SDL_MOUSEBUTTONUP:
             if (event.button.button == SDL_BUTTON_LEFT) {
-                int x = event.button.x;
-                int y = event.button.y;
-                std::cout << "Left click released at (" << x << ", " << y << ")\n";
+                const auto x = event.button.x;
+                const auto y = event.button.y;
+                if(m_board->addStone(x, y, m_turnBlack, m_renderer)) {
+                    m_turnBlack = !m_turnBlack;
+                    m_redraw = true;
+                }
             }
             break;
 

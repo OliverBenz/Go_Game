@@ -17,16 +17,24 @@ public:
 
     void draw(SDL_Renderer* renderer);
 
+    //! TODO: Remove this function. In GUI, we always place stones through mouse coordinates.
     //! Official coordinates (A1, etc)
     bool addStone(char x, int y, bool black, SDL_Renderer* renderer);
-    
+
+    //! Add stone at the specified window position (in pixels).
+    //! \returns False if click could not be assigned to a board position.
+    bool addStone(int xPx, int yPx, bool black, SDL_Renderer* renderer);
+
 private:
     void drawBackground(SDL_Renderer* renderer);
     void drawStones(SDL_Renderer* renderer);
     void drawStone(int x, int y, int player, SDL_Renderer* renderer);
 
-    //! x,y \in [0, nodes-1]
+    //! (x,y) \mapsto i \in [0, nodes-1]
     int coordToId(int x, int y);
+
+    //! Transforms pixel value to board coordinate.
+    bool pixelToCoord(int px, int& coord);
 
     static SDL_Texture* load_texture(const char* path, SDL_Renderer* renderer);
 
