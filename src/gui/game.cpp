@@ -3,10 +3,10 @@
 #include <iostream>
 #include <SDL_image.h>
 
-Game::Game(int wndWidth, int wndHeight) : m_windowWidth{wndWidth}, m_windowHeight{wndHeight}
+Game::Game(unsigned wndWidth, unsigned wndHeight) : m_windowWidth{wndWidth}, m_windowHeight{wndHeight}
 {
     if(InitializeSDL()) {
-        m_board = std::make_unique<Board>(9, std::min(m_windowWidth, m_windowHeight), m_renderer);
+        m_board = std::make_unique<Board>(9u, std::min(m_windowWidth, m_windowHeight), m_renderer);
     }
 }
 
@@ -31,7 +31,8 @@ bool Game::InitializeSDL() {
 
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");
 
-    m_window = SDL_CreateWindow("Go Board", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, m_windowWidth, m_windowHeight, 0);
+    m_window = SDL_CreateWindow("Go Board", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        static_cast<int>(m_windowWidth), static_cast<int>(m_windowHeight), 0);
     if (!m_window){
         std::cerr << "Failed to create window: " << SDL_GetError() << "\n";
         return false;
