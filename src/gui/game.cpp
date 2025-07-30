@@ -3,7 +3,7 @@
 #include <iostream>
 #include <SDL_image.h>
 
-Game::Game(int wndHeight, int wndWidth) : m_windowHeight{wndHeight}, m_windowWidth{wndWidth}
+Game::Game(int wndWidth, int wndHeight) : m_windowWidth{wndWidth}, m_windowHeight{wndHeight}
 {
     if(InitializeSDL()) {
         m_board = std::make_unique<Board>(9, std::min(m_windowWidth, m_windowHeight), m_renderer);

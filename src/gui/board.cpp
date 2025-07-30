@@ -6,8 +6,8 @@
 #include <format>
 #include <SDL_image.h>
 
-Board::Board(int nodes, int boardSizePx, SDL_Renderer* renderer) :
-    m_boardSize{static_cast<int>(boardSizePx / nodes) * nodes}, 
+Board::Board(unsigned nodes, unsigned boardSizePx, SDL_Renderer* renderer) :
+    m_boardSize{boardSizePx / nodes * nodes}, 
     m_stoneSize{m_boardSize / nodes},  // TODO: Could still be a pixel off due to rounding int division
     m_nodes(nodes),
     m_board(nodes*nodes, 0)
@@ -52,27 +52,28 @@ void Board::drawBackground(SDL_Renderer* renderer) {
     static constexpr Uint8 COL_BG_G = 179;
     static constexpr Uint8 COL_BG_B = 92;
 
-    static const int effBoardWidth = m_coordEnd - m_coordStart;  //!< Board width between outer lines
+    assert(m_coordEnd > m_coordStart);
+    static const int effBoardWidth = static_cast<int>(m_coordEnd - m_coordStart);  //!< Board width between outer lines
 
 
-    SDL_Rect dest_board{.x=0, .y=0, .w=m_boardSize, .h=m_boardSize};
+    SDL_Rect dest_board{.x=0, .y=0, .w=static_cast<int>(m_boardSize), .h=static_cast<int>(m_boardSize)};
     SDL_SetRenderDrawColor(renderer, COL_BG_R, COL_BG_G, COL_BG_B, 255);
     SDL_RenderFillRect(renderer, &dest_board);
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    for (int i = 0; i != m_nodes; ++i) {
+    for (unsigned i = 0; i != m_nodes; ++i) {
         SDL_Rect dest_line {
-            .x = m_coordStart,
-            .y = m_coordStart + i * m_stoneSize,
+            .x = static_cast<int>(m_coordStart),
+            .y = static_cast<int>(m_coordStart + i * m_stoneSize),
             .w = effBoardWidth,
             .h = LW
         };
         SDL_RenderFillRect(renderer, &dest_line);
     }
-    for (int i = 0; i != m_nodes; ++i) {
+    for (unsigned i = 0; i != m_nodes; ++i) {
         SDL_Rect dest_line {
-            .x = m_coordStart + i * m_stoneSize,
-            .y = m_coordStart,
+            .x = static_cast<int>(m_coordStart + i * m_stoneSize),
+            .y = static_cast<int>(m_coordStart),
             .w = LW,
             .h = effBoardWidth
         };
@@ -80,58 +81,57 @@ void Board::drawBackground(SDL_Renderer* renderer) {
     }
 }
 
-void Board::drawStone(int x, int y, int player, SDL_Renderer* renderer) {
+void Board::drawStone(unsigned x, unsigned y, int player, SDL_Renderer* renderer) {
+    assert(m_coordStart >= m_drawStepSize);
+
     SDL_Rect dest;
-    dest.w = m_stoneSize;
-    dest.h = m_stoneSize;
-    dest.x = (m_coordStart - m_drawStepSize) + x * m_stoneSize;
-    dest.y = (m_coordStart - m_drawStepSize) + y * m_stoneSize;
+    dest.w = static_cast<int>(m_stoneSize);
+    dest.h = static_cast<int>(m_stoneSize);
+    dest.x = static_cast<int>((m_coordStart - m_drawStepSize) + x * m_stoneSize);
+    dest.y = static_cast<int>((m_coordStart - m_drawStepSize) + y * m_stoneSize);
     
     SDL_RenderCopy(renderer, (player == 1 ? m_textureBlack : m_textureWhite), nullptr, &dest);
 }
 
 void Board::drawStones(SDL_Renderer* renderer) {
-    for (int i = 0; i != m_board.size(); ++i) {
+    for (unsigned i = 0; i != m_board.size(); ++i) {
         if(m_board[i] == 0) {
             continue;
         }
 
-        int x = i % m_nodes;
-        int y = i / m_nodes;
+        unsigned x = i % m_nodes;
+        unsigned y = i / m_nodes;
 
         drawStone(x, y, m_board[i], renderer);
     }
 }
 
-// TODO: Use unsigned types.
-int Board::coordToId(int x, int y) {
-    assert(0 <= x && x <= m_nodes-1);
-    assert(0 <= y && y <= m_nodes-1);
+unsigned Board::coordToId(unsigned x, unsigned y) {
+    assert(x <= m_nodes-1 && y <= m_nodes-1);
 
     return y * m_nodes + x;
 }
 
-// TODO: Optimize
-bool Board::pixelToCoord(int px, int& coord) {
-    static constexpr float TOLERANCE = 0.3;  // To avoid accidental placement of stones.
-    
-    const auto coordRel  = static_cast<float>(px-m_coordStart) / m_stoneSize;  // Calculate board coordinate from pixel values.
-    const int coordRound = static_cast<int>(std::round(coordRel));             // Round to nearest coordinate.
+bool Board::pixelToCoord(int px, unsigned& coord) {
+    static constexpr float TOLERANCE = 0.3f;  // To avoid accidental placement of stones.
 
-    // Click has to be close enough to a point.
-    if(std::abs(coordRound - coordRel) > TOLERANCE) {
+    const auto coordRel  = static_cast<float>(px-static_cast<int>(m_coordStart)) / static_cast<float>(m_stoneSize);  // Calculate board coordinate from pixel values.
+    const auto coordRound = std::round(coordRel);                               // Round to nearest coordinate.
+
+    // Click has to be close enough to a point and on the board.
+    if(std::abs(coordRound - coordRel) > TOLERANCE || coordRound < 0 || coordRound > static_cast<float>(m_nodes)-1) {
         std::cerr << "Could not assign mouse coordinats to a field.\n";
         return false;
     }
 
-    coord = coordRound;
+    coord = static_cast<unsigned>(coordRound);
     return true;
 }
 
 bool Board::addStone(int xPx, int yPx, bool black, SDL_Renderer* renderer) {
-    int xTrafo, yTrafo;
+    unsigned xTrafo, yTrafo;
     if(pixelToCoord(xPx, xTrafo) && pixelToCoord(yPx, yTrafo)) {
-        if(!(0 <= xTrafo <= m_nodes-1 && 0 <= yTrafo <= m_nodes-1)) {
+        if(xTrafo >= m_nodes || yTrafo >= m_nodes) {
             std::cerr << "Invalid coordinates for board size.\n";
             return false;
         }

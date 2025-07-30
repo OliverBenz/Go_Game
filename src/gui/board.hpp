@@ -12,7 +12,7 @@
 class Board{
 public:
     Board() = default;
-    Board(int nodes, int boardSizePx, SDL_Renderer* renderer);
+    Board(unsigned nodes, unsigned boardSizePx, SDL_Renderer* renderer);
     ~Board();
 
     void draw(SDL_Renderer* renderer);
@@ -24,13 +24,13 @@ public:
 private:
     void drawBackground(SDL_Renderer* renderer);
     void drawStones(SDL_Renderer* renderer);
-    void drawStone(int x, int y, int player, SDL_Renderer* renderer);
+    void drawStone(unsigned x, unsigned y, int player, SDL_Renderer* renderer);
 
     //! (x,y) \mapsto i \in [0, nodes-1]
-    int coordToId(int x, int y);
+    unsigned coordToId(unsigned x, unsigned y);
 
     //! Transforms pixel value to board coordinate.
-    bool pixelToCoord(int px, int& coord);
+    bool pixelToCoord(int px, unsigned& coord);
 
     static SDL_Texture* load_texture(const char* path, SDL_Renderer* renderer);
 
@@ -38,16 +38,16 @@ private:
     // TODO: BoardLogic instance from Core
     // Then this class only handles GUI stuff. Logic in core.
 
-    int m_boardSize = 0;  //!< Pixels for the whole board (without coordinate text).
-    int m_stoneSize = 0;  //!< Pixel Radius of a stone.
-    int m_nodes = 0;
+    unsigned m_boardSize = 0;  //!< Pixels for the whole board (without coordinate text).
+    unsigned m_stoneSize = 0;  //!< Pixel Radius of a stone.
+    unsigned m_nodes = 0;
 
     std::vector<char> m_board;
 
     // TODO: Check stones dont overlap by 1 pixel
-    int m_drawStepSize = m_stoneSize / 2;               //!< Half a stone offset from border
-    int m_coordStart   = m_drawStepSize;                //!< (x,y) starting coordinate of lines
-    int m_coordEnd     = m_boardSize - m_drawStepSize;  //!< (x,y) ending coordinate of lines
+    unsigned m_drawStepSize = m_stoneSize / 2;               //!< Half a stone offset from border
+    unsigned m_coordStart   = m_drawStepSize;                //!< (x,y) starting coordinate of lines
+    unsigned m_coordEnd     = m_boardSize - m_drawStepSize;  //!< (x,y) ending coordinate of lines
 
     SDL_Texture* m_textureBlack = nullptr;
     SDL_Texture* m_textureWhite = nullptr;

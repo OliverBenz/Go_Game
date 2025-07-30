@@ -8,7 +8,7 @@
 // TODO: Board in unique ptr.
 class Game {
 public:
-    Game(int wndHeight, int wndWidth);
+    Game(int wndWidth, int wndHeight);
     ~Game();
 
     void run();
