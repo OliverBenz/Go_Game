@@ -1,6 +1,7 @@
 #include "board.hpp"
 
 #include <cassert>
+#include <cmath>
 #include <iostream>
 #include <format>
 #include <SDL_image.h>
@@ -16,12 +17,6 @@ Board::Board(int nodes, int boardSizePx, SDL_Renderer* renderer) :
     if(!m_textureWhite || !m_textureBlack) {
         return;
     }
-
-    // TODO: Remove debugging stones.
-    addStone('A', 1, true,  renderer);
-    addStone('B', 1, true,  renderer);
-    addStone('C', 1, true,  renderer);
-    addStone('D', 2, false, renderer);
 }
 
 Board::~Board() {
@@ -116,37 +111,21 @@ int Board::coordToId(int x, int y) {
     return y * m_nodes + x;
 }
 
-bool Board::addStone(char x, int y, bool black, SDL_Renderer* renderer) {
-    const int xTrafo = static_cast<int>(std::tolower(x)) - 97; // ASCII dec('a')=79
-    const int yTrafo = m_nodes-y;
+// TODO: Optimize
+bool Board::pixelToCoord(int px, int& coord) {
+    static constexpr float TOLERANCE = 0.3;  // To avoid accidental placement of stones.
+    
+    const auto coordRel  = static_cast<float>(px-m_coordStart) / m_stoneSize;  // Calculate board coordinate from pixel values.
+    const int coordRound = static_cast<int>(std::round(coordRel));             // Round to nearest coordinate.
 
-    if(!(0 <= xTrafo <= m_nodes-1 && 0 <= yTrafo <= m_nodes-1)) {
-        std::cerr << "Invalid coordinates for board size.\n";
+    // Click has to be close enough to a point.
+    if(std::abs(coordRound - coordRel) > TOLERANCE) {
+        std::cerr << "Could not assign mouse coordinats to a field.\n";
         return false;
     }
 
-    m_board[coordToId(xTrafo, yTrafo)] = (black ? 1 : -1);
-
-    drawStone(xTrafo, yTrafo, black ? 1 : -1, renderer);
-
+    coord = coordRound;
     return true;
-}
-
-// TODO: Optimize
-bool Board::pixelToCoord(int px, int& coord) {
-    const int tolerance = m_stoneSize / 3;
-    
-    for (int i = 0; i < m_nodes; ++i) {
-        const int nodePos = m_coordStart + i * m_stoneSize;
-
-        if(nodePos - tolerance <= px  && px <= nodePos + tolerance) {
-            coord = i;
-            return true;
-        }
-    }
-
-    std::cerr << "Could not assign mouse coordinats to a field.\n";
-    return false;
 }
 
 bool Board::addStone(int xPx, int yPx, bool black, SDL_Renderer* renderer) {

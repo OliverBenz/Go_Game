@@ -17,10 +17,6 @@ public:
 
     void draw(SDL_Renderer* renderer);
 
-    //! TODO: Remove this function. In GUI, we always place stones through mouse coordinates.
-    //! Official coordinates (A1, etc)
-    bool addStone(char x, int y, bool black, SDL_Renderer* renderer);
-
     //! Add stone at the specified window position (in pixels).
     //! \returns False if click could not be assigned to a board position.
     bool addStone(int xPx, int yPx, bool black, SDL_Renderer* renderer);
