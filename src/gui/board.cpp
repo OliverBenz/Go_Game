@@ -136,8 +136,13 @@ bool Board::addStone(int xPx, int yPx, bool black, SDL_Renderer* renderer) {
             return false;
         }
 
-        m_board[coordToId(xTrafo, yTrafo)] = (black ? 1 : -1);
+        const auto boardId = coordToId(xTrafo, yTrafo);
+        if(m_board[boardId] != 0) {
+            std::cerr << "Board position already occupied\n";
+            return false;
+        }
 
+        m_board[boardId] = (black ? 1 : -1);
         drawStone(xTrafo, yTrafo, black ? 1 : -1, renderer);
 
         return true;
