@@ -26,3 +26,14 @@ CMake  | Collection of CMake files.
 Logger | Library for logging functionality.
 Asio   | Library for networking support.
 GTest  | Google unit testing library.
+
+
+## Networking
+For simple remote 2 player sessions, the data is sent in format
+"0042BAA1690987654"
+- The first 4 digits being the move number [0,9999]
+- The next 1 char for the player (B=Black, W=White)
+- The next 2 chars for board position (as in sgf format)
+- The next 10 chars: UNIX timestamp in seconds.
+
+So the above example would be Move: 42, Player: Black, Position: AA (A1), Timestamp: ...
