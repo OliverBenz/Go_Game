@@ -107,7 +107,7 @@ void Board::drawStones(SDL_Renderer* renderer) {
 }
 
 unsigned Board::coordToId(unsigned x, unsigned y) {
-    assert(x <= m_nodes-1 && y <= m_nodes-1);
+    assert(x < m_nodes && y < m_nodes);
 
     return y * m_nodes + x;
 }
