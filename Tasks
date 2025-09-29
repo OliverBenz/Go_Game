@@ -1,0 +1,11 @@
+General
+ o Add Logger
+
+GUI
+ o Window size resizable
+ o Draw corner points
+ o Only draw new stones and redraw on chain delete
+ o Move logic to Engine library
+
+Engine
+ o Implement board class (4 bits per point)
