@@ -185,81 +185,6 @@ cv::Mat makeGrid(const std::vector<cv::Mat>& images) {
     return grid;
 }
 
-class BoardDetect {
-public:
-    BoardDetect() {
-        // Initial setup with manual values
-        SetupBoardMask();
-        SetupStoneMask();
-    }
-
-    std::vector<std::pair<unsigned, bool>> process(const cv::Mat& img){
-        auto res = detectBoardContour();
-        res = warpAndCutBoard(res);
-        
-        auto stones = detectStones(res);
-        return calcStonePositionIndex(stones);
-    }
-
-private:
-    //! Adjust HSV range and update board mask
-    void SetupBoardMask(const cv::Mat& img) {        
-        // HSV Range will be properly set at
-        static int m_hmin=13, m_smin=44,  m_vmin=187;
-        static int m_hmax=37, m_smax=197, m_vmax=255;
-
-        // Histogram equalization or CLAHE on V channel improves detection under variable lighting.
-    }
-
-    //! Uses a mask and filters to detect the contour or the Go board in the image.
-    cv::Mat DetectBoardContour(const cv::Mat& img) {
-        // Consider morphological operations (MORPH_CLOSE / MORPH_OPEN) to clean up the mask before finding contours.
-
-        // If fails       -> SetupBoardMask and try again (maybe lighting changed)
-        // If still fails -> Gracefully fail
-    }
-
-    //! Warps the board to be square and cuts the image to board size.
-    //! \note Calls VerifyBoardWarp to check propery executed.
-    cv::Mat WarpAndCutBoard(const cv::Mat& img) {
-        // Im assuming a quadrilateral. If the contour has extra noise, approxPolyDP may produce >4 points.
-        //  -> If more than 4 points, consider convex hull or polygon simplification to reliably pick corners.
-    }
-
-    //! Test cases: Board should be square (5% error allowed), Detect grid size (and verify against m_boardSize) and further checks
-    bool VerifyBoardWarp(const cv::Mat& img);
-
-    //! Applies a different mask that detects the stones on the board and whether they are white/black.
-    //! \note Calls VerifyDetectStones to check properly executed.
-    //! \returns Vector of stone locations and isBlackStone(true,false)
-    std::vector<std::pair<cv::Vec3f, bool>> DetectStones(const cv::Mat& img){
-        // Consider masking only inside board area before stone detection. This reduces false positives.
-
-
-        // Robust way to distinguish black vs white stones:
-        // Use V (value) channel in HSV or grayscale mean intensity.
-        // Normalize by local background (to account for shadows).
-        // Optional: adaptive threshold or simple learning-based method if lighting varies a lot.
-
-        // Optional: color code stones by detection confidence.
-    }
-
-    //! Sanity checks for stones. Just return true for now.  
-    bool VerifyDetectStones();
-
-    //! Transforms image coordinates to Go board coordinates (0 <= boardId < m_boardSize*m_boardSize).
-    std::vector<std::pair<, bool>> calcStonePositionIndex(const std::vector<std::pair<cv::Vec3f>>& stones) {
-        // Board warp may have small scaling errors (both physical warp and image warp)
-        // Stones not perfectly centered in intersections
-    }
-
-private:
-    unsigned m_boardSize = 19;
-
-    cv::Mask m_boardMask;
-    cv::Maks m_stoneMask;
-}
-
 
 int main() {
     // Load your 6 reference images
@@ -273,12 +198,13 @@ int main() {
         images.push_back(img);
     }
 
-    MaskTesterHSV testMask;
-    MaskContour contourMask;
+    // MaskTesterHSV testMask;
+    // MaskContour contourMask;
+    BoardDetect boardHandler();
     while (true) {
         std::vector<cv::Mat> processed;
         for (auto& img : images) {
-            processed.push_back(testMask.processWithStones(img));
+            processed.push_back(boardHandler.process(img));
         }
         cv::Mat grid = makeGrid(processed);
         cv::imshow("Masks", grid);
