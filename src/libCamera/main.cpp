@@ -46,7 +46,7 @@ public:
         return result;
     }
 
-    cv::Mat processAndWarp(const cv::Mat& img) {
+    cv::Mat process(const cv::Mat& img) {
         cv::Mat hsv, mask;
         cv::cvtColor(img, hsv, cv::COLOR_BGR2HSV);
         cv::inRange(hsv, cv::Scalar(hmin, smin, vmin),
@@ -115,7 +115,7 @@ public:
 
     // TODO: Stone detection is bad. I need a different mask to find stones and their colour.
     cv::Mat processWithStones(const cv::Mat& img) {
-        cv::Mat warped = processAndWarp(img);
+        cv::Mat warped = process(img);
         auto stones = detectStones(warped);
         cv::Mat withStones = drawStones(warped, stones);
     
@@ -152,8 +152,6 @@ public:
     int hmin=13, smin=44,  vmin=187; // or vmin 186
     int hmax=37, smax=197, vmax=255;
 };
-
-
 
 cv::Mat makeGrid(const std::vector<cv::Mat>& images) {
     if (images.size() != 6) {
@@ -198,13 +196,13 @@ int main() {
         images.push_back(img);
     }
 
-    // MaskTesterHSV testMask;
-    // MaskContour contourMask;
-    BoardDetect boardHandler();
+    MaskTesterHSV mask;
+    // MaskContour mask;
+    // BoardDetect boardHandler;
     while (true) {
         std::vector<cv::Mat> processed;
         for (auto& img : images) {
-            processed.push_back(boardHandler.process(img));
+            processed.push_back(mask.process(img));
         }
         cv::Mat grid = makeGrid(processed);
         cv::imshow("Masks", grid);
