@@ -23,8 +23,13 @@ add_executable(${targetName}
 
 target_link_libraries(${targetName} PRIVATE
     glfw
-    ${SDL2_LIBRARIES}
-    SDL2_image
+    SDL2::SDL2
+    SDL2::SDL2main
+    SDL2_image::SDL2_image
+)
+target_include_directories(${targetName} PRIVATE
+    ${SDL2_INCLUDE_DIRS}
+    ${SDL2_IMAGE_INCLUDE_DIRS}
 )
 
 # Setup project settings

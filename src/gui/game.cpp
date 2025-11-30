@@ -1,7 +1,7 @@
 #include "game.hpp"
 
 #include <iostream>
-#include <SDL_image.h>
+#include <SDL2/SDL_image.h>
 
 Game::Game(unsigned wndWidth, unsigned wndHeight) : m_windowWidth{wndWidth}, m_windowHeight{wndHeight}
 {
