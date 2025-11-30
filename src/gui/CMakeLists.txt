@@ -24,7 +24,6 @@ add_executable(${targetName}
 target_link_libraries(${targetName} PRIVATE
     glfw
     SDL2::SDL2
-    SDL2::SDL2main
     SDL2_image::SDL2_image
 )
 target_include_directories(${targetName} PRIVATE
