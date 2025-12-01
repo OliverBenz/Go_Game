@@ -1,6 +1,16 @@
 #include "game.hpp"
+#include "window.hpp"
 
-int main() {
-    Game game(800, 800);
-    game.run();
+#include <QApplication>
+
+int main(int argc, char** argv) {
+    // Game game(800, 800);
+    // game.run();
+
+    QApplication app(argc, argv);
+
+    MainWindow window;
+    window.show();
+
+    return app.exec();
 }

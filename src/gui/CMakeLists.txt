@@ -5,6 +5,7 @@ set(targetName goUi)
 find_package(glfw3 REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(SDL2_image REQUIRED)
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
 # Get files to build
 set(headers)
@@ -12,6 +13,7 @@ set(sources
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
     ${CMAKE_CURRENT_LIST_DIR}/game.cpp
     ${CMAKE_CURRENT_LIST_DIR}/board.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/window.cpp
 )
 
 # TODO: Make this a library included in the game.
@@ -25,10 +27,17 @@ target_link_libraries(${targetName} PRIVATE
     glfw
     SDL2::SDL2
     SDL2_image::SDL2_image
+    Qt6::Widgets
 )
 target_include_directories(${targetName} PRIVATE
     ${SDL2_INCLUDE_DIRS}
     ${SDL2_IMAGE_INCLUDE_DIRS}
+)
+
+set_target_properties(${targetName} PROPERTIES
+    AUTOMOC ON
+    AUTOUIC ON
+    AUTORCC ON
 )
 
 # Setup project settings

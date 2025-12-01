@@ -3,14 +3,19 @@
 #include "board.hpp"
 
 #include <memory>
-#include <SDL.h>
+#include <SDL2/SDL.h>
+#include <QWidget>
 
-class Game {
+class Game : QWidget {
+    Q_OBJECT
+
 public:
     Game(unsigned wndWidth, unsigned wndHeight);
     ~Game();
 
     void run();
+
+    void paintEvent(QPaintEvent*) override;
 
 private:
     bool InitializeSDL();

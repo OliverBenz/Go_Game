@@ -4,7 +4,7 @@
 #include <cmath>
 #include <iostream>
 #include <format>
-#include <SDL_image.h>
+#include <SDL2/SDL_image.h>
 
 Board::Board(unsigned nodes, unsigned boardSizePx, SDL_Renderer* renderer) :
     m_boardSize{boardSizePx / nodes * nodes}, 

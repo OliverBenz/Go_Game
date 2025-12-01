@@ -5,6 +5,9 @@
 
 Game::Game(unsigned wndWidth, unsigned wndHeight) : m_windowWidth{wndWidth}, m_windowHeight{wndHeight}
 {
+    setAttribute(Qt::WA_NativeWindow);
+    setAttribute(Qt::WA_PaintOnScreen);
+
     if(InitializeSDL()) {
         m_board = std::make_unique<Board>(9u, std::min(m_windowWidth, m_windowHeight), m_renderer);
     }
@@ -95,4 +98,15 @@ void Game::run() {
             m_redraw = false;
         }
     }
+}
+
+void Game::paintEvent(QPaintEvent*) {
+    // You control rendering completely
+    SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
+    SDL_RenderClear(m_renderer);
+
+    // Draw your Go board, stones, etc.
+    m_board->draw(m_renderer);
+
+    SDL_RenderPresent(m_renderer);
 }
