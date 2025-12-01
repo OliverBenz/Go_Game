@@ -10,18 +10,26 @@
     in {
       devShells.${system}.default = pkgs.mkShell {
         packages = [
-          pkgs.gcc
-          pkgs.cmake
-          pkgs.SDL2
-          pkgs.SDL2_image
-          pkgs.glfw
-          pkgs.opencv
-          pkgs.zlib
-          pkgs.libpng
-          pkgs.libjpeg
-          pkgs.libtiff
-          pkgs.libwebp
+            pkgs.gcc
+            pkgs.cmake
+            pkgs.SDL2
+            pkgs.SDL2_image
+            pkgs.glfw
+            pkgs.opencv
+            pkgs.zlib
+            pkgs.libpng
+            pkgs.libjpeg
+            pkgs.libtiff
+            pkgs.libwebp
+            pkgs.qt6.full
+            pkgs.qt6.qtbase
         ];
+
+        shellHook = ''
+          echo "Dev shell ready. Use 'go-ui' to run the application."
+
+          alias go-ui='nixGLNvidia-580.82.09 ./out/bin/goUi'
+        '';
       };
     };
 }
