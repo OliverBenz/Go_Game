@@ -68,7 +68,7 @@ void draw(const Board& board) {
 	std::cout << "\n";
 
 	for (Id i = 0; i != BOARD_SIZE; ++i) {
-        for(Id j = 0; i != BOARD_SIZE; ++j) {
+        for(Id j = 0; j != BOARD_SIZE; ++j) {
 		    char symb = ' ';
 		    switch (board.getAt(Coord{i, j})) {
 		    	case Board::FieldValue::Black:

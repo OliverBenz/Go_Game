@@ -24,11 +24,11 @@ void play() {
 	});
 
 	while (true) {
+		draw(game.board());
+
 		const auto move = getMove(game.currentPlayer(), game.board());
 		// TODO: Game core should also verify isValidMove
 		game.pushEvent(PutStoneEvent{move});
-
-		draw(game.board());
 	}
 }
 
