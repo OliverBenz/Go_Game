@@ -22,6 +22,13 @@
           pkgs.libtiff
           pkgs.libwebp
         ];
+
+        shellHook = ''
+          echo "Dev shell ready. Use 'i-go-ui' to run the application on an intel card or n-go-ui to run the application on an nvidia card."
+
+          alias n-go-ui='nixGLNvidia-580.82.09 ./out/bin/goUi'
+          alias i-go-ui='nixGLIntel ./out/bin/goUi'
+        '';
       };
     };
 }
