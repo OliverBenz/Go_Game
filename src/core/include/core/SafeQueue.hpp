@@ -5,7 +5,7 @@
 #include <deque>
 #include <mutex>
 
-namespace go::core {
+namespace go {
 
 //! Thread safe queue with a blocking Pop function.
 template<class Entry>

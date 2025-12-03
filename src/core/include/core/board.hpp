@@ -1,9 +1,9 @@
 #pragma once
 
-#include "types.hpp"
+#include "core/types.hpp"
 #include <vector>
 
-namespace go::core {
+namespace go {
 
 // TODO: This should be optimized to use 2Bits per site on the field. (B, W, None, ...)
 class Board {

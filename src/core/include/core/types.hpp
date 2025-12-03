@@ -1,6 +1,6 @@
 #pragma once
 
-namespace go::core {
+namespace go {
 
 using Id = unsigned;  //!< Board ID used by the core library.
 
