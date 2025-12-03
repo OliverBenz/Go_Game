@@ -14,9 +14,6 @@ MainWindow::MainWindow(QWidget* parent)
     QWidget* central = new QWidget;
     QVBoxLayout* layout = new QVBoxLayout(central);
 
-    Game* sdl = new Game(900,900);
-    layout->addWidget(sdl); 
-
     setCentralWidget(central);
 
     setWindowTitle("Qt6 Window");

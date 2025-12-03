@@ -9,4 +9,10 @@ struct Coord {
     Id x, y;
 };
 
+enum class Player {
+    Black = 1,
+    White = 2
+};
+
+
 }

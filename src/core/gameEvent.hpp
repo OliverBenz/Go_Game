@@ -1,5 +1,9 @@
 #pragma once
 
+#include "types.hpp"
+
+#include <variant>
+
 namespace go::core {
 
 struct PutStoneEvent { Coord c; Player player; };
