@@ -16,9 +16,7 @@ void play() {
 	static constexpr std::size_t BOARD_SIZE = 9; 
 
 	Game game;
-	
 	game.setup(BOARD_SIZE);
-
 	std::thread gameThread([&]{
 		game.run();
 	});

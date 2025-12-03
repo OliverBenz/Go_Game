@@ -86,7 +86,7 @@ void draw(const Board& board) {
 }
 
 Coord getMove(const Player player, const Board& board) {
-	Coord moveId;
+	Coord moveId{};
 	do {
 		moveId = input(player);
 	} while(!isValidMove(player, moveId, board));

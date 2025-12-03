@@ -30,6 +30,8 @@ public:
     Player currentPlayer();
 
 private:
+    void switchTurn();
+
     void handleEvent(const PutStoneEvent& event);
     void handleEvent(const PassEvent& event);
     void handleEvent(const ResignEvent& event);

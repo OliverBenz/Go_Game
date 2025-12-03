@@ -17,6 +17,7 @@ public:
     };
 
 public:
+    Board() = delete;
     Board(std::size_t size);
 
     std::size_t size() const;
@@ -27,8 +28,8 @@ public:
     FieldValue getAt(Coord c) const;
 
 private:
-    std::size_t m_size;               //!< Board size
-    std::vector<FieldValue> m_board;  //!< Board values.
+    std::size_t m_size;                //!< Board size
+    std::vector<FieldValue> m_board{}; //!< Board values.
 };
 
 }

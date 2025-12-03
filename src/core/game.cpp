@@ -28,13 +28,17 @@ Player Game::currentPlayer() {
     return m_currentPlayer;
 }
 
-void Game::handleEvent(const PutStoneEvent& event) {
-    m_board.setAt(event.c, static_cast<Board::FieldValue>(m_currentPlayer));
+void Game::switchTurn() {
     m_currentPlayer = m_currentPlayer == Player::Black ? Player::White : Player::Black;
 }
 
+void Game::handleEvent(const PutStoneEvent& event) {
+    m_board.setAt(event.c, static_cast<Board::FieldValue>(m_currentPlayer));
+    switchTurn();
+}
+
 void Game::handleEvent(const PassEvent& event) {
-    m_currentPlayer = m_currentPlayer == Player::Black ? Player::White : Player::Black;
+    switchTurn();
 }
 
 void Game::handleEvent(const ResignEvent& event) {
