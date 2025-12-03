@@ -14,5 +14,4 @@ enum class Player {
     White = 2
 };
 
-
 }
