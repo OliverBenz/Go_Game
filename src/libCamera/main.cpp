@@ -46,7 +46,7 @@ public:
         return result;
     }
 
-    cv::Mat process(const cv::Mat& img) {
+    cv::Mat processAndWarp(const cv::Mat& img) {
         cv::Mat hsv, mask;
         cv::cvtColor(img, hsv, cv::COLOR_BGR2HSV);
         cv::inRange(hsv, cv::Scalar(hmin, smin, vmin),
@@ -115,7 +115,7 @@ public:
 
     // TODO: Stone detection is bad. I need a different mask to find stones and their colour.
     cv::Mat processWithStones(const cv::Mat& img) {
-        cv::Mat warped = process(img);
+        cv::Mat warped = processAndWarp(img);
         auto stones = detectStones(warped);
         cv::Mat withStones = drawStones(warped, stones);
     
@@ -149,8 +149,8 @@ public:
     }
 
 
-    int hmin=13, smin=44,  vmin=187; // or vmin 186
-    int hmax=37, smax=197, vmax=255;
+    int hmin=13, smin=44,  vmin=84; // or vmin 186
+    int hmax=37, smax=166, vmax=255;
 };
 
 cv::Mat makeGrid(const std::vector<cv::Mat>& images) {
@@ -160,7 +160,7 @@ cv::Mat makeGrid(const std::vector<cv::Mat>& images) {
     }
     
     // Resize all to the same size for neat layout
-    cv::Size sz(320, 240); // pick a display size
+    cv::Size sz(400, 400); // pick a display size
     std::vector<cv::Mat> resized;
     for (auto& img : images) {
         cv::Mat r;
@@ -187,7 +187,7 @@ cv::Mat makeGrid(const std::vector<cv::Mat>& images) {
 int main() {
     // Load your 6 reference images
     std::vector<cv::Mat> images;
-    for (auto i = 1; i != 7; ++i) {
+    for (auto i = 2; i != 8; ++i) {
         cv::Mat img = cv::imread("/home/oliver/Data/dev/Go_Game/tests/img/boards_easy/angle_"+ std::to_string(i) + ".jpeg");
         if (img.empty()) {
             std::cerr << "Could not read " << i << std::endl;
@@ -202,7 +202,7 @@ int main() {
     while (true) {
         std::vector<cv::Mat> processed;
         for (auto& img : images) {
-            processed.push_back(mask.process(img));
+            processed.push_back(mask.processAndWarp(img));
         }
         cv::Mat grid = makeGrid(processed);
         cv::imshow("Masks", grid);
