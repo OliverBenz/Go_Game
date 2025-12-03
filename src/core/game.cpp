@@ -20,13 +20,21 @@ void Game::run() {
     }
 }
 
+const Board& Game::board() const {
+    return m_board;
+}
+
+Player Game::currentPlayer() {
+    return m_currentPlayer;
+}
+
 void Game::handleEvent(const PutStoneEvent& event) {
-    m_board.setAt(event.c, static_cast<Board::FieldValue>(event.player));
-    m_turnBlack = !m_turnBlack;
+    m_board.setAt(event.c, static_cast<Board::FieldValue>(m_currentPlayer));
+    m_currentPlayer = m_currentPlayer == Player::Black ? Player::White : Player::Black;
 }
 
 void Game::handleEvent(const PassEvent& event) {
-    m_turnBlack = !m_turnBlack;
+    m_currentPlayer = m_currentPlayer == Player::Black ? Player::White : Player::Black;
 }
 
 void Game::handleEvent(const ResignEvent& event) {

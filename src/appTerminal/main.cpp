@@ -1,0 +1,52 @@
+#include "types.hpp"
+#include "terminalUI.hpp"
+
+#include <iostream>
+#include <thread>
+
+namespace go::terminal {
+
+void play() {
+	static constexpr std::size_t BOARD_SIZE = 9; 
+
+	Game game;
+	
+	game.setup(BOARD_SIZE);
+
+	std::thread gameThread([&]{
+		game.run();
+	});
+
+	while (true) {
+		const auto move = getMove(game.currentPlayer())
+		// TODO: Game core should also verify isValidMove
+		game.pushEvent(PutStoneEvent{move});
+
+		draw(game.board());
+	}
+}
+
+void review() {
+	std::cout << "Not yet implemented.\n";
+}
+
+}
+
+int main() {
+	char option = ' ';
+	std::cout << "Play (P) or Review (R): ";
+	std::cin >> option;
+	
+	switch (option) {
+		case 'p':
+		case 'P':
+			go::terminal::play();
+			break;
+		case 'r':
+		case 'R':
+			go::terminal::review();
+			break;
+		default:
+			std::cout << "Invalid selection." << std::endl;
+	}
+}

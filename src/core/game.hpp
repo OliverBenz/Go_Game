@@ -14,10 +14,20 @@ class Game {
 public:
     Game() = default;
 
+    //! Setup a game of certain board size without starting the game loop.
     void setup(std::size_t size);
+
+    //! Run the main game loop/start handling the event loop.
     void run();
 
+    //! Push an event to the event queue.
     void pushEvent(GameEvent event);
+
+    //! Get board data for rendering.
+    const Board& board() const;
+
+    //! Get the current player to make a move.
+    Player currentPlayer();
 
 private:
     void handleEvent(const PutStoneEvent& event);
@@ -28,7 +38,7 @@ private:
 
 private:
     bool m_gameActive{false};
-    bool m_turnBlack{true};
+    Player m_currentPlayer{Player::Black};
 
     EventQueue m_eventQueue;
     Board m_board{19u};
