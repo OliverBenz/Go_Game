@@ -1,10 +1,16 @@
-#include "types.hpp"
 #include "terminalUI.hpp"
+
+#include "core/game.hpp"
 
 #include <iostream>
 #include <thread>
 
 namespace go::terminal {
+
+// TODO: Remove core namespace
+// TODO: Write cmake
+// TODO: Get running
+// TODO: Includes subdirectory for libs
 
 void play() {
 	static constexpr std::size_t BOARD_SIZE = 9; 
@@ -18,7 +24,7 @@ void play() {
 	});
 
 	while (true) {
-		const auto move = getMove(game.currentPlayer())
+		const auto move = getMove(game.currentPlayer(), game.board());
 		// TODO: Game core should also verify isValidMove
 		game.pushEvent(PutStoneEvent{move});
 

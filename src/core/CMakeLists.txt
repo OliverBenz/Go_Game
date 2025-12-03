@@ -17,11 +17,15 @@ set(sources
 )
 
 # Create target
-add_library(${targetName}
+add_library(${targetName} STATIC
     ${headers}
     ${sources}
 )
 
+target_include_directories(${targetName}
+    PUBLIC
+        ${CMAKE_CURRENT_LIST_DIR}/include
+)
 
 # Setup project settings
 # set_project_warnings(${targetName})  # Which warnings to enable

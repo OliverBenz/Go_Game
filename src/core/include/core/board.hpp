@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/types.hpp"
+
 #include <vector>
 
 namespace go {
@@ -17,6 +18,8 @@ public:
 
 public:
     Board(std::size_t size);
+
+    std::size_t size() const;
 
     //! With x,y \in [0, size-1]
     //! \note Game coordinates origin is at bottom left of board and start at 0. Column: A->0, B->1, etc

@@ -1,6 +1,7 @@
 #pragma once
 
-#incldue "types.hpp"
+#include "core/board.hpp"
+#include "core/types.hpp"
 
 #include <string>
 
