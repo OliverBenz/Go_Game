@@ -1,13 +1,23 @@
 # Settings
-set(targetName goGame)
+set(targetName goCore)
 
 # Get files to build
-set(headers )
-set(sources ${CMAKE_CURRENT_LIST_DIR}/main.cpp)
+set(headers
+    ${CMAKE_CURRENT_LIST_DIR}/types.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/board.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/game.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/gameEvent.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/SafeQueue.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/sgfHandler.hpp
+)
+set(sources
+    ${CMAKE_CURRENT_LIST_DIR}/board.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/game.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/sgfHandler.cpp
+)
 
-# TODO: This core/ will be a library. Not the executable.
 # Create target
-add_executable(${targetName}
+add_library(${targetName}
     ${headers}
     ${sources}
 )

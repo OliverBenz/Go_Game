@@ -4,8 +4,8 @@ namespace go::core {
 
 Coord fromSGF(const std::string& s) {
     return {
-        static_cast<Id>(s[0] - 'a'),
-        static_cast<Id>(s[1] - 'a')
+        static_cast<Id>(s[0u] - 'a'),
+        static_cast<Id>(s[1u] - 'a')
     };
 }
 
