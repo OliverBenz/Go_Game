@@ -1,8 +1,8 @@
-#include "board.hpp"
+#include "core/board.hpp"
 
 #include <cassert>
 
-namespace go::core {
+namespace go {
 
 Board::Board(const std::size_t size) : m_size(size), m_board(size*size, FieldValue::None) {
     assert(size == 9 || size == 13 || size == 19);

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "types.hpp"
+#include "core/types.hpp"
 
 #include <variant>
 
-namespace go::core {
+namespace go {
 
 struct PutStoneEvent { Coord c; Player player; };
 struct PassEvent { Player player; };

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "types.hpp"
+#include "core/types.hpp"
 
 #include <string>
 
-namespace go::core {
+namespace go {
 
 //! Convert sgf code to core game coordinate.
 Coord fromSGF(const std::string& s);

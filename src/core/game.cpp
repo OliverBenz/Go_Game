@@ -1,6 +1,6 @@
-#include "game.hpp"
+#include "core/game.hpp"
 
-namespace go::core {
+namespace go {
 
 void Game::setup(const std::size_t size) {
     m_board = Board(size);

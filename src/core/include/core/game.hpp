@@ -1,11 +1,11 @@
 #pragma once
 
-#include "SafeQueue.hpp"
-#include "types.hpp"
-#include "board.hpp"
-#include "gameEvent.hpp"
+#include "core/SafeQueue.hpp"
+#include "core/types.hpp"
+#include "core/board.hpp"
+#include "core/gameEvent.hpp"
 
-namespace go::core {
+namespace go {
 
 using EventQueue = SafeQueue<GameEvent>;
 

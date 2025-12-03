@@ -3,12 +3,12 @@ set(targetName goCore)
 
 # Get files to build
 set(headers
-    ${CMAKE_CURRENT_LIST_DIR}/types.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/board.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/game.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/gameEvent.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/SafeQueue.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/sgfHandler.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/core/types.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/core/board.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/core/game.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/core/gameEvent.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/core/SafeQueue.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/core/sgfHandler.hpp
 )
 set(sources
     ${CMAKE_CURRENT_LIST_DIR}/board.cpp

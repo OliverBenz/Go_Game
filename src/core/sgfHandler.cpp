@@ -1,6 +1,6 @@
-#include "sgfHandler.hpp"
+#include "core/sgfHandler.hpp"
 
-namespace go::core {
+namespace go {
 
 Coord fromSGF(const std::string& s) {
     return {
