@@ -1,8 +1,12 @@
 #pragma once
 
+#include "core/types.hpp"
+#include "core/board.hpp"
+
 #include <vector>
 #include <SDL.h>
 
+namespace go {
 
 // TODO: 
 // - Cleanup function and variable names(board name redundant, specify pixel or type)
@@ -15,22 +19,15 @@ public:
     BoardRenderer(unsigned nodes, unsigned boardSizePx, SDL_Renderer* renderer);
     ~BoardRenderer();
 
-    void draw(SDL_Renderer* renderer);
-
-    //! Add stone at the specified window position (in pixels).
-    //! \returns False if click could not be assigned to a board position.
-    bool addStone(int xPx, int yPx, bool black, SDL_Renderer* renderer);
-
-private:
-    void drawBackground(SDL_Renderer* renderer);
-    void drawStones(SDL_Renderer* renderer);
-    void drawStone(unsigned x, unsigned y, int player, SDL_Renderer* renderer);
-
-    //! (x,y) \mapsto i \in [0, nodes-1]
-    unsigned coordToId(unsigned x, unsigned y);
+    void draw(SDL_Renderer* renderer, const Board& board);
 
     //! Transforms pixel value to board coordinate.
     bool pixelToCoord(int px, unsigned& coord);
+
+private:
+    void drawBackground(SDL_Renderer* renderer);
+    void drawStones(SDL_Renderer* renderer, const Board& board);
+    void drawStone(Coord c, Board::FieldValue player, SDL_Renderer* renderer);
 
     static SDL_Texture* load_texture(const char* path, SDL_Renderer* renderer);
 
@@ -42,8 +39,6 @@ private:
     unsigned m_stoneSize = 0;  //!< Pixel Radius of a stone.
     unsigned m_nodes = 0;
 
-    std::vector<char> m_board;
-
     // TODO: Check stones dont overlap by 1 pixel
     unsigned m_drawStepSize = m_stoneSize / 2;               //!< Half a stone offset from border
     unsigned m_coordStart   = m_drawStepSize;                //!< (x,y) starting coordinate of lines
@@ -52,3 +47,5 @@ private:
     SDL_Texture* m_textureBlack = nullptr;
     SDL_Texture* m_textureWhite = nullptr;
 };
+
+}

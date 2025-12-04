@@ -1,4 +1,4 @@
-#include "board.hpp"
+#include "boardRenderer.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -6,11 +6,12 @@
 #include <format>
 #include <SDL_image.h>
 
+namespace go {
+
 BoardRenderer::BoardRenderer(unsigned nodes, unsigned boardSizePx, SDL_Renderer* renderer) :
     m_boardSize{boardSizePx / nodes * nodes}, 
     m_stoneSize{m_boardSize / nodes},  // TODO: Could still be a pixel off due to rounding int division
-    m_nodes(nodes),
-    m_board(nodes*nodes, 0)
+    m_nodes(nodes)
 {
     m_textureBlack = load_texture("/home/oliver/Data/dev/Go_Game/assets/anime_black.png", renderer);
     m_textureWhite = load_texture("/home/oliver/Data/dev/Go_Game/assets/anime_white.png", renderer);
@@ -26,9 +27,9 @@ BoardRenderer::~BoardRenderer() {
 
 // TODO: Don't redraw background and past stones all the time.
 // TODO: Always draw new stone individually and add function redrawBoard
-void BoardRenderer::draw(SDL_Renderer* renderer) {
+void BoardRenderer::draw(SDL_Renderer* renderer, const Board& board) {
     drawBackground(renderer);
-    drawStones(renderer);
+    drawStones(renderer, board);
 }
 
 SDL_Texture* BoardRenderer::load_texture(const char* path, SDL_Renderer* renderer){
@@ -81,35 +82,30 @@ void BoardRenderer::drawBackground(SDL_Renderer* renderer) {
     }
 }
 
-void BoardRenderer::drawStone(unsigned x, unsigned y, int player, SDL_Renderer* renderer) {
+void BoardRenderer::drawStone(Coord c, Board::FieldValue player, SDL_Renderer* renderer) {
     assert(m_coordStart >= m_drawStepSize);
 
     SDL_Rect dest;
     dest.w = static_cast<int>(m_stoneSize);
     dest.h = static_cast<int>(m_stoneSize);
-    dest.x = static_cast<int>((m_coordStart - m_drawStepSize) + x * m_stoneSize);
-    dest.y = static_cast<int>((m_coordStart - m_drawStepSize) + y * m_stoneSize);
+    dest.x = static_cast<int>((m_coordStart - m_drawStepSize) + c.x * m_stoneSize);
+    dest.y = static_cast<int>((m_coordStart - m_drawStepSize) + c.y * m_stoneSize);
     
-    SDL_RenderCopy(renderer, (player == 1 ? m_textureBlack : m_textureWhite), nullptr, &dest);
+    SDL_RenderCopy(renderer, (player == Board::FieldValue::Black ? m_textureBlack : m_textureWhite), nullptr, &dest);
 }
 
-void BoardRenderer::drawStones(SDL_Renderer* renderer) {
-    for (unsigned i = 0; i != m_board.size(); ++i) {
-        if(m_board[i] == 0) {
-            continue;
+void BoardRenderer::drawStones(SDL_Renderer* renderer, const Board& board) {
+    for (std::size_t i = 0; i != board.size(); ++i) {
+        for (std::size_t j = 0; j != board.size(); ++j) {
+            Coord c{static_cast<Id>(i), static_cast<Id>(j)};
+
+            if(board.getAt(c) == Board::FieldValue::None) {
+                return;
+            }
+
+            drawStone(c, board.getAt(c), renderer);
         }
-
-        unsigned x = i % m_nodes;
-        unsigned y = i / m_nodes;
-
-        drawStone(x, y, m_board[i], renderer);
     }
-}
-
-unsigned BoardRenderer::coordToId(unsigned x, unsigned y) {
-    assert(x < m_nodes && y < m_nodes);
-
-    return y * m_nodes + x;
 }
 
 bool BoardRenderer::pixelToCoord(int px, unsigned& coord) {
@@ -128,25 +124,4 @@ bool BoardRenderer::pixelToCoord(int px, unsigned& coord) {
     return true;
 }
 
-bool BoardRenderer::addStone(int xPx, int yPx, bool black, SDL_Renderer* renderer) {
-    unsigned xTrafo, yTrafo;
-    if(pixelToCoord(xPx, xTrafo) && pixelToCoord(yPx, yTrafo)) {
-        if(xTrafo >= m_nodes || yTrafo >= m_nodes) {
-            std::cerr << "Invalid coordinates for board size.\n";
-            return false;
-        }
-
-        const auto boardId = coordToId(xTrafo, yTrafo);
-        if(m_board[boardId] != 0) {
-            std::cerr << "Board position already occupied\n";
-            return false;
-        }
-
-        m_board[boardId] = (black ? 1 : -1);
-        drawStone(xTrafo, yTrafo, black ? 1 : -1, renderer);
-
-        return true;
-    }
-
-    return false;
 }

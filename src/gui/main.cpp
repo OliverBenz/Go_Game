@@ -1,6 +1,14 @@
 #include "window.hpp"
 
 int main() {
-    Window window(800, 800);
-    window.run();
+    go::Window window(800, 800);
+    go::Game game;
+
+    game.setup(9u);
+	std::thread gameThread([&]{
+		game.run();
+	});
+
+    window.run(game);
+    gameThread.join();
 }

@@ -3,6 +3,8 @@
 #include <iostream>
 #include <SDL2/SDL_image.h>
 
+namespace go {
+
 Window::Window(unsigned wndWidth, unsigned wndHeight) : m_windowWidth{wndWidth}, m_windowHeight{wndHeight}
 {
     if(InitializeSDL()) {
@@ -55,13 +57,14 @@ bool Window::InitializeSDL() {
     return true;
 }
 
-void Window::run() {
+void Window::run(Game& game) {
     SDL_Event event;
     while(SDL_WaitEvent(&event) && !m_exit) {
         std::cerr << "Event: " << event.type << "\n";
 
         switch(event.type) {
         case SDL_QUIT:
+            game.pushEvent(ShutdownEvent{});
             m_exit = true;
             break;
 
@@ -69,10 +72,13 @@ void Window::run() {
             if (event.button.button == SDL_BUTTON_LEFT) {
                 const auto x = event.button.x;
                 const auto y = event.button.y;
-                if(m_board->addStone(x, y, m_turnBlack, m_renderer)) {
-                    m_turnBlack = !m_turnBlack;
+
+                Coord c{};
+                if(m_board->pixelToCoord(x, c.x) && m_board->pixelToCoord(y, c.y)) {
+                    game.pushEvent(PutStoneEvent(c));
                     m_redraw = true;
                 }
+
             }
             break;
 
@@ -90,9 +96,11 @@ void Window::run() {
 
         if(m_redraw) {
             SDL_RenderClear(m_renderer);
-            m_board->draw(m_renderer);
+            m_board->draw(m_renderer, game.board());
             SDL_RenderPresent(m_renderer);
             m_redraw = false;
         }
     }
+}
+
 }

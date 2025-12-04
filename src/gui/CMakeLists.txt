@@ -7,20 +7,19 @@ find_package(SDL2 REQUIRED)
 find_package(SDL2_image REQUIRED)
 
 # Get files to build
-set(headers)
 set(sources
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
     ${CMAKE_CURRENT_LIST_DIR}/window.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/board.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/boardRenderer.cpp
 )
 
 # Create target
 add_executable(${targetName}
-    ${headers}
     ${sources}
 )
 
 target_link_libraries(${targetName} PRIVATE
+    goCore
     glfw
     SDL2::SDL2
     SDL2_image::SDL2_image
