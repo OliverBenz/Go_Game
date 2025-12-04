@@ -8,9 +8,13 @@ Board::Board(const std::size_t size) : m_size(size), m_board(size*size, FieldVal
     assert(size == 9 || size == 13 || size == 19);
 };
 
-bool Board::setAt(const Coord c, FieldValue fieldValue) {
+std::size_t Board::size() const {
+    return m_size;
+}
+
+void Board::setAt(const Coord c, FieldValue fieldValue) {
     assert(fieldValue != Board::FieldValue::None);
-    assert(0 <= c.x && c.x <= m_size-1 && 0 <= c.y && c.y <= m_size-1);
+    assert(0 <= c.x && c.x <= m_size-1 && 0 <= c.y && c.y <= m_size-1); // Should be validated beforehand
 
     m_board[c.y * m_size + c.x] = fieldValue;
 }

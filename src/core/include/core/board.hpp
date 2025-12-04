@@ -18,14 +18,16 @@ public:
 public:
     Board(std::size_t size);
 
+    std::size_t size() const;
+
     //! With x,y \in [0, size-1]
     //! \note Game coordinates origin is at bottom left of board and start at 0. Column: A->0, B->1, etc
-    bool setAt(Coord c, FieldValue fieldValue);
+    void setAt(Coord c, FieldValue fieldValue);
     FieldValue getAt(Coord c) const;
 
 private:
-    std::size_t m_size;               //!< Board size
-    std::vector<FieldValue> m_board;  //!< Board values.
+    std::size_t m_size;                 //!< Board size
+    std::vector<FieldValue> m_board{};  //!< Board values.
 };
 
 }
