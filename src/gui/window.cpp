@@ -6,7 +6,7 @@
 Window::Window(unsigned wndWidth, unsigned wndHeight) : m_windowWidth{wndWidth}, m_windowHeight{wndHeight}
 {
     if(InitializeSDL()) {
-        m_board = std::make_unique<Board>(9u, std::min(m_windowWidth, m_windowHeight), m_renderer);
+        m_board = std::make_unique<BoardRenderer>(9u, std::min(m_windowWidth, m_windowHeight), m_renderer);
     }
 }
 

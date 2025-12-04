@@ -14,7 +14,6 @@ set(sources
     ${CMAKE_CURRENT_LIST_DIR}/board.cpp
 )
 
-# TODO: Make this a library included in the game.
 # Create target
 add_executable(${targetName}
     ${headers}

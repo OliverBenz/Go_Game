@@ -9,11 +9,11 @@
 // - Cleanup board.size() / 2 -> replace with gameSize
 // - Move all game logic to core library.
 // - Wrap raw pointer in smart pointers?
-class Board{
+class BoardRenderer{
 public:
-    Board() = default;
-    Board(unsigned nodes, unsigned boardSizePx, SDL_Renderer* renderer);
-    ~Board();
+    BoardRenderer() = default;
+    BoardRenderer(unsigned nodes, unsigned boardSizePx, SDL_Renderer* renderer);
+    ~BoardRenderer();
 
     void draw(SDL_Renderer* renderer);
 

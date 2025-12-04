@@ -20,7 +20,7 @@ private:
     bool m_redraw = true;    //!< Redraw window content.
     bool m_turnBlack = true; //!< Black players turn.
 
-    std::unique_ptr<Board> m_board = nullptr;
+    std::unique_ptr<BoardRenderer> m_board = nullptr;
 
     unsigned m_windowWidth;
     unsigned m_windowHeight;
