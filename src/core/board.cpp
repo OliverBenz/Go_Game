@@ -12,8 +12,8 @@ std::size_t Board::size() const {
     return m_size;
 }
 
-bool Board::setAt(const Coord c, FieldValue fieldValue) {
-    assert(fieldValue != Board::FieldValue::None);
+void Board::setAt(const Coord c, FieldValue fieldValue) {
+    assert(fieldValue != FieldValue::None);
     assert(0 <= c.x && c.x <= m_size-1 && 0 <= c.y && c.y <= m_size-1);
 
     m_board[c.y * m_size + c.x] = fieldValue;
