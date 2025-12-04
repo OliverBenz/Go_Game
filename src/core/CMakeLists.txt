@@ -1,17 +1,31 @@
 # Settings
-set(targetName goGame)
+set(targetName goCore)
 
 # Get files to build
-set(headers )
-set(sources ${CMAKE_CURRENT_LIST_DIR}/main.cpp)
+set(headers
+    ${CMAKE_CURRENT_LIST_DIR}/include/core/types.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/core/board.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/core/game.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/core/gameEvent.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/core/SafeQueue.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/core/sgfHandler.hpp
+)
+set(sources
+    ${CMAKE_CURRENT_LIST_DIR}/board.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/game.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/sgfHandler.cpp
+)
 
-# TODO: This core/ will be a library. Not the executable.
 # Create target
-add_executable(${targetName}
+add_library(${targetName} STATIC
     ${headers}
     ${sources}
 )
 
+target_include_directories(${targetName}
+    PUBLIC
+        ${CMAKE_CURRENT_LIST_DIR}/include
+)
 
 # Setup project settings
 # set_project_warnings(${targetName})  # Which warnings to enable
