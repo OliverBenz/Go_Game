@@ -32,9 +32,25 @@ void Game::switchTurn() {
     m_currentPlayer = m_currentPlayer == Player::Black ? Player::White : Player::Black;
 }
 
+bool Game::isValidMove(Player player, Coord c) {
+    // Check valid coord for board size
+    if(c.x >= m_board.size() || c.y >= m_board.size()){
+        return false;
+    }
+    
+    // Check coord free
+    if(m_board.getAt(c) != Board::FieldValue::None) {
+        return false;
+    }
+    
+    // TODO: Check no board state repeat
+}
+
 void Game::handleEvent(const PutStoneEvent& event) {
-    m_board.setAt(event.c, static_cast<Board::FieldValue>(m_currentPlayer));
-    switchTurn();
+    if (isValidMove(m_currentPlayer, event.c)) {
+        m_board.setAt(event.c, static_cast<Board::FieldValue>(m_currentPlayer));
+        switchTurn();
+    }
 }
 
 void Game::handleEvent(const PassEvent& event) {
@@ -46,7 +62,9 @@ void Game::handleEvent(const ResignEvent& event) {
 }
 
 void Game::handleEvent(const NetworkMoveEvent& event) {
-    // TODO: 
+    if (isValidMove(m_currentPlayer, event.c)) {
+        // TODO: 
+    }
 }
 
 void Game::handleEvent(const ShutdownEvent& event) {

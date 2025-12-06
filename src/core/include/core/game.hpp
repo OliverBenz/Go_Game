@@ -31,6 +31,7 @@ public:
 
 private:
     void switchTurn();
+    bool isValidMove(Player player, Coord coord);
 
     void handleEvent(const PutStoneEvent& event);
     void handleEvent(const PassEvent& event);

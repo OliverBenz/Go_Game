@@ -14,7 +14,7 @@ std::size_t Board::size() const {
 
 void Board::setAt(const Coord c, FieldValue fieldValue) {
     assert(fieldValue != Board::FieldValue::None);
-    assert(0 <= c.x && c.x <= m_size-1 && 0 <= c.y && c.y <= m_size-1); // Should be validated beforehand
+    assert(0 <= c.x && c.x <= m_size-1 && 0 <= c.y && c.y <= m_size-1); // Game should heck isValidMove trying to set
 
     m_board[c.y * m_size + c.x] = fieldValue;
 }
