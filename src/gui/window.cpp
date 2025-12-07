@@ -3,7 +3,9 @@
 #include <iostream>
 #include <SDL2/SDL_image.h>
 
-Window::Window(unsigned wndWidth, unsigned wndHeight) : m_windowWidth{wndWidth}, m_windowHeight{wndHeight}
+namespace go::sdl {
+
+Window::Window(unsigned wndWidth, unsigned wndHeight, Game& game) : m_windowWidth{wndWidth}, m_windowHeight{wndHeight}, m_game{game}
 {
     if(InitializeSDL()) {
         m_board = std::make_unique<BoardRenderer>(9u, std::min(m_windowWidth, m_windowHeight), m_renderer);
@@ -62,19 +64,17 @@ void Window::run() {
 
         switch(event.type) {
         case SDL_QUIT:
+            m_game.pushEvent(ShutdownEvent{});
             m_exit = true;
             break;
 
         case SDL_MOUSEBUTTONUP:
             if (event.button.button == SDL_BUTTON_LEFT) {
-                const auto x = event.button.x;
-                const auto y = event.button.y;
-                /*
-                if(m_board->addStone(x, y, m_turnBlack, m_renderer)) {
-                    m_turnBlack = !m_turnBlack;
+                Coord c;
+                if (m_board->pixelToCoord(event.button.x, event.button.y, c)) {
+                    m_game.pushEvent(PutStoneEvent{c});
                     m_redraw = true;
                 }
-            */
             }
             break;
 
@@ -92,9 +92,11 @@ void Window::run() {
 
         if(m_redraw) {
             SDL_RenderClear(m_renderer);
-            m_board->draw(m_renderer);
+            m_board->draw(m_game.board(), m_renderer);
             SDL_RenderPresent(m_renderer);
             m_redraw = false;
         }
     }
+}
+
 }

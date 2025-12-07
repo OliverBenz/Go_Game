@@ -41,7 +41,7 @@ private:
     Player m_currentPlayer{Player::Black};
 
     EventQueue m_eventQueue;
-    Board m_board{19u};
+    Board m_board;
 
     MoveChecker m_moveChecker;
 };
