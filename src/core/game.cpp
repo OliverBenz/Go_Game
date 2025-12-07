@@ -61,12 +61,6 @@ void Game::handleEvent(const ResignEvent& event) {
     m_gameActive = false;
 }
 
-void Game::handleEvent(const NetworkMoveEvent& event) {
-    if (isValidMove(m_currentPlayer, event.c)) {
-        // TODO: 
-    }
-}
-
 void Game::handleEvent(const ShutdownEvent& event) {
     m_gameActive = false;
 }

@@ -36,7 +36,6 @@ private:
     void handleEvent(const PutStoneEvent& event);
     void handleEvent(const PassEvent& event);
     void handleEvent(const ResignEvent& event);
-    void handleEvent(const NetworkMoveEvent& event);
     void handleEvent(const ShutdownEvent& event);
 
 private:
