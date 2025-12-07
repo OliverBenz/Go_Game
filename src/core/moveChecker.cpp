@@ -23,11 +23,19 @@ MoveChecker::MoveChecker(const Board& board) : m_board(board) {
         break;
     }
 }
+
+uint64_t MoveChecker::hashAfterMove(Player player, Coord c) {
+    auto hash = m_hasher->lookAhead(c, player);
+
+    // TODO: Remove captured stones after move
+
+    return hash;
+}
     
 bool MoveChecker::isValidMove(Player player, Coord c) {
     return c.x < m_board.size() && c.y < m_board.size() // Valid board coordinates
-        && m_board.getAt(c) != Board::FieldValue::None  // Field free
-        && m_seenHashes.contains(m_hasher->value());     // No game state repeat
+        && m_board.getAt(c) == Board::FieldValue::None  // Field free
+        && !m_seenHashes.contains(hashAfterMove(player, c));   // No game state repeat
 }
 
 }

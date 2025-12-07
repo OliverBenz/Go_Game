@@ -15,7 +15,12 @@ public:
     MoveChecker(const Board& board);
     ~MoveChecker();
 
+    //! Check if a move is valid.
     bool isValidMove(Player player, Coord c);
+
+private:
+    //! Compute the gamestate hash after a move.
+    uint64_t hashAfterMove(Player player, Coord c);
 
 private:
     const Board& m_board;                      //!< Reference the game board.

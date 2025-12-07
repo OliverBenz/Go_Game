@@ -12,8 +12,9 @@ namespace go {
 //! Interface to allow storing different board size instantiations. 
 class IZobristHash {
 public:
-    virtual void placeStone(Id x, Id y, Player color) = 0;
-    virtual void removeStone(Id x, Id y, Player color) = 0;
+    virtual uint64_t lookAhead(Coord c, Player color) const = 0;
+    virtual void placeStone(Coord c, Player color) = 0;
+    virtual void removeStone(Coord c, Player color) = 0;
     virtual void togglePlayer() = 0;
     
     virtual void reset() = 0;
@@ -33,11 +34,14 @@ public:
     //! Get current hash.
     uint64_t value() const override;
 
+    //! Returns the hash that would happen after a move.
+    uint64_t lookAhead(Coord c, Player color) const override;
+
     //! Update on placing a stone.
-    void placeStone(Id x, Id y, Player color) override;
+    void placeStone(Coord c, Player color) override;
 
     //! Update on removing a stone.
-    void removeStone(Id x, Id y, Player color) override;
+    void removeStone(Coord c, Player color) override;
 
     // Update for player-to-move swap (needed for situational superko).
     void togglePlayer() override;
@@ -68,18 +72,26 @@ uint64_t ZobristHash<SIZE>::value() const {
 }
 
 template<std::size_t SIZE>
-void ZobristHash<SIZE>::placeStone(Id x, Id y, Player color) {
+uint64_t ZobristHash<SIZE>::lookAhead(Coord c, Player color) const {
     assert(static_cast<int>(color) == 1 || static_cast<int>(color) == 2);
-    assert(x < SIZE && y < SIZE);
+    assert(c.x < SIZE && c.y < SIZE);
 
-    m_hash ^= m_table[x][y][static_cast<unsigned>(color) - 1u];
+    return m_hash ^ m_table[c.x][c.y][static_cast<unsigned>(color) - 1u];
 }
 
 template<std::size_t SIZE>
-void ZobristHash<SIZE>::removeStone(Id x, Id y, Player color) {
+void ZobristHash<SIZE>::placeStone(Coord c, Player color) {
     assert(static_cast<int>(color) == 1 || static_cast<int>(color) == 2);
-    assert(x < SIZE && y < SIZE);
-    m_hash ^= m_table[x][y][static_cast<unsigned>(color) - 1u];
+    assert(c.x < SIZE && c.y < SIZE);
+
+    m_hash ^= m_table[c.x][c.y][static_cast<unsigned>(color) - 1u];
+}
+
+template<std::size_t SIZE>
+void ZobristHash<SIZE>::removeStone(Coord c, Player color) {
+    assert(static_cast<int>(color) == 1 || static_cast<int>(color) == 2);
+    assert(c.x < SIZE && c.y < SIZE);
+    m_hash ^= m_table[c.x][c.y][static_cast<unsigned>(color) - 1u];
 }
 
 template<std::size_t SIZE>
