@@ -7,10 +7,10 @@ namespace go::gtest {
 
 // TODO: Verify board state after every place 
 TEST(Game, BoardUpdate) {
-    Game game;
+    Game game(9u);
     std::thread gameThread([&]{
         game.run();
-    })
+    });
 
     // Setup ?koseki?
     game.pushEvent(PutStoneEvent{0u, 1u});

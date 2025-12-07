@@ -3,6 +3,7 @@
 #include "core/types.hpp"
 
 #include <array>
+#include <cassert>
 #include <cstdint>
 #include <random>
 
@@ -11,11 +12,8 @@ namespace go {
 //! Interface to allow storing different board size instantiations. 
 class IZobristHash {
 public:
-    virtual ZobristHash() = 0;
-    virtual ~ZobristHashBase() = default;
-
-    virtual void placeStone(int x, int y, int color) = 0;
-    virtual void removeStone(int x, int y, int color) = 0;
+    virtual void placeStone(Id x, Id y, Player color) = 0;
+    virtual void removeStone(Id x, Id y, Player color) = 0;
     virtual void togglePlayer() = 0;
     
     virtual void reset() = 0;
@@ -25,24 +23,24 @@ public:
 
 //! Hash for the current game state. Used to ensure no game state repetition.
 template<std::size_t SIZE>
-class ZobristHash {
+class ZobristHash : public IZobristHash {
 public:
     ZobristHash();
 
     //! Reset hash.
-    void reset();
+    void reset() override;
 
     //! Get current hash.
-    uint64_t value() const;
+    uint64_t value() const override;
 
     //! Update on placing a stone.
-    void placeStone(Id x, Id y, Player color);
+    void placeStone(Id x, Id y, Player color) override;
 
     //! Update on removing a stone.
-    void removeStone(Id x, Id y, Player color);
+    void removeStone(Id x, Id y, Player color) override;
 
     // Update for player-to-move swap (needed for situational superko).
-    void togglePlayer();
+    void togglePlayer() override;
 
 private:
     void initRandomTable();

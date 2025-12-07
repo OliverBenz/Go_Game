@@ -4,10 +4,11 @@ set(targetName "core.gtest")
 # Create executable
 add_executable(${targetName}
     ${CMAKE_CURRENT_LIST_DIR}/main.gtest.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/game.gtest.cpp
 )
 
 # Link to required libraries
-target_link_libraries(${targetName} PUBLIC core gtest_main)
+target_link_libraries(${targetName} PUBLIC goCore GTest::gtest_main)
 set_target_properties(${targetName} PROPERTIES FOLDER "${ideFolderSource}")
 
 # Setup project settings

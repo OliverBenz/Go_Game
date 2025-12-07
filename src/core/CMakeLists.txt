@@ -9,11 +9,14 @@ set(headers
     ${CMAKE_CURRENT_LIST_DIR}/include/core/gameEvent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/core/SafeQueue.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/core/sgfHandler.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/core/moveChecker.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/zobristHash.hpp
 )
 set(sources
     ${CMAKE_CURRENT_LIST_DIR}/board.cpp
     ${CMAKE_CURRENT_LIST_DIR}/game.cpp
     ${CMAKE_CURRENT_LIST_DIR}/sgfHandler.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/moveChecker.cpp
 )
 
 # Create target
