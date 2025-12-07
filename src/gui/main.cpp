@@ -1,6 +1,6 @@
-#include "game.hpp"
+#include "window.hpp"
 
 int main() {
-    Game game(800, 800);
-    game.run();
+    Window window(800, 800);
+    window.run();
 }

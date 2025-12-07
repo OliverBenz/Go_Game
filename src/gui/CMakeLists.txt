@@ -7,17 +7,14 @@ find_package(SDL2 REQUIRED)
 find_package(SDL2_image REQUIRED)
 
 # Get files to build
-set(headers)
 set(sources
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/game.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/board.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/window.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/boardRenderer.cpp
 )
 
-# TODO: Make this a library included in the game.
 # Create target
 add_executable(${targetName}
-    ${headers}
     ${sources}
 )
 
