@@ -4,6 +4,7 @@
 #include "core/types.hpp"
 #include "core/board.hpp"
 #include "core/gameEvent.hpp"
+#include "core/moveChecker.hpp"
 
 namespace go {
 
@@ -12,10 +13,8 @@ using EventQueue = SafeQueue<GameEvent>;
 //! Core game setup.
 class Game {
 public:
-    Game() = default;
-
     //! Setup a game of certain board size without starting the game loop.
-    void setup(std::size_t size);
+    Game(std::size_t boardSize);
 
     //! Run the main game loop/start handling the event loop.
     void run();
@@ -31,7 +30,6 @@ public:
 
 private:
     void switchTurn();
-    bool isValidMove(Player player, Coord coord);
 
     void handleEvent(const PutStoneEvent& event);
     void handleEvent(const PassEvent& event);
@@ -44,6 +42,8 @@ private:
 
     EventQueue m_eventQueue;
     Board m_board{19u};
+
+    MoveChecker m_moveChecker;
 };
 
 }

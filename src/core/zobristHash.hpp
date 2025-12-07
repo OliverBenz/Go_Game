@@ -39,7 +39,7 @@ public:
     void placeStone(Id x, Id y, Player color);
 
     //! Update on removing a stone.
-    void removeStone(int x, int y, Player color);
+    void removeStone(Id x, Id y, Player color);
 
     // Update for player-to-move swap (needed for situational superko).
     void togglePlayer();
@@ -72,6 +72,7 @@ uint64_t ZobristHash<SIZE>::value() const {
 template<std::size_t SIZE>
 void ZobristHash<SIZE>::placeStone(Id x, Id y, Player color) {
     assert(static_cast<int>(color) == 1 || static_cast<int>(color) == 2);
+    assert(x < SIZE && y < SIZE);
 
     m_hash ^= m_table[x][y][static_cast<unsigned>(color) - 1u];
 }
@@ -79,6 +80,7 @@ void ZobristHash<SIZE>::placeStone(Id x, Id y, Player color) {
 template<std::size_t SIZE>
 void ZobristHash<SIZE>::removeStone(Id x, Id y, Player color) {
     assert(static_cast<int>(color) == 1 || static_cast<int>(color) == 2);
+    assert(x < SIZE && y < SIZE);
     m_hash ^= m_table[x][y][static_cast<unsigned>(color) - 1u];
 }
 

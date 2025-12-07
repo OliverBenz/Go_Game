@@ -15,7 +15,6 @@ using GameEvent = std::variant<
     PutStoneEvent,
     PassEvent,
     ResignEvent,
-    NetworkMoveEvent,
     ShutdownEvent
 >;
 
