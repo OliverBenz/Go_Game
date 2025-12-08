@@ -5,6 +5,7 @@
 #include "core/board.hpp"
 #include "core/gameEvent.hpp"
 #include "core/moveChecker.hpp"
+#include "core/notificationHandler.hpp"
 
 namespace go {
 
@@ -28,6 +29,10 @@ public:
     //! Get the current player to make a move.
     Player currentPlayer();
 
+public:
+    void addNotifiationListener(IGameListener* listener);
+    void removeNotificationListener(IGameListener* listener);
+
 private:
     void switchTurn();
 
@@ -44,6 +49,7 @@ private:
     Board m_board;
 
     MoveChecker m_moveChecker;
+    NotificationHandler m_notificationHandler;
 };
 
 }

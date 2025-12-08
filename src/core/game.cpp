@@ -34,6 +34,7 @@ void Game::switchTurn() {
 void Game::handleEvent(const PutStoneEvent& event) {
     if (m_moveChecker.isValidMove(m_currentPlayer, event.c)) {
         m_board.setAt(event.c, static_cast<Board::FieldValue>(m_currentPlayer));
+        m_notificationHandler.signalBoardChange();
         switchTurn();
     }
 }
@@ -48,6 +49,14 @@ void Game::handleEvent(const ResignEvent& event) {
 
 void Game::handleEvent(const ShutdownEvent& event) {
     m_gameActive = false;
+}
+
+void Game::addNotifiationListener(IGameListener* listener) {
+    m_notificationHandler.addListener(listener);
+}
+
+void Game::removeNotificationListener(IGameListener* listener) {
+    m_notificationHandler.remListener(listener);
 }
 
 }

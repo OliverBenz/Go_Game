@@ -10,6 +10,8 @@ set(headers
     ${CMAKE_CURRENT_LIST_DIR}/include/core/SafeQueue.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/core/sgfHandler.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/core/moveChecker.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/core/notificationHandler.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/core/IGameListener.hpp
     ${CMAKE_CURRENT_LIST_DIR}/zobristHash.hpp
 )
 set(sources
@@ -17,6 +19,7 @@ set(sources
     ${CMAKE_CURRENT_LIST_DIR}/game.cpp
     ${CMAKE_CURRENT_LIST_DIR}/sgfHandler.cpp
     ${CMAKE_CURRENT_LIST_DIR}/moveChecker.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/notificationHandler.cpp
 )
 
 # Create target
