@@ -1,18 +1,18 @@
-#include "window.hpp"
+#include "gameWindow.hpp"
 
 #include <iostream>
 #include <SDL2/SDL_image.h>
 
 namespace go::sdl {
 
-Window::Window(unsigned wndWidth, unsigned wndHeight, Game& game) : m_windowWidth{wndWidth}, m_windowHeight{wndHeight}, m_game{game}
+GameWindow::GameWindow(unsigned wndWidth, unsigned wndHeight, Game& game) : m_windowWidth{wndWidth}, m_windowHeight{wndHeight}, m_game{game}
 {
     if(InitializeSDL()) {
         m_board = std::make_unique<BoardRenderer>(9u, std::min(m_windowWidth, m_windowHeight), m_renderer);
     }
 }
 
-Window::~Window() {
+GameWindow::~GameWindow() {
     m_board.reset();
 
     SDL_DestroyRenderer(m_renderer);
@@ -21,7 +21,7 @@ Window::~Window() {
     SDL_Quit();
 }
 
-bool Window::InitializeSDL() {
+bool GameWindow::InitializeSDL() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cerr << "Failed to initialize SDL: " << SDL_GetError() << "\n";
         return false;
@@ -57,7 +57,7 @@ bool Window::InitializeSDL() {
     return true;
 }
 
-void Window::run() {
+void GameWindow::run() {
     SDL_Event event;
     while(SDL_WaitEvent(&event) && !m_exit) {
         std::cerr << "Event: " << event.type << "\n";

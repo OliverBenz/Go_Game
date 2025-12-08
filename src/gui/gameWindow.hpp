@@ -8,10 +8,10 @@
 
 namespace go::sdl {
 
-class Window {
+class GameWindow {
 public:
-    Window(unsigned wndWidth, unsigned wndHeight, Game& game);
-    ~Window();
+    GameWindow(unsigned wndWidth, unsigned wndHeight, Game& game);
+    ~GameWindow();
 
     void run();
 

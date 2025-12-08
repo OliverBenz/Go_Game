@@ -1,4 +1,4 @@
-#include "window.hpp"
+#include "gameWindow.hpp"
 #include "core/game.hpp"
 
 #include <thread>
@@ -10,7 +10,7 @@ int main() {
         game.run();
     });
 
-    go::sdl::Window window(800, 800, game);
+    go::sdl::GameWindow window(800, 800, game);
 
     window.run();
 

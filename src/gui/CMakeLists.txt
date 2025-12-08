@@ -9,7 +9,7 @@ find_package(SDL2_image REQUIRED)
 # Get files to build
 set(sources
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/window.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/gameWindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/boardRenderer.cpp
 )
 
