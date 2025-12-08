@@ -8,9 +8,8 @@
 namespace go {
 
 //! Thread safe queue with a blocking Pop function.
-template<class Entry>
-class SafeQueue
-{
+template <class Entry>
+class SafeQueue {
 public:
 	SafeQueue();
 
@@ -35,11 +34,10 @@ protected:
 };
 
 
-template<class Entry>
-SafeQueue<Entry>::SafeQueue() : m_blockThreads(true)
-{};
+template <class Entry>
+SafeQueue<Entry>::SafeQueue() : m_blockThreads(true){};
 
-template<class Entry>
+template <class Entry>
 void SafeQueue<Entry>::Push(const Entry& value) {
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
@@ -48,16 +46,15 @@ void SafeQueue<Entry>::Push(const Entry& value) {
 	m_condition.notify_one();
 }
 
-template<class Entry>
-Entry SafeQueue<Entry>::Pop()
-{
+template <class Entry>
+Entry SafeQueue<Entry>::Pop() {
 	Entry element;
 	{
 		std::unique_lock<std::mutex> lock(m_mutex);
 		m_condition.wait(lock, [this] { return !(m_queue.empty() && m_blockThreads); });
 
 		if (m_queue.empty()) {
-            // TODO: Throw Less generic exception
+			// TODO: Throw Less generic exception
 			throw std::exception();
 		}
 		element = m_queue.front();
@@ -67,18 +64,16 @@ Entry SafeQueue<Entry>::Pop()
 	return element;
 }
 
-template<class Entry>
-bool SafeQueue<Entry>::Empty() const
-{
-    // TODO: Lock?
+template <class Entry>
+bool SafeQueue<Entry>::Empty() const {
+	// TODO: Lock?
 	return m_queue.empty();
 }
 
-template<class Entry>
-void SafeQueue<Entry>::Release()
-{
+template <class Entry>
+void SafeQueue<Entry>::Release() {
 	m_blockThreads.store(false);
 	m_condition.notify_all();
 }
 
-}
+} // namespace go

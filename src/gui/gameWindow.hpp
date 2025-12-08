@@ -1,39 +1,39 @@
 #pragma once
 
+#include "boardRenderer.hpp"
 #include "core/IGameListener.hpp"
 #include "core/game.hpp"
-#include "boardRenderer.hpp"
 
-#include <memory>
 #include <SDL.h>
+#include <memory>
 
 namespace go::sdl {
 
 class GameWindow : public IGameListener {
 public:
-    GameWindow(unsigned wndWidth, unsigned wndHeight, Game& game);
-    ~GameWindow() override;
+	GameWindow(unsigned wndWidth, unsigned wndHeight, Game& game);
+	~GameWindow() override;
 
-    void run();
+	void run();
 
-    void onBoardChange() override;
-
-private:
-    bool initializeSDL();
-    void sendRedrawEvent();
+	void onBoardChange() override;
 
 private:
-    unsigned m_windowWidth;  //!< Window width in pixels.
-    unsigned m_windowHeight; //!< Window height in pixels.
-    bool m_exit = false;     //!< Stop game execution.
+	bool initializeSDL();
+	void sendRedrawEvent();
 
-    Game& m_game;
+private:
+	unsigned m_windowWidth;  //!< Window width in pixels.
+	unsigned m_windowHeight; //!< Window height in pixels.
+	bool m_exit = false;     //!< Stop game execution.
 
-    std::unique_ptr<BoardRenderer> m_boardRenderer = nullptr;
-    SDL_Window*   m_window   = nullptr;
-    SDL_Renderer* m_renderer = nullptr;
+	Game& m_game;
 
-    static constexpr int EVENT_REDRAW = 2; //!< Event ID for a redraw. 
+	std::unique_ptr<BoardRenderer> m_boardRenderer = nullptr;
+	SDL_Window* m_window                           = nullptr;
+	SDL_Renderer* m_renderer                       = nullptr;
+
+	static constexpr int EVENT_REDRAW = 2; //!< Event ID for a redraw.
 };
 
-}
+} // namespace go::sdl

@@ -13,4 +13,4 @@ Coord fromSGF(const std::string& s);
 std::string toSGF(Coord c);
 
 
-}
+} // namespace go

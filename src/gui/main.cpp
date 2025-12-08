@@ -1,18 +1,16 @@
-#include "gameWindow.hpp"
 #include "core/game.hpp"
+#include "gameWindow.hpp"
 
 #include <thread>
 
 int main() {
-    static constexpr std::size_t boardSize = 9u;
-    go::Game game(boardSize);
-    std::thread gameThread([&]{
-        game.run();
-    });
+	static constexpr std::size_t boardSize = 9u;
+	go::Game game(boardSize);
+	std::thread gameThread([&] { game.run(); });
 
-    go::sdl::GameWindow window(800, 800, game);
+	go::sdl::GameWindow window(800, 800, game);
 
-    window.run();
+	window.run();
 
-    gameThread.join();
+	gameThread.join();
 }

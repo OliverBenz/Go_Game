@@ -4,8 +4,8 @@ namespace go {
 
 class IGameListener {
 public:
-    virtual ~IGameListener() = default;
-    virtual void onBoardChange() = 0;
+	virtual ~IGameListener()     = default;
+	virtual void onBoardChange() = 0;
 };
 
-}
+} // namespace go

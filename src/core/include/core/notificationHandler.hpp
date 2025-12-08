@@ -9,15 +9,15 @@ namespace go {
 
 class NotificationHandler {
 public:
-    void addListener(IGameListener* listener);
-    void remListener(IGameListener* listener);
+	void addListener(IGameListener* listener);
+	void remListener(IGameListener* listener);
 
-    //! Calls onBoardChange for every listener.
-    void signalBoardChange();
+	//! Calls onBoardChange for every listener.
+	void signalBoardChange();
 
 private:
-    std::mutex m_listenerMutex;
-    std::vector<IGameListener*> m_listeners;
+	std::mutex m_listenerMutex;
+	std::vector<IGameListener*> m_listeners;
 };
 
-}
+} // namespace go

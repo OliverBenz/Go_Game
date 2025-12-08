@@ -6,16 +6,13 @@
 
 namespace go {
 
-struct PutStoneEvent { Coord c; };
+struct PutStoneEvent {
+	Coord c;
+};
 struct PassEvent {};
 struct ResignEvent {};
 struct ShutdownEvent {};
 
-using GameEvent = std::variant<
-    PutStoneEvent,
-    PassEvent,
-    ResignEvent,
-    ShutdownEvent
->;
+using GameEvent = std::variant<PutStoneEvent, PassEvent, ResignEvent, ShutdownEvent>;
 
-}
+} // namespace go
