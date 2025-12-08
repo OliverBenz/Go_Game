@@ -14,9 +14,8 @@ public:
 	GameWindow(unsigned wndWidth, unsigned wndHeight, Game& game);
 	~GameWindow() override;
 
-	void run();
-
-	void onBoardChange() override;
+	void run();                    //!< Start SDL Event queue handling.
+	void onBoardChange() override; //!< Game signals board change here.
 
 private:
 	bool initializeSDL();

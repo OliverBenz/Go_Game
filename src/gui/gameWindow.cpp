@@ -8,7 +8,8 @@ namespace go::sdl {
 GameWindow::GameWindow(unsigned wndWidth, unsigned wndHeight, Game& game)
     : m_windowWidth{wndWidth}, m_windowHeight{wndHeight}, m_game{game} {
 	if (initializeSDL()) {
-		m_boardRenderer = std::make_unique<BoardRenderer>(9u, std::min(m_windowWidth, m_windowHeight), m_renderer);
+		m_boardRenderer = std::make_unique<BoardRenderer>(game.board().size(), std::min(m_windowWidth, m_windowHeight),
+		                                                  m_renderer);
 	}
 
 	m_game.addNotifiationListener(this);

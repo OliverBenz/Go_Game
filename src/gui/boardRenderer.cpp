@@ -12,8 +12,9 @@ BoardRenderer::BoardRenderer(unsigned nodes, unsigned boardSizePx, SDL_Renderer*
     : m_boardSize{boardSizePx / nodes * nodes},
       m_stoneSize{m_boardSize / nodes}, // TODO: Could still be a pixel off due to rounding int division
       m_nodes(nodes) {
-	m_textureBlack = load_texture("/home/oliver/Documents/dev/Go_Game/assets/anime_black.png", renderer);
-	m_textureWhite = load_texture("/home/oliver/Documents/dev/Go_Game/assets/anime_white.png", renderer);
+	// Texture macros set with CMake
+	m_textureBlack = load_texture(TEXTURE_BLACK, renderer);
+	m_textureWhite = load_texture(TEXTURE_WHITE, renderer);
 	if (!m_textureWhite || !m_textureBlack) {
 		return;
 	}

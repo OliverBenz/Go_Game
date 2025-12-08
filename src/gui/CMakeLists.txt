@@ -6,16 +6,10 @@ find_package(glfw3 REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(SDL2_image REQUIRED)
 
-# Get files to build
-set(sources
+add_executable(${targetName}
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
     ${CMAKE_CURRENT_LIST_DIR}/gameWindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/boardRenderer.cpp
-)
-
-# Create target
-add_executable(${targetName}
-    ${sources}
 )
 
 target_link_libraries(${targetName} PRIVATE
@@ -28,6 +22,8 @@ target_include_directories(${targetName} PRIVATE
     ${SDL2_INCLUDE_DIRS}
     ${SDL2_IMAGE_INCLUDE_DIRS}
 )
+target_compile_definitions(${targetName} PRIVATE TEXTURE_BLACK="${CMAKE_SOURCE_DIR}/assets/anime_black.png")
+target_compile_definitions(${targetName} PRIVATE TEXTURE_WHITE="${CMAKE_SOURCE_DIR}/assets/anime_white.png")
 
 # Setup project settings
 set_project_warnings(${targetName})  # Which warnings to enable
