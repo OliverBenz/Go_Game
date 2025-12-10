@@ -80,6 +80,7 @@ bool MoveChecker::isSuicide(Player player, Coord c) {
 	// Move safe if connected group has free liberties
 	if (computeGroupLiberties(c, player) == 0) {
 		// TODO: Check if move kills enemy group
+		// Caputure: Move reduces number of any enemy group liberties to zero and is not repeated game state.
 		return true;
 	}
 	return false;
