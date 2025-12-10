@@ -58,17 +58,18 @@ std::size_t MoveChecker::computeGroupLiberties(const Coord& startCoord, const Pl
 		for (std::size_t i = 0; i != dx.size(); ++i) {
 			Coord cN = {c.x + dx[i], c.y + dy[i]};
 			if (cN.x >= N || cN.y >= N) {
-				continue;
+				continue;  // At border, subtracting from 0u wraps around
 			}
 
 			const auto value = m_board.getAt(cN);
 			if (value == Board::FieldValue::None) {
+				// Track visited to avoid overcounting.
 				if (!visited[cN.x][cN.y]) {
-					++liberties;
 					visited[cN.x][cN.y] = true;
+					++liberties;
 				}
 			} else if (value == friendColor) {
-				stack.push(cN);
+				stack.push(cN); // Chain continues.
 			}
 		}
 	}
