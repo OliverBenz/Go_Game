@@ -35,10 +35,10 @@ uint64_t MoveChecker::hashAfterMove(Player player, Coord c) {
 
 
 std::size_t MoveChecker::computeGroupLiberties(const Coord& startCoord, const Player player) {
-	const auto N = m_board.size();
+	const auto N           = m_board.size();
 	const auto friendColor = player == Player::White ? Board::FieldValue::White : Board::FieldValue::Black;
 
-    std::vector<std::vector<bool>> visited(N, std::vector<bool>(N, false));
+	std::vector<std::vector<bool>> visited(N, std::vector<bool>(N, false));
 
 	std::stack<Coord> stack;
 	stack.push(startCoord);
@@ -53,8 +53,8 @@ std::size_t MoveChecker::computeGroupLiberties(const Coord& startCoord, const Pl
 		visited[c.x][c.y] = true;
 
 		// Nearest neighbours
-		static constexpr std::array<int, 4> dx = {1, -1, 0,  0};
-		static constexpr std::array<int, 4> dy = {0,  0, 1, -1};
+		static constexpr std::array<int, 4> dx = {1, -1, 0, 0};
+		static constexpr std::array<int, 4> dy = {0, 0, 1, -1};
 		for (std::size_t i = 0; i != dx.size(); ++i) {
 			Coord cN = {c.x + dx[i], c.y + dy[i]};
 			if (cN.x >= N || cN.y >= N) {
