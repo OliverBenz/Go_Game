@@ -57,17 +57,15 @@ std::size_t MoveChecker::computeGroupLiberties(const Coord& startCoord, const Pl
 		static constexpr std::array<int, 4> dy = {0, 0, 1, -1};
 		for (std::size_t i = 0; i != dx.size(); ++i) {
 			Coord cN = {c.x + dx[i], c.y + dy[i]};
-			if (cN.x >= N || cN.y >= N) {
-				continue;  // At border, subtracting from 0u wraps around
+			if (cN.x >= N || cN.y >= N || visited[cN.x][cN.y]) {
+				continue; // At border, subtracting from 0u wraps around
 			}
 
 			const auto value = m_board.getAt(cN);
 			if (value == Board::FieldValue::None) {
 				// Track visited to avoid overcounting.
-				if (!visited[cN.x][cN.y]) {
-					visited[cN.x][cN.y] = true;
-					++liberties;
-				}
+				visited[cN.x][cN.y] = true;
+				++liberties;
 			} else if (value == friendColor) {
 				stack.push(cN); // Chain continues.
 			}
@@ -77,17 +75,32 @@ std::size_t MoveChecker::computeGroupLiberties(const Coord& startCoord, const Pl
 	return liberties;
 }
 
-// A suicide is a move where the number of free liberties of the connected group becomes zero after the move and the
-// move does not open up liberties (kill surrounding enemy).
-// We move from simple to expensive checks.
+// A suicide is a move where the number of free liberties of the connected group becomes zero after the move
+// and the move does not open up liberties by killing surrounding enemy.
+// Technically, we also have to check superko. After killing an enemy group, the board state much not repeat.
+// This is checked in hashAfterMove already.
 bool MoveChecker::isSuicide(Player player, Coord c) {
 	// Move safe if connected group has free liberties
-	if (computeGroupLiberties(c, player) == 0) {
-		// TODO: Check if move kills enemy group
-		// Caputure: Move reduces number of any enemy group liberties to zero and is not repeated game state.
-		return true;
+	if (computeGroupLiberties(c, player) > 0) {
+		return false;
 	}
-	return false;
+
+	// If move has no liberties, still safe if it captures a neighbouring group.
+	const auto enemy = player == Player::White ? Board::FieldValue::Black : Board::FieldValue::White;
+
+	// Caputure: Check all neighbours
+	static constexpr std::array<int, 4> dx = {1, -1, 0, 0};
+	static constexpr std::array<int, 4> dy = {0, 0, 1, -1};
+	for (Id i = 0; i != dx.size(); ++i) {
+		const auto nnCoord = Coord{c.x + dx[i], c.y + dy[i]}; //!< Neighbour coordinates
+
+		// If neighbour is enemy, check if group has no liberties.
+		// We subtract 1 because the move we check has not been added to the board yet. Would NN liberties reduce by 1.
+		if (m_board.getAt(nnCoord) == enemy && computeGroupLiberties(nnCoord, static_cast<Player>(enemy)) - 1 == 0) {
+			return false;
+		}
+	}
+	return true;
 }
 
 bool MoveChecker::isValidMove(Player player, Coord c) {
