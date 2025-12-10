@@ -10,6 +10,7 @@ namespace go {
 
 class IZobristHash;
 
+// TODO: findGroupAndLiberties ()
 class MoveChecker {
 public:
 	MoveChecker(const Board& board);
@@ -19,6 +20,9 @@ public:
 	bool isValidMove(Player player, Coord c);
 
 private:
+	//! Check if the move is a suicide move.
+	bool isSuicide(Player player, Coord c);
+
 	//! Compute the gamestate hash after a move.
 	uint64_t hashAfterMove(Player player, Coord c);
 

@@ -25,6 +25,9 @@ public:
 	void setAt(Coord c, FieldValue fieldValue);
 	FieldValue getAt(Coord c) const;
 
+	//! Returns whether a certain board coordinate is free or occupied.
+	bool isFree(Coord c) const;
+
 private:
 	std::size_t m_size;                //!< Board size
 	std::vector<FieldValue> m_board{}; //!< Board values.

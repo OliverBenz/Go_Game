@@ -26,4 +26,8 @@ Board::FieldValue Board::getAt(const Coord c) const {
 	return m_board[c.y * m_size + c.x];
 }
 
+bool Board::isFree(const Coord c) const {
+	return getAt(c) == FieldValue::None;
+}
+
 } // namespace go
