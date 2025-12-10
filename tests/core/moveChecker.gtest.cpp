@@ -102,17 +102,17 @@ TEST(MoveChecker, ComputeConnectedLiberties_Center) {
 		board.setAt({7u, 4u}, Board::FieldValue::Black);
 
 		// Check liberties for each stone to check that full chain is found.
-		EXPECT_EQ(checker.computeGroupLiberties({4u, 3u}, Player::Black), 12u);
-		EXPECT_EQ(checker.computeGroupLiberties({4u, 4u}, Player::Black), 12u);
-		EXPECT_EQ(checker.computeGroupLiberties({4u, 5u}, Player::Black), 12u);
+		EXPECT_EQ(checker.computeGroupLiberties({4u, 3u}, Player::Black), 13u);
+		EXPECT_EQ(checker.computeGroupLiberties({4u, 4u}, Player::Black), 13u);
+		EXPECT_EQ(checker.computeGroupLiberties({4u, 5u}, Player::Black), 13u);
 
-		EXPECT_EQ(checker.computeGroupLiberties({5u, 3u}, Player::Black), 12u);
-		EXPECT_EQ(checker.computeGroupLiberties({5u, 5u}, Player::Black), 12u);
+		EXPECT_EQ(checker.computeGroupLiberties({5u, 3u}, Player::Black), 13u);
+		EXPECT_EQ(checker.computeGroupLiberties({5u, 5u}, Player::Black), 13u);
 
-		EXPECT_EQ(checker.computeGroupLiberties({6u, 4u}, Player::Black), 12u);
-		EXPECT_EQ(checker.computeGroupLiberties({6u, 5u}, Player::Black), 12u);
+		EXPECT_EQ(checker.computeGroupLiberties({6u, 4u}, Player::Black), 13u);
+		EXPECT_EQ(checker.computeGroupLiberties({6u, 5u}, Player::Black), 13u);
 
-		EXPECT_EQ(checker.computeGroupLiberties({7u, 4u}, Player::Black), 12u);
+		EXPECT_EQ(checker.computeGroupLiberties({7u, 4u}, Player::Black), 13u);
 	}
 }
 
@@ -131,7 +131,7 @@ TEST(MoveChecker, Suicide) {
 
 		// Legal move
 		EXPECT_TRUE(checker.isValidMove(Player::Black, {1u, 1u}));
-		EXPECT_EQ(checker.computeGroupLiberties({1u, 1u}, Player::Black), 1u);
+		EXPECT_EQ(checker.computeGroupLiberties({1u, 1u}, Player::White), 1u);
 	}
 
 	{
@@ -144,8 +144,8 @@ TEST(MoveChecker, Suicide) {
 		board.setAt({2u, 1u}, Board::FieldValue::Black);
 
 		// Suicide -> invalid move
-		EXPECT_FALSE(checker.isValidMove(Player::Black, {1u, 1u}));
-		EXPECT_EQ(checker.computeGroupLiberties({1u, 1u}, Player::Black), 0u);
+		EXPECT_FALSE(checker.isValidMove(Player::White, {1u, 1u}));
+		EXPECT_EQ(checker.computeGroupLiberties({1u, 1u}, Player::White), 0u);
 	}
 	{
 		Board board(9u);
@@ -172,7 +172,7 @@ TEST(MoveChecker, Suicide) {
 
 		// Suicide -> invalid move
 		EXPECT_FALSE(checker.isValidMove(Player::White, {3u, 1u}));
-		EXPECT_EQ(checker.computeGroupLiberties({1u, 1u}, Player::Black), 0u);
+		EXPECT_EQ(checker.computeGroupLiberties({3u, 1u}, Player::White), 0u);
 
 		// Now add white stones which would allow the same move to be a capture
 		// Surround the rightmost black stone.
@@ -182,7 +182,7 @@ TEST(MoveChecker, Suicide) {
 
 		// Now we capture -> Move valid
 		EXPECT_TRUE(checker.isValidMove(Player::White, {3u, 1u}));
-		EXPECT_EQ(checker.computeGroupLiberties({1u, 1u}, Player::Black), 0u);
+		EXPECT_EQ(checker.computeGroupLiberties({3u, 1u}, Player::White), 0u);
 	}
 
 	{
@@ -202,7 +202,7 @@ TEST(MoveChecker, Suicide) {
 
 		// Captures -> valid move
 		EXPECT_TRUE(checker.isValidMove(Player::White, {1u, 1u}));
-		EXPECT_EQ(checker.computeGroupLiberties({1u, 1u}, Player::Black), 0u);
+		EXPECT_EQ(checker.computeGroupLiberties({1u, 1u}, Player::White), 0u);
 	}
 }
 

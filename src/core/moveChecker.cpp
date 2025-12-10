@@ -63,9 +63,12 @@ std::size_t MoveChecker::computeGroupLiberties(const Coord& startCoord, const Pl
 
 			const auto value = m_board.getAt(cN);
 			if (value == Board::FieldValue::None) {
-				++liberties;
+				if (!visited[cN.x][cN.y]) {
+					++liberties;
+					visited[cN.x][cN.y] = true;
+				}
 			} else if (value == friendColor) {
-				stack.push(c);
+				stack.push(cN);
 			}
 		}
 	}
