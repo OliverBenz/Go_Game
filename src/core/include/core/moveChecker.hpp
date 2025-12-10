@@ -19,6 +19,9 @@ public:
 	//! Check if a move is valid.
 	bool isValidMove(Player player, Coord c);
 
+	//! Compute the liberties of the connected group when Player places a stone at startCoord.
+	std::size_t computeGroupLiberties(const Coord& startCoord, const Player player);
+
 private:
 	//! Check if the move is a suicide move.
 	bool isSuicide(Player player, Coord c);

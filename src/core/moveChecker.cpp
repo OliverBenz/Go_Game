@@ -3,6 +3,7 @@
 #include "zobristHash.hpp"
 
 #include <cassert>
+#include <stack>
 
 namespace go {
 
@@ -33,35 +34,58 @@ uint64_t MoveChecker::hashAfterMove(Player player, Coord c) {
 }
 
 
+std::size_t MoveChecker::computeGroupLiberties(const Coord& startCoord, const Player player) {
+	const auto N = m_board.size();
+	const auto friendColor = player == Player::White ? Board::FieldValue::White : Board::FieldValue::Black;
+
+    std::vector<std::vector<bool>> visited(N, std::vector<bool>(N, false));
+
+	std::stack<Coord> stack;
+	stack.push(startCoord);
+
+	// TODO: Ensure startCoord is counted as a player stone. Its not on board
+	std::size_t liberties = 0;
+	while (!stack.empty()) {
+		const auto c = stack.top();
+		stack.pop();
+		if (visited[c.x][c.y])
+			continue;
+		visited[c.x][c.y] = true;
+
+		// Nearest neighbours
+		static constexpr std::array<int, 4> dx = {1, -1, 0,  0};
+		static constexpr std::array<int, 4> dy = {0,  0, 1, -1};
+		for (std::size_t i = 0; i != dx.size(); ++i) {
+			Coord cN = {c.x + dx[i], c.y + dy[i]};
+			if (cN.x >= N || cN.y >= N) {
+				continue;
+			}
+
+			const auto value = m_board.getAt(cN);
+			if (value == Board::FieldValue::None) {
+				++liberties;
+			} else if (value == friendColor) {
+				stack.push(c);
+			}
+		}
+	}
+
+	return liberties;
+}
+
 // A suicide is a move where the number of free liberties of the connected group becomes zero after the move and the
 // move does not open up liberties (kill surrounding enemy).
 // We move from simple to expensive checks.
 bool MoveChecker::isSuicide(Player player, Coord c) {
-	const auto ENEMY = player == Player::Black ? Board::FieldValue::White : Board::FieldValue::Black;
-	const std::array<Coord, 4> nnCoords{{c.x - 1, c.y}, {c.x + 1, c.y}, {c.x, c.y - 1}, {c.x, c.y + 1}};
-
-	// Move always safe if one liberty
-	unsigned liberties = 0;
-	for (const auto& c: nnCoords) {
-		liberties += static_cast<unsigned>(m_board.isFree(c));
-	}
-	if (liberties > 0) {
-		return false;
-	}
-
 	// Move safe if connected group has free liberties
-
-
-
-	// No liberties after move: 
-	// Move safe if the connected group kills the surrounding enemy group:
-	//   Count liberties of neighbour chain
-	//   return numberLiberties == 1 // Last libery closed -> Kill group
+	if (computeGroupLiberties(c, player) == 0) {
+		// TODO: Check if move kills enemy group
+		return true;
+	}
+	return false;
 }
 
 bool MoveChecker::isValidMove(Player player, Coord c) {
-
-
 	return c.x < m_board.size() && c.y < m_board.size()        // Valid board coordinates
 	       && m_board.getAt(c) == Board::FieldValue::None      // Field free
 	       && !m_seenHashes.contains(hashAfterMove(player, c)) // No game state repeat
