@@ -118,6 +118,105 @@ TEST(MoveChecker, ComputeConnectedLiberties_Center) {
 
 // Liberties of groups touching borders and corners
 TEST(MoveChecker, ComputeConnectedLiberties_Borders) {
+	{
+		Board board(9u);
+		MoveChecker checker(board);
+
+		board.setAt({0u, 0u}, Board::FieldValue::Black);
+		board.setAt({0u, 1u}, Board::FieldValue::Black);
+		board.setAt({0u, 2u}, Board::FieldValue::Black);
+
+		board.setAt({1u, 1u}, Board::FieldValue::Black);
+
+		// Check liberties for each stone to check that full chain is found.
+		EXPECT_EQ(checker.computeGroupLiberties({0u, 0u}, Player::Black), 4u);
+		EXPECT_EQ(checker.computeGroupLiberties({0u, 1u}, Player::Black), 4u);
+		EXPECT_EQ(checker.computeGroupLiberties({0u, 2u}, Player::Black), 4u);
+
+		EXPECT_EQ(checker.computeGroupLiberties({1u, 1u}, Player::Black), 4u);
+	}
+	{
+		Board board(9u);
+		MoveChecker checker(board);
+
+		board.setAt({0u, 0u}, Board::FieldValue::Black);
+		board.setAt({0u, 1u}, Board::FieldValue::Black);
+		board.setAt({0u, 2u}, Board::FieldValue::Black);
+
+		board.setAt({1u, 1u}, Board::FieldValue::Black);
+
+		board.setAt({2u, 0u}, Board::FieldValue::Black);
+		board.setAt({2u, 1u}, Board::FieldValue::Black);
+		board.setAt({2u, 2u}, Board::FieldValue::Black);
+
+		// Check liberties for each stone to check that full chain is found.
+		EXPECT_EQ(checker.computeGroupLiberties({0u, 0u}, Player::Black), 7u);
+		EXPECT_EQ(checker.computeGroupLiberties({0u, 1u}, Player::Black), 7u);
+		EXPECT_EQ(checker.computeGroupLiberties({0u, 2u}, Player::Black), 7u);
+
+		EXPECT_EQ(checker.computeGroupLiberties({1u, 1u}, Player::Black), 7u);
+
+		EXPECT_EQ(checker.computeGroupLiberties({2u, 0u}, Player::Black), 7u);
+		EXPECT_EQ(checker.computeGroupLiberties({2u, 1u}, Player::Black), 7u);
+		EXPECT_EQ(checker.computeGroupLiberties({2u, 2u}, Player::Black), 7u);
+	}
+	{
+		Board board(9u);
+		MoveChecker checker(board);
+
+		board.setAt({0u, 0u}, Board::FieldValue::Black);
+		board.setAt({0u, 1u}, Board::FieldValue::Black);
+		board.setAt({0u, 2u}, Board::FieldValue::Black);
+
+		board.setAt({1u, 0u}, Board::FieldValue::Black);
+		board.setAt({1u, 2u}, Board::FieldValue::Black);
+
+		board.setAt({2u, 0u}, Board::FieldValue::Black);
+		board.setAt({2u, 1u}, Board::FieldValue::Black);
+		board.setAt({2u, 2u}, Board::FieldValue::Black);
+
+		// Check liberties for each stone to check that full chain is found.
+		EXPECT_EQ(checker.computeGroupLiberties({0u, 0u}, Player::Black), 7u);
+		EXPECT_EQ(checker.computeGroupLiberties({0u, 1u}, Player::Black), 7u);
+		EXPECT_EQ(checker.computeGroupLiberties({0u, 2u}, Player::Black), 7u);
+
+		EXPECT_EQ(checker.computeGroupLiberties({1u, 0u}, Player::Black), 7u);
+		EXPECT_EQ(checker.computeGroupLiberties({1u, 2u}, Player::Black), 7u);
+
+		EXPECT_EQ(checker.computeGroupLiberties({2u, 0u}, Player::Black), 7u);
+		EXPECT_EQ(checker.computeGroupLiberties({2u, 1u}, Player::Black), 7u);
+		EXPECT_EQ(checker.computeGroupLiberties({2u, 2u}, Player::Black), 7u);
+	}
+	{
+		Board board(9u);
+		MoveChecker checker(board);
+
+		board.setAt({0u, 0u}, Board::FieldValue::Black);
+		board.setAt({1u, 0u}, Board::FieldValue::Black);
+		board.setAt({2u, 0u}, Board::FieldValue::Black);
+		board.setAt({3u, 0u}, Board::FieldValue::Black);
+
+		board.setAt({0u, 1u}, Board::FieldValue::Black);
+		board.setAt({3u, 1u}, Board::FieldValue::Black);
+
+		board.setAt({0u, 2u}, Board::FieldValue::Black);
+		board.setAt({1u, 2u}, Board::FieldValue::Black);
+		board.setAt({2u, 2u}, Board::FieldValue::Black);
+		board.setAt({3u, 2u}, Board::FieldValue::Black);
+
+		EXPECT_EQ(checker.computeGroupLiberties({0u, 0u}, Player::Black), 9u);
+		EXPECT_EQ(checker.computeGroupLiberties({1u, 0u}, Player::Black), 9u);
+		EXPECT_EQ(checker.computeGroupLiberties({2u, 0u}, Player::Black), 9u);
+		EXPECT_EQ(checker.computeGroupLiberties({3u, 0u}, Player::Black), 9u);
+
+		EXPECT_EQ(checker.computeGroupLiberties({0u, 1u}, Player::Black), 9u);
+		EXPECT_EQ(checker.computeGroupLiberties({3u, 1u}, Player::Black), 9u);
+
+		EXPECT_EQ(checker.computeGroupLiberties({0u, 2u}, Player::Black), 9u);
+		EXPECT_EQ(checker.computeGroupLiberties({1u, 2u}, Player::Black), 9u);
+		EXPECT_EQ(checker.computeGroupLiberties({2u, 2u}, Player::Black), 9u);
+		EXPECT_EQ(checker.computeGroupLiberties({3u, 2u}, Player::Black), 9u);
+	}
 }
 
 TEST(MoveChecker, Suicide) {
