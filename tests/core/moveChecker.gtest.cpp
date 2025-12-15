@@ -219,6 +219,11 @@ TEST(MoveChecker, ComputeConnectedLiberties_Borders) {
 	}
 }
 
+// TODO: Write tests to check we find the whole group and liberty count
+TEST(MoveChecker, FindGroup) {
+
+}
+
 TEST(MoveChecker, Suicide) {
 	{
 		Board board(9u);
@@ -305,5 +310,27 @@ TEST(MoveChecker, Suicide) {
 	}
 }
 
+TEST(MoveChecker, Kill) {
+	{
+		Board board(9u);
+		MoveChecker checker(board);
+
+		board.setAt({0u, 0u}, Board::FieldValue::White);
+		board.setAt({0u, 1u}, Board::FieldValue::Black);
+		board.setAt({0u, 2u}, Board::FieldValue::White);
+
+		board.setAt({1u, 0u}, Board::FieldValue::Black);
+		board.setAt({1u, 2u}, Board::FieldValue::Black);
+		board.setAt({1u, 3u}, Board::FieldValue::White);
+
+		board.setAt({2u, 0u}, Board::FieldValue::White);
+		board.setAt({2u, 1u}, Board::FieldValue::Black);
+		board.setAt({2u, 2u}, Board::FieldValue::White);
+
+		board.setAt({3u, 1u}, Board::FieldValue::White);
+
+		EXPECT_TRUE(checker.isValidMove(Player::White, {1u, 1u}));
+	}
+}
 
 } // namespace go::gtest

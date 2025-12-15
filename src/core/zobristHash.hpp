@@ -19,6 +19,7 @@ public:
 
 	virtual void reset()           = 0;
 	virtual uint64_t value() const = 0;
+	virtual uint64_t update(uint64_t currHash, Coord coord, Player color) const = 0;
 };
 
 
@@ -45,6 +46,9 @@ public:
 
 	// Update for player-to-move swap (needed for situational superko).
 	void togglePlayer() override;
+
+	//! Update a given hash for a certain move. Used for move lookahead.
+	uint64_t update(uint64_t currHash, Coord coord, Player color) const override;
 
 private:
 	void initRandomTable();
@@ -77,6 +81,14 @@ uint64_t ZobristHash<SIZE>::lookAhead(Coord c, Player color) const {
 	assert(c.x < SIZE && c.y < SIZE);
 
 	return m_hash ^ m_table[c.x][c.y][static_cast<unsigned>(color) - 1u];
+}
+
+template <std::size_t SIZE>
+uint64_t ZobristHash<SIZE>::update(uint64_t currHash, Coord c, Player color) const {
+	assert(static_cast<int>(color) == 1 || static_cast<int>(color) == 2);
+	assert(c.x < SIZE && c.y < SIZE);
+
+	return currHash ^ m_table[c.x][c.y][static_cast<unsigned>(color) - 1u];
 }
 
 template <std::size_t SIZE>

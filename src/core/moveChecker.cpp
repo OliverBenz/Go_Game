@@ -1,5 +1,6 @@
 #include "core/moveChecker.hpp"
 
+#include "include/core/moveChecker.hpp"
 #include "zobristHash.hpp"
 
 #include <cassert>
@@ -28,13 +29,30 @@ MoveChecker::MoveChecker(const Board& board) : m_board(board) {
 uint64_t MoveChecker::hashAfterMove(Player player, Coord c) {
 	auto hash = m_hasher->lookAhead(c, player);
 
-	// TODO: Remove captured stones after move
+	const auto enemy = player == Player::White ? Board::FieldValue::Black : Board::FieldValue::White;
+
+	// Caputure: Check all neighbours
+	static constexpr std::array<int, 4> dx = {1, -1, 0, 0};
+	static constexpr std::array<int, 4> dy = {0, 0, 1, -1};
+	for (Id i = 0; i != dx.size(); ++i) {
+		const auto nnCoord = Coord{c.x + dx[i], c.y + dy[i]}; //!< Neighbour coordinates
+			if (nnCoord.x >= m_board.size() || nnCoord.y >= m_board.size()) {
+				continue; // At border, subtracting from 0u wraps around
+			}
+
+		if (m_board.getAt(nnCoord) == enemy) {
+			std::vector<Coord> killedGroup = getKilledByMove(c, player);
+			// Update game state hash
+			for (const auto& stoneId : killedGroup) {
+				m_hasher->update(hash, stoneId, static_cast<Player>(enemy));
+			}
+		}
+	}
 
 	return hash;
 }
 
-
-std::size_t MoveChecker::computeGroupLiberties(const Coord& startCoord, const Player player) {
+std::size_t MoveChecker::groupAnalysis(const Coord& startCoord, const Player player, std::vector<Coord>& group) {
 	const auto N           = m_board.size();
 	const auto friendColor = player == Player::White ? Board::FieldValue::White : Board::FieldValue::Black;
 
@@ -42,6 +60,7 @@ std::size_t MoveChecker::computeGroupLiberties(const Coord& startCoord, const Pl
 
 	std::stack<Coord> stack;
 	stack.push(startCoord);
+	group.emplace_back(startCoord);
 
 	// TODO: Ensure startCoord is counted as a player stone. Its not on board
 	std::size_t liberties = 0;
@@ -68,11 +87,25 @@ std::size_t MoveChecker::computeGroupLiberties(const Coord& startCoord, const Pl
 				++liberties;
 			} else if (value == friendColor) {
 				stack.push(cN); // Chain continues.
+				group.emplace_back(cN);
 			}
 		}
 	}
 
 	return liberties;
+
+}
+
+std::size_t MoveChecker::computeGroupLiberties(const Coord& startCoord, const Player player) {
+	std::vector<Coord> group;
+	return groupAnalysis(startCoord, player, group);
+}
+
+std::vector<Coord> MoveChecker::getKilledByMove(const Coord& groupCoord, const Player player) {
+	std::vector<Coord> group;
+	if (groupAnalysis(groupCoord, player, group) - 1 == 0)
+		return group;
+	return {};
 }
 
 // A suicide is a move where the number of free liberties of the connected group becomes zero after the move
