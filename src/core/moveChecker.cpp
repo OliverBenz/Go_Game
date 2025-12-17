@@ -29,8 +29,6 @@ MoveChecker::MoveChecker(const Board& board) : m_board(board) {
 uint64_t MoveChecker::hashAfterMove(Player player, Coord c) {
 	auto hash = m_hasher->lookAhead(c, player);
 
-	const auto enemy = player == Player::White ? Board::Value::Black : Board::Value::White;
-
 	// Caputure: Check all neighbours
 	static constexpr std::array<int, 4> dx = {1, -1, 0, 0};
 	static constexpr std::array<int, 4> dy = {0, 0, 1, -1};
@@ -40,11 +38,11 @@ uint64_t MoveChecker::hashAfterMove(Player player, Coord c) {
 				continue; // At border, subtracting from 0u wraps around
 			}
 
-		if (m_board.getAt(nnCoord) == enemy) {
+		if (m_board.getAt(nnCoord) == toBoardValue(opponent(player))) {
 			std::vector<Coord> killedGroup = getKilledByMove(c, player);
 			// Update game state hash
 			for (const auto& stoneId : killedGroup) {
-				m_hasher->update(hash, stoneId, static_cast<Player>(enemy));
+				m_hasher->update(hash, stoneId, opponent(player));
 			}
 		}
 	}
@@ -53,8 +51,7 @@ uint64_t MoveChecker::hashAfterMove(Player player, Coord c) {
 }
 
 std::size_t MoveChecker::groupAnalysis(const Coord& startCoord, const Player player, std::vector<Coord>& group) {
-	const auto N           = m_board.size();
-	const auto friendColor = player == Player::White ? Board::Value::White : Board::Value::Black;
+	const auto N = m_board.size();
 
 	std::vector<std::vector<bool>> visited(N, std::vector<bool>(N, false));
 
@@ -85,7 +82,7 @@ std::size_t MoveChecker::groupAnalysis(const Coord& startCoord, const Player pla
 				// Track visited to avoid overcounting.
 				visited[cN.x][cN.y] = true;
 				++liberties;
-			} else if (value == friendColor) {
+			} else if (value == toBoardValue(player)) {
 				stack.push(cN); // Chain continues.
 				group.emplace_back(cN);
 			}
@@ -117,10 +114,7 @@ bool MoveChecker::isSuicide(Player player, Coord c) {
 	if (computeGroupLiberties(c, player) > 0) {
 		return false;
 	}
-
-	// If move has no liberties, still safe if it captures a neighbouring group.
-	const auto enemy = player == Player::White ? Board::Value::Black : Board::Value::White;
-
+	
 	// Caputure: Check all neighbours
 	static constexpr std::array<int, 4> dx = {1, -1, 0, 0};
 	static constexpr std::array<int, 4> dy = {0, 0, 1, -1};
@@ -129,7 +123,7 @@ bool MoveChecker::isSuicide(Player player, Coord c) {
 
 		// If neighbour is enemy, check if group has no liberties.
 		// We subtract 1 because the move we check has not been added to the board yet. Would NN liberties reduce by 1.
-		if (m_board.getAt(nnCoord) == enemy && computeGroupLiberties(nnCoord, static_cast<Player>(enemy)) - 1 == 0) {
+		if (m_board.getAt(nnCoord) == toBoardValue(opponent(player)) && computeGroupLiberties(nnCoord, opponent(player)) - 1 == 0) {
 			return false;
 		}
 	}

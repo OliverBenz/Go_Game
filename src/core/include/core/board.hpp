@@ -33,4 +33,9 @@ private:
 	std::vector<Value> m_board{}; //!< Board values.
 };
 
+//! Returns the Board::Value enum value of input player.
+inline constexpr Board::Value toBoardValue(Player player) {
+	return player == Player::White ? Board::Value::White : Board::Value::Black;
+}
+
 } // namespace go
