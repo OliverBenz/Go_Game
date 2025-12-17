@@ -30,7 +30,7 @@ void Game::switchTurn() {
 
 void Game::handleEvent(const PutStoneEvent& event) {
 	if (m_moveChecker.isValidMove(m_currentPlayer, event.c)) {
-		m_board.setAt(event.c, static_cast<Board::FieldValue>(m_currentPlayer));
+		m_board.setAt(event.c, static_cast<Board::Value>(m_currentPlayer));
 		m_notificationHandler.signalBoardChange();
 		switchTurn();
 	}

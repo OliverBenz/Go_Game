@@ -26,7 +26,7 @@ public:
 private:
 	void drawBackground(SDL_Renderer* renderer);
 	void drawStones(const Board& board, SDL_Renderer* renderer);
-	void drawStone(Id x, Id y, Board::FieldValue player, SDL_Renderer* renderer);
+	void drawStone(Id x, Id y, Board::Value player, SDL_Renderer* renderer);
 
 	//! Transforms pixel value to board coordinate.
 	bool pixelToCoord(int px, unsigned& coord);

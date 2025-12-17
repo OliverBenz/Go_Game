@@ -29,7 +29,7 @@ MoveChecker::MoveChecker(const Board& board) : m_board(board) {
 uint64_t MoveChecker::hashAfterMove(Player player, Coord c) {
 	auto hash = m_hasher->lookAhead(c, player);
 
-	const auto enemy = player == Player::White ? Board::FieldValue::Black : Board::FieldValue::White;
+	const auto enemy = player == Player::White ? Board::Value::Black : Board::Value::White;
 
 	// Caputure: Check all neighbours
 	static constexpr std::array<int, 4> dx = {1, -1, 0, 0};
@@ -54,7 +54,7 @@ uint64_t MoveChecker::hashAfterMove(Player player, Coord c) {
 
 std::size_t MoveChecker::groupAnalysis(const Coord& startCoord, const Player player, std::vector<Coord>& group) {
 	const auto N           = m_board.size();
-	const auto friendColor = player == Player::White ? Board::FieldValue::White : Board::FieldValue::Black;
+	const auto friendColor = player == Player::White ? Board::Value::White : Board::Value::Black;
 
 	std::vector<std::vector<bool>> visited(N, std::vector<bool>(N, false));
 
@@ -81,7 +81,7 @@ std::size_t MoveChecker::groupAnalysis(const Coord& startCoord, const Player pla
 			}
 
 			const auto value = m_board.getAt(cN);
-			if (value == Board::FieldValue::None) {
+			if (value == Board::Value::Empty) {
 				// Track visited to avoid overcounting.
 				visited[cN.x][cN.y] = true;
 				++liberties;
@@ -119,7 +119,7 @@ bool MoveChecker::isSuicide(Player player, Coord c) {
 	}
 
 	// If move has no liberties, still safe if it captures a neighbouring group.
-	const auto enemy = player == Player::White ? Board::FieldValue::Black : Board::FieldValue::White;
+	const auto enemy = player == Player::White ? Board::Value::Black : Board::Value::White;
 
 	// Caputure: Check all neighbours
 	static constexpr std::array<int, 4> dx = {1, -1, 0, 0};
@@ -138,7 +138,7 @@ bool MoveChecker::isSuicide(Player player, Coord c) {
 
 bool MoveChecker::isValidMove(Player player, Coord c) {
 	return c.x < m_board.size() && c.y < m_board.size()        // Valid board coordinates
-	       && m_board.getAt(c) == Board::FieldValue::None      // Field free
+	       && m_board.getAt(c) == Board::Value::Empty          // Field free
 	       && !m_seenHashes.contains(hashAfterMove(player, c)) // No game state repeat
 	       && !isSuicide(player, c);
 }
