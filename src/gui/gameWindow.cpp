@@ -15,7 +15,7 @@ GameWindow::GameWindow(unsigned wndWidth, unsigned wndHeight, Game& game)
 	}
 
 	if (m_ready) {
-		m_game.addNotifiationListener(this);
+		m_game.addNotificationListener(this);
 	} else {
 		std::cerr << "SDL failed to initialize renderer resources, exiting.\n";
 		m_exit = true;

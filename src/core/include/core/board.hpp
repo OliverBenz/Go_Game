@@ -9,11 +9,7 @@ namespace go {
 class Board {
 public:
 	//! Possible ownership values of fields on the board.
-	enum class Value {
-		Empty = 0,
-		Black = static_cast<int>(Player::Black),
-		White = static_cast<int>(Player::White)
-	};
+	enum class Value { Empty = 0, Black = static_cast<int>(Player::Black), White = static_cast<int>(Player::White) };
 
 public:
 	Board(std::size_t size);

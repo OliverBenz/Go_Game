@@ -1,8 +1,25 @@
 #include "core/game.hpp"
 
+#include "zobristHash.hpp"
+
 namespace go {
 
-Game::Game(const std::size_t boardSize) : m_gameActive{true}, m_board{boardSize}, m_moveChecker{m_board} {
+Game::Game(const std::size_t boardSize) : m_gameActive{true}, m_position{boardSize} {
+	switch (m_position.board.size()) {
+	case 9u:
+		m_hasher = std::make_unique<ZobristHash<9u>>();
+		break;
+	case 13u:
+		m_hasher = std::make_unique<ZobristHash<13u>>();
+		break;
+	case 19u:
+		m_hasher = std::make_unique<ZobristHash<19u>>();
+		break;
+	default:
+		assert(false);
+		break;
+	}
+	m_seenHashes.insert(m_position.hash);
 }
 
 void Game::pushEvent(GameEvent event) {
@@ -17,27 +34,32 @@ void Game::run() {
 }
 
 const Board& Game::board() const {
-	return m_board;
-}
-
-Player Game::currentPlayer() {
-	return m_currentPlayer;
-}
-
-void Game::switchTurn() {
-	m_currentPlayer = m_currentPlayer == Player::Black ? Player::White : Player::Black;
+	return m_position.board;
 }
 
 void Game::handleEvent(const PutStoneEvent& event) {
-	if (m_moveChecker.isValidMove(m_currentPlayer, event.c)) {
-		m_board.setAt(event.c, static_cast<Board::Value>(m_currentPlayer));
+	assert(m_hasher);
+
+	Position next{m_position.board.size()};
+	if (isNextPositionLegal(m_position, m_position.currentPlayer, event.c, *m_hasher, m_seenHashes, next)) {
+		m_position = std::move(next);
+		m_seenHashes.insert(m_position.hash);
 		m_notificationHandler.signalBoardChange();
-		switchTurn();
 	}
 }
 
 void Game::handleEvent(const PassEvent& event) {
-	switchTurn();
+	assert(m_hasher);
+
+	Position next = m_position;
+	next.pass(*m_hasher);
+
+	if (m_seenHashes.contains(next.hash))
+		return;
+
+	m_position = std::move(next);
+	m_seenHashes.insert(m_position.hash);
+	m_notificationHandler.signalBoardChange();
 }
 
 void Game::handleEvent(const ResignEvent& event) {
@@ -48,7 +70,7 @@ void Game::handleEvent(const ShutdownEvent& event) {
 	m_gameActive = false;
 }
 
-void Game::addNotifiationListener(IGameListener* listener) {
+void Game::addNotificationListener(IGameListener* listener) {
 	m_notificationHandler.addListener(listener);
 }
 
