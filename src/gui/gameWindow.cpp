@@ -2,6 +2,7 @@
 
 #include <SDL2/SDL_image.h>
 #include <iostream>
+#include <cassert>
 
 namespace go::sdl {
 
@@ -10,9 +11,15 @@ GameWindow::GameWindow(unsigned wndWidth, unsigned wndHeight, Game& game)
 	if (initializeSDL()) {
 		m_boardRenderer = std::make_unique<BoardRenderer>(game.board().size(), std::min(m_windowWidth, m_windowHeight),
 		                                                  m_renderer);
+		m_ready = m_boardRenderer != nullptr && m_boardRenderer->isReady() && m_renderer != nullptr;
 	}
 
-	m_game.addNotifiationListener(this);
+	if (m_ready) {
+		m_game.addNotifiationListener(this);
+	} else {
+		std::cerr << "SDL failed to initialize renderer resources, exiting.\n";
+		m_exit = true;
+	}
 }
 
 GameWindow::~GameWindow() {
@@ -73,6 +80,13 @@ void GameWindow::sendRedrawEvent() {
 }
 
 void GameWindow::run() {
+	// Stop application when UI could not be created
+	if (!m_ready) {
+		m_game.pushEvent(ShutdownEvent{});
+		return;
+	}
+	assert(m_renderer && m_boardRenderer); // Definition of ready.
+
 	SDL_Event event;
 	while (SDL_WaitEvent(&event) && !m_exit) {
 		std::cerr << "Event: " << event.type << "\n";

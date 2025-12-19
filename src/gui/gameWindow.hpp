@@ -25,6 +25,7 @@ private:
 	unsigned m_windowWidth;  //!< Window width in pixels.
 	unsigned m_windowHeight; //!< Window height in pixels.
 	bool m_exit = false;     //!< Stop game execution.
+	bool m_ready = false;    //!< SDL initialized and renderer available.
 
 	Game& m_game;
 

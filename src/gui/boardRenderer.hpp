@@ -18,6 +18,7 @@ public:
 	~BoardRenderer();
 
 	void draw(const Board& board, SDL_Renderer* renderer);
+	bool isReady() const;
 
 	//! Try to convert pixel values to a board coordinate.
 	bool pixelToCoord(int pX, int pY, Coord& coord);
@@ -44,6 +45,7 @@ private:
 
 	SDL_Texture* m_textureBlack = nullptr;
 	SDL_Texture* m_textureWhite = nullptr;
+	bool m_ready                = false;  //!< Textures have been loaded.
 };
 
 } // namespace go::sdl

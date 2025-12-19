@@ -15,9 +15,7 @@ BoardRenderer::BoardRenderer(unsigned nodes, unsigned boardSizePx, SDL_Renderer*
 	// Texture macros set with CMake
 	m_textureBlack = load_texture(TEXTURE_BLACK, renderer);
 	m_textureWhite = load_texture(TEXTURE_WHITE, renderer);
-	if (!m_textureWhite || !m_textureBlack) {
-		return;
-	}
+	m_ready        = (m_textureWhite != nullptr) && (m_textureBlack != nullptr);
 }
 
 BoardRenderer::~BoardRenderer() {
@@ -28,8 +26,16 @@ BoardRenderer::~BoardRenderer() {
 // TODO: Don't redraw background and past stones all the time.
 // TODO: Always draw new stone individually and add function redrawBoard
 void BoardRenderer::draw(const Board& board, SDL_Renderer* renderer) {
+	if (!renderer) {
+		return;
+	}
 	drawBackground(renderer);
-	drawStones(board, renderer);
+	if (m_ready) {
+		drawStones(board, renderer);
+	}
+}
+bool BoardRenderer::isReady() const { 
+	return m_ready; 
 }
 
 SDL_Texture* BoardRenderer::load_texture(const char* path, SDL_Renderer* renderer) {
@@ -80,6 +86,9 @@ void BoardRenderer::drawBackground(SDL_Renderer* renderer) {
 
 void BoardRenderer::drawStone(Id x, Id y, Board::FieldValue player, SDL_Renderer* renderer) {
 	assert(m_coordStart >= m_drawStepSize);
+	if (!m_ready) {
+		return;
+	}
 
 	SDL_Rect dest;
 	dest.w = static_cast<int>(m_stoneSize);
