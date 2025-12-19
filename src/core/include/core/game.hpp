@@ -2,37 +2,16 @@
 
 #include "core/IZobristHash.hpp"
 #include "core/SafeQueue.hpp"
-#include "core/board.hpp"
 #include "core/gameEvent.hpp"
-#include "core/moveChecker.hpp"
 #include "core/notificationHandler.hpp"
+#include "core/position.hpp"
 #include "core/types.hpp"
+
+#include <unordered_set>
 
 namespace go {
 
 using EventQueue = SafeQueue<GameEvent>;
-
-struct Position {
-	Position(std::size_t boardSize) : board{boardSize} {
-	}
-	Board board;
-	Player currentPlayer{Player::Black};
-	uint64_t hash = 0; //!< Game state hash
-
-	//! \note Assume legal move.
-	void putStone(Coord c, IZobristHash& hasher) {
-		board.setAt(c, toBoardValue(currentPlayer));
-		hash ^= hasher.stone(c, currentPlayer);
-
-		currentPlayer = opponent(currentPlayer);
-		hash ^= hasher.togglePlayer();
-	}
-
-	void pass(IZobristHash& hasher) {
-		currentPlayer = opponent(currentPlayer);
-		hash ^= hasher.togglePlayer();
-	}
-};
 
 //! Core game setup.
 class Game {
