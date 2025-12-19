@@ -34,8 +34,8 @@ void BoardRenderer::draw(const Board& board, SDL_Renderer* renderer) {
 		drawStones(board, renderer);
 	}
 }
-bool BoardRenderer::isReady() const { 
-	return m_ready; 
+bool BoardRenderer::isReady() const {
+	return m_ready;
 }
 
 SDL_Texture* BoardRenderer::load_texture(const char* path, SDL_Renderer* renderer) {

@@ -15,11 +15,8 @@ static bool inBounds(const Board& board, Coord c) {
 	return c.x < board.size() && c.y < board.size();
 }
 
-static std::size_t groupAnalysis(const Board& board,
-                                 const Coord startCoord,
-                                 const Player player,
-                                 std::vector<Coord>& group,
-                                 const std::optional<Coord> pretendStone,
+static std::size_t groupAnalysis(const Board& board, const Coord startCoord, const Player player,
+                                 std::vector<Coord>& group, const std::optional<Coord> pretendStone,
                                  const std::optional<Coord> blockedLiberty) {
 	const auto boardSize = board.size();
 
@@ -64,8 +61,7 @@ static std::size_t groupAnalysis(const Board& board,
 			}
 
 			if (board.getAt(neighbor) == Board::Value::Empty &&
-			    (!blockedLiberty ||
-			     (blockedLiberty->x != neighbor.x || blockedLiberty->y != neighbor.y)) &&
+			    (!blockedLiberty || (blockedLiberty->x != neighbor.x || blockedLiberty->y != neighbor.y)) &&
 			    !libertyVisited[neighbor.x][neighbor.y]) {
 				libertyVisited[neighbor.x][neighbor.y] = true;
 				++liberties;
@@ -102,7 +98,7 @@ static bool wouldCapture(const Board& board, Coord c, Player player) {
 
 		group.clear();
 		const auto liberties = groupAnalysis(board, neighbor, enemy, group, std::nullopt, c);
-		for (const auto stone : group) {
+		for (const auto stone: group) {
 			visited[stone.x][stone.y] = true;
 		}
 		if (liberties == 0) {
@@ -127,7 +123,7 @@ static Position simulatePosition(const Position& start, Coord move, Player playe
 	assert(start.board.isFree(move));
 
 	const auto boardSize = start.board.size();
-	const auto enemy = opponent(player);
+	const auto enemy     = opponent(player);
 
 	std::vector<std::vector<bool>> visited(boardSize, std::vector<bool>(boardSize, false));
 	std::vector<std::vector<bool>> captured(boardSize, std::vector<bool>(boardSize, false));
@@ -145,11 +141,11 @@ static Position simulatePosition(const Position& start, Coord move, Player playe
 
 		group.clear();
 		const auto liberties = groupAnalysis(start.board, neighbor, enemy, group, std::nullopt, move);
-		for (const auto stone : group) {
+		for (const auto stone: group) {
 			visited[stone.x][stone.y] = true;
 		}
 		if (liberties == 0) {
-			for (const auto stone : group) {
+			for (const auto stone: group) {
 				captured[stone.x][stone.y] = true;
 			}
 		}
@@ -181,10 +177,10 @@ static Position simulatePosition(const Position& start, Coord move, Player playe
 	}
 	nextHash ^= hasher.togglePlayer();
 
-	Position next = start;
-	next.board = std::move(nextBoard);
+	Position next      = start;
+	next.board         = std::move(nextBoard);
 	next.currentPlayer = opponent(player);
-	next.hash = nextHash;
+	next.hash          = nextHash;
 	return next;
 }
 
@@ -195,12 +191,8 @@ bool isValidMove(const Board& board, Player player, Coord c) {
 	return !isSuicide(board, player, c);
 }
 
-bool isNextPositionLegal(const Position& current,
-                         Player player,
-                         Coord c,
-                         IZobristHash& hasher,
-                         const std::unordered_set<uint64_t>& history,
-                         Position& out) {
+bool isNextPositionLegal(const Position& current, Player player, Coord c, IZobristHash& hasher,
+                         const std::unordered_set<uint64_t>& history, Position& out) {
 	if (!isValidMove(current.board, player, c))
 		return false;
 

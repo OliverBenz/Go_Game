@@ -1,8 +1,8 @@
 #include "gameWindow.hpp"
 
 #include <SDL2/SDL_image.h>
-#include <iostream>
 #include <cassert>
+#include <iostream>
 
 namespace go::sdl {
 
@@ -11,7 +11,7 @@ GameWindow::GameWindow(unsigned wndWidth, unsigned wndHeight, Game& game)
 	if (initializeSDL()) {
 		m_boardRenderer = std::make_unique<BoardRenderer>(game.board().size(), std::min(m_windowWidth, m_windowHeight),
 		                                                  m_renderer);
-		m_ready = m_boardRenderer != nullptr && m_boardRenderer->isReady() && m_renderer != nullptr;
+		m_ready         = m_boardRenderer != nullptr && m_boardRenderer->isReady() && m_renderer != nullptr;
 	}
 
 	if (m_ready) {

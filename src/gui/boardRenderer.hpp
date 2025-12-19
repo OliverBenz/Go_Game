@@ -45,7 +45,7 @@ private:
 
 	SDL_Texture* m_textureBlack = nullptr;
 	SDL_Texture* m_textureWhite = nullptr;
-	bool m_ready                = false;  //!< Textures have been loaded.
+	bool m_ready                = false; //!< Textures have been loaded.
 };
 
 } // namespace go::sdl
