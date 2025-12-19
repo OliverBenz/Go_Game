@@ -6,6 +6,7 @@ set(headers
     ${CMAKE_CURRENT_LIST_DIR}/include/core/types.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/core/board.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/core/game.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/core/position.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/core/gameEvent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/core/SafeQueue.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/core/sgfHandler.hpp
@@ -16,6 +17,7 @@ set(headers
 )
 set(sources
     ${CMAKE_CURRENT_LIST_DIR}/board.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/position.cpp
     ${CMAKE_CURRENT_LIST_DIR}/game.cpp
     ${CMAKE_CURRENT_LIST_DIR}/sgfHandler.cpp
     ${CMAKE_CURRENT_LIST_DIR}/moveChecker.cpp

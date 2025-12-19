@@ -34,8 +34,8 @@ void BoardRenderer::draw(const Board& board, SDL_Renderer* renderer) {
 		drawStones(board, renderer);
 	}
 }
-bool BoardRenderer::isReady() const { 
-	return m_ready; 
+bool BoardRenderer::isReady() const {
+	return m_ready;
 }
 
 SDL_Texture* BoardRenderer::load_texture(const char* path, SDL_Renderer* renderer) {
@@ -84,7 +84,7 @@ void BoardRenderer::drawBackground(SDL_Renderer* renderer) {
 	}
 }
 
-void BoardRenderer::drawStone(Id x, Id y, Board::FieldValue player, SDL_Renderer* renderer) {
+void BoardRenderer::drawStone(Id x, Id y, Board::Value player, SDL_Renderer* renderer) {
 	assert(m_coordStart >= m_drawStepSize);
 	if (!m_ready) {
 		return;
@@ -96,13 +96,13 @@ void BoardRenderer::drawStone(Id x, Id y, Board::FieldValue player, SDL_Renderer
 	dest.x = static_cast<int>((m_coordStart - m_drawStepSize) + x * m_stoneSize);
 	dest.y = static_cast<int>((m_coordStart - m_drawStepSize) + y * m_stoneSize);
 
-	SDL_RenderCopy(renderer, (player == Board::FieldValue::Black ? m_textureBlack : m_textureWhite), nullptr, &dest);
+	SDL_RenderCopy(renderer, (player == Board::Value::Black ? m_textureBlack : m_textureWhite), nullptr, &dest);
 }
 
 void BoardRenderer::drawStones(const Board& board, SDL_Renderer* renderer) {
 	for (Id i = 0; i != board.size(); ++i) {
 		for (Id j = 0; j != board.size(); ++j) {
-			if (board.getAt({i, j}) != Board::FieldValue::None) {
+			if (board.getAt({i, j}) != Board::Value::Empty) {
 				drawStone(i, j, board.getAt({i, j}), renderer);
 			}
 		}

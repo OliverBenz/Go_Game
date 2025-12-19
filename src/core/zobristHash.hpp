@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/IZobristHash.hpp"
 #include "core/types.hpp"
 
 #include <array>
@@ -9,106 +10,42 @@
 
 namespace go {
 
-//! Interface to allow storing different board size instantiations.
-class IZobristHash {
-public:
-	virtual uint64_t lookAhead(Coord c, Player color) const = 0;
-	virtual void placeStone(Coord c, Player color)          = 0;
-	virtual void removeStone(Coord c, Player color)         = 0;
-	virtual void togglePlayer()                             = 0;
-
-	virtual void reset()           = 0;
-	virtual uint64_t value() const = 0;
-	virtual uint64_t update(uint64_t currHash, Coord coord, Player color) const = 0;
-};
-
-
 //! Hash for the current game state. Used to ensure no game state repetition.
 template <std::size_t SIZE>
 class ZobristHash : public IZobristHash {
 public:
 	ZobristHash();
 
-	//! Reset hash.
-	void reset() override;
-
-	//! Get current hash.
-	uint64_t value() const override;
-
-	//! Returns the hash that would happen after a move.
-	uint64_t lookAhead(Coord c, Player color) const override;
-
 	//! Update on placing a stone.
-	void placeStone(Coord c, Player color) override;
-
-	//! Update on removing a stone.
-	void removeStone(Coord c, Player color) override;
+	uint64_t stone(Coord c, Player color) override;
 
 	// Update for player-to-move swap (needed for situational superko).
-	void togglePlayer() override;
-
-	//! Update a given hash for a certain move. Used for move lookahead.
-	uint64_t update(uint64_t currHash, Coord coord, Player color) const override;
+	uint64_t togglePlayer() override;
 
 private:
 	void initRandomTable();
 
 private:
-	uint64_t m_hash = 0;       //!< Game state hash
-	uint64_t m_playerToggle{}; //!< Hash for player toggle.
 	std::array<std::array<std::array<uint64_t, 2>, SIZE>, SIZE> m_table{};
+	uint64_t m_playerToggle{0}; //!< Hash for player toggle.
 };
 
 template <std::size_t SIZE>
 ZobristHash<SIZE>::ZobristHash() {
 	initRandomTable();
-	reset();
 }
 
 template <std::size_t SIZE>
-void ZobristHash<SIZE>::reset() {
-	m_hash = 0;
-}
-
-template <std::size_t SIZE>
-uint64_t ZobristHash<SIZE>::value() const {
-	return m_hash;
-}
-
-template <std::size_t SIZE>
-uint64_t ZobristHash<SIZE>::lookAhead(Coord c, Player color) const {
+uint64_t ZobristHash<SIZE>::stone(Coord c, Player color) {
 	assert(static_cast<int>(color) == 1 || static_cast<int>(color) == 2);
 	assert(c.x < SIZE && c.y < SIZE);
 
-	return m_hash ^ m_table[c.x][c.y][static_cast<unsigned>(color) - 1u];
+	return m_table[c.x][c.y][static_cast<unsigned>(color) - 1u];
 }
 
 template <std::size_t SIZE>
-uint64_t ZobristHash<SIZE>::update(uint64_t currHash, Coord c, Player color) const {
-	assert(static_cast<int>(color) == 1 || static_cast<int>(color) == 2);
-	assert(c.x < SIZE && c.y < SIZE);
-
-	return currHash ^ m_table[c.x][c.y][static_cast<unsigned>(color) - 1u];
-}
-
-template <std::size_t SIZE>
-void ZobristHash<SIZE>::placeStone(Coord c, Player color) {
-	assert(static_cast<int>(color) == 1 || static_cast<int>(color) == 2);
-	assert(c.x < SIZE && c.y < SIZE);
-
-	m_hash ^= m_table[c.x][c.y][static_cast<unsigned>(color) - 1u];
-}
-
-template <std::size_t SIZE>
-void ZobristHash<SIZE>::removeStone(Coord c, Player color) {
-	assert(static_cast<int>(color) == 1 || static_cast<int>(color) == 2);
-	assert(c.x < SIZE && c.y < SIZE);
-	m_hash ^= m_table[c.x][c.y][static_cast<unsigned>(color) - 1u];
-}
-
-template <std::size_t SIZE>
-void ZobristHash<SIZE>::togglePlayer() {
-	m_hash ^= m_playerToggle;
+uint64_t ZobristHash<SIZE>::togglePlayer() {
+	return m_playerToggle;
 }
 
 template <std::size_t SIZE>

@@ -1,11 +1,13 @@
 #pragma once
 
+#include "core/IZobristHash.hpp"
 #include "core/SafeQueue.hpp"
-#include "core/board.hpp"
 #include "core/gameEvent.hpp"
-#include "core/moveChecker.hpp"
 #include "core/notificationHandler.hpp"
+#include "core/position.hpp"
 #include "core/types.hpp"
+
+#include <unordered_set>
 
 namespace go {
 
@@ -26,29 +28,25 @@ public:
 	//! Get board data for rendering.
 	const Board& board() const;
 
-	//! Get the current player to make a move.
-	Player currentPlayer();
-
 public:
-	void addNotifiationListener(IGameListener* listener);
+	void addNotificationListener(IGameListener* listener);
 	void removeNotificationListener(IGameListener* listener);
 
 private:
-	void switchTurn();
-
 	void handleEvent(const PutStoneEvent& event);
 	void handleEvent(const PassEvent& event);
 	void handleEvent(const ResignEvent& event);
 	void handleEvent(const ShutdownEvent& event);
 
 private:
-	bool m_gameActive{false};
-	Player m_currentPlayer{Player::Black};
+	bool m_gameActive;
 
+	Position m_position;
 	EventQueue m_eventQueue;
-	Board m_board;
 
-	MoveChecker m_moveChecker;
+	std::unordered_set<uint64_t> m_seenHashes; //!< History of board states.
+	std::unique_ptr<IZobristHash> m_hasher;    //!< Store the last 2 moves. Allows to check repeating board state.
+
 	NotificationHandler m_notificationHandler;
 };
 

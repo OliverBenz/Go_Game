@@ -9,11 +9,7 @@ namespace go {
 class Board {
 public:
 	//! Possible ownership values of fields on the board.
-	enum class FieldValue {
-		None  = 0,
-		Black = static_cast<int>(Player::Black),
-		White = static_cast<int>(Player::White)
-	};
+	enum class Value { Empty = 0, Black = static_cast<int>(Player::Black), White = static_cast<int>(Player::White) };
 
 public:
 	Board(std::size_t size);
@@ -22,15 +18,20 @@ public:
 
 	//! With x,y \in [0, size-1]
 	//! \note Game coordinates origin is at bottom left of board and start at 0. Column: A->0, B->1, etc
-	void setAt(Coord c, FieldValue fieldValue);
-	FieldValue getAt(Coord c) const;
+	void setAt(Coord c, Value fieldValue);
+	Value getAt(Coord c) const;
 
 	//! Returns whether a certain board coordinate is free or occupied.
 	bool isFree(Coord c) const;
 
 private:
-	std::size_t m_size;                //!< Board size
-	std::vector<FieldValue> m_board{}; //!< Board values.
+	std::size_t m_size;           //!< Board size
+	std::vector<Value> m_board{}; //!< Board values.
 };
+
+//! Returns the Board::Value enum value of input player.
+inline constexpr Board::Value toBoardValue(Player player) {
+	return player == Player::White ? Board::Value::White : Board::Value::Black;
+}
 
 } // namespace go
