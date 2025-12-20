@@ -16,7 +16,7 @@ public:
 	explicit SdlBoardWidget(Game& game, QWidget* parent = nullptr);
 	~SdlBoardWidget() override;
 
-	void onBoardChange() override;
+	void onGameNotification(Notification event) override;
 
 protected:
 	void showEvent(QShowEvent* event) override;

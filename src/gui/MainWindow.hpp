@@ -11,12 +11,14 @@
 
 namespace go::ui {
 
-class MainWindow : public QMainWindow {
+class MainWindow : public QMainWindow, public IGameListener {
 	Q_OBJECT
 
 public:
 	explicit MainWindow(Game& game, QWidget* parent = nullptr);
 	~MainWindow() override = default;
+
+	void onGameNotification(Notification event) override;
 
 protected:
 	void closeEvent(QCloseEvent* event) override;

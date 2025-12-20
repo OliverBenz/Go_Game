@@ -43,7 +43,7 @@ SdlBoardWidget::SdlBoardWidget(Game& game, QWidget* parent) : QWidget(parent), m
 	setAttribute(Qt::WA_NativeWindow);
 	setAttribute(Qt::WA_PaintOnScreen);
 	setAttribute(Qt::WA_OpaquePaintEvent);
-	
+
 	setMouseTracking(false);
 }
 
@@ -101,8 +101,12 @@ void SdlBoardWidget::keyReleaseEvent(QKeyEvent* event) {
 	event->accept(); // Set event handled
 }
 
-void SdlBoardWidget::onBoardChange() {
-	queueRender();
+void SdlBoardWidget::onGameNotification(Notification event) {
+	switch(event) {
+	case Notification::BoardChange:
+		queueRender();
+		break;
+	}
 }
 
 void SdlBoardWidget::ensureRenderer() {

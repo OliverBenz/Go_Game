@@ -13,12 +13,15 @@ void NotificationHandler::remListener(IGameListener* listener) {
 	m_listeners.erase(std::remove(m_listeners.begin(), m_listeners.end(), listener), m_listeners.end());
 }
 
-void NotificationHandler::signalBoardChange() {
+void NotificationHandler::signal(Notification event) {
 	std::lock_guard<std::mutex> lock(m_listenerMutex);
+
 	for (const auto& listener: m_listeners) {
-		// TODO: How to ensure these listener side functions are not heavy.
-		//       Else they might block the game thread.
-		listener->onBoardChange();
+		if (listener.eventMask & static_cast<uint64_t>(event.mask)){
+			// TODO: How to ensure these listener side functions are not heavy.
+			//       Else they might block the game thread.
+			listener->onBoardChange();
+		}
 	}
 }
 
