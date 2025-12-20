@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace go {
 
 using Id = unsigned; //!< Board ID used by the core library.
@@ -12,7 +14,7 @@ struct Coord {
 enum class Player { Black = 1, White = 2 };
 
 //! Types of notifications.
-enum class Notification : uint64_t {
+enum class GameSignal : uint64_t {
 	BoardChange  = 1 << 0,
 	PlayerChange = 1 << 1,
 };

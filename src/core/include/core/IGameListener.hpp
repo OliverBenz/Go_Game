@@ -6,8 +6,8 @@ namespace go {
 
 class IGameListener {
 public:
-	virtual ~IGameListener()                            = default;
-	virtual void onGameNotification(Notification event) = 0;
+	virtual ~IGameListener()                    = default;
+	virtual void onGameEvent(GameSignal signal) = 0;
 };
 
 } // namespace go

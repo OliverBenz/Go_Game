@@ -4,23 +4,35 @@
 
 namespace go {
 
-void NotificationHandler::addListener(IGameListener* listener) {
-	std::lock_guard<std::mutex> lock(m_listenerMutex);
-	m_listeners.push_back(listener);
-}
-
-void NotificationHandler::remListener(IGameListener* listener) {
-	m_listeners.erase(std::remove(m_listeners.begin(), m_listeners.end(), listener), m_listeners.end());
-}
-
-void NotificationHandler::signal(Notification event) {
+void NotificationHandler::subscribe(IGameListener* listener, uint64_t signalMask) {
 	std::lock_guard<std::mutex> lock(m_listenerMutex);
 
-	for (const auto& listener: m_listeners) {
-		if (listener.eventMask & static_cast<uint64_t>(event.mask)){
+	m_listeners.push_back({listener, signalMask});
+}
+
+void NotificationHandler::unsubscribe(IGameListener* listener) {
+    std::lock_guard<std::mutex> lock(m_listenerMutex);
+
+    m_listeners.erase(
+        std::remove_if(
+            m_listeners.begin(),
+            m_listeners.end(),
+            [&](const ListenerEntry& e) {
+                return e.listener == listener;
+            }
+        ),
+        m_listeners.end()
+    );
+}
+
+void NotificationHandler::signal(GameSignal signal) {
+	std::lock_guard<std::mutex> lock(m_listenerMutex);
+
+	for (const auto& [listener, signalMask]: m_listeners) {
+		if (signalMask & static_cast<uint64_t>(signal)){
 			// TODO: How to ensure these listener side functions are not heavy.
 			//       Else they might block the game thread.
-			listener->onBoardChange();
+			listener->onGameEvent(signal);
 		}
 	}
 }

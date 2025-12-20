@@ -15,7 +15,7 @@ GameWindow::GameWindow(unsigned wndWidth, unsigned wndHeight, Game& game)
 	}
 
 	if (m_ready) {
-		m_game.addNotificationListener(this);
+		m_game.subscribeEvents(this, static_cast<uint64_t>(GameSignal::BoardChange));
 	} else {
 		std::cerr << "SDL failed to initialize renderer resources, exiting.\n";
 		m_exit = true;
@@ -23,7 +23,7 @@ GameWindow::GameWindow(unsigned wndWidth, unsigned wndHeight, Game& game)
 }
 
 GameWindow::~GameWindow() {
-	m_game.removeNotificationListener(this);
+	m_game.unsubscribeEvents(this);
 
 	m_boardRenderer.reset();
 
@@ -127,9 +127,12 @@ void GameWindow::run() {
 		}
 	}
 }
-
-void GameWindow::onBoardChange() {
-	sendRedrawEvent();
+void GameWindow::onGameEvent(GameSignal signal) {
+	switch (signal) {
+	case GameSignal::BoardChange:
+		sendRedrawEvent();
+		break;
+	}
 }
 
 } // namespace go::sdl

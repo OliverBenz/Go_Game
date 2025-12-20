@@ -18,7 +18,7 @@ public:
 	explicit MainWindow(Game& game, QWidget* parent = nullptr);
 	~MainWindow() override = default;
 
-	void onGameNotification(Notification event) override;
+	void onGameEvent(GameSignal signal) override;
 
 protected:
 	void closeEvent(QCloseEvent* event) override;

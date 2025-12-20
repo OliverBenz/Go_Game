@@ -11,9 +11,9 @@ MainWindow::MainWindow(Game& game, QWidget* parent) : QMainWindow(parent), m_gam
 	buildLayout();
 }
 
-void MainWindow::onGameNotification(Notification event) {
-	switch (event) {
-	case Notification::PlayerChange:
+void MainWindow::onGameEvent(GameSignal signal) {
+	switch (signal) {
+	case GameSignal::PlayerChange:
 		break;
 	}
 }

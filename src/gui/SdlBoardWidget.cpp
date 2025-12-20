@@ -49,7 +49,7 @@ SdlBoardWidget::SdlBoardWidget(Game& game, QWidget* parent) : QWidget(parent), m
 
 SdlBoardWidget::~SdlBoardWidget() {
 	if (m_listenerRegistered) {
-		m_game.removeNotificationListener(this);
+		m_game.unsubscribeEvents(this);
 	}
 
 	m_boardRenderer.reset();
@@ -101,9 +101,9 @@ void SdlBoardWidget::keyReleaseEvent(QKeyEvent* event) {
 	event->accept(); // Set event handled
 }
 
-void SdlBoardWidget::onGameNotification(Notification event) {
-	switch(event) {
-	case Notification::BoardChange:
+void SdlBoardWidget::onGameEvent(GameSignal signal) {
+	switch(signal) {
+	case GameSignal::BoardChange:
 		queueRender();
 		break;
 	}
@@ -133,7 +133,7 @@ void SdlBoardWidget::ensureRenderer() {
 	recreateBoardRenderer();
 	m_initialized = true;
 
-	m_game.addNotificationListener(this);
+	m_game.subscribeEvents(this, static_cast<uint64_t>(GameSignal::BoardChange));
 	m_listenerRegistered = true;
 
 	queueRender();

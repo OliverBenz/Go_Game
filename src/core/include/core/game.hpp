@@ -29,8 +29,8 @@ public:
 	const Board& board() const;
 
 public:
-	void addNotificationListener(IGameListener* listener);
-	void removeNotificationListener(IGameListener* listener);
+	void subscribeEvents(IGameListener* listener, uint64_t signalMask);
+	void unsubscribeEvents(IGameListener* listener);
 
 private:
 	void handleEvent(const PutStoneEvent& event);
