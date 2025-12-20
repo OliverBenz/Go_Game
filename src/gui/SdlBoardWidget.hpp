@@ -22,6 +22,7 @@ protected:
 	void showEvent(QShowEvent* event) override;
 	void resizeEvent(QResizeEvent* event) override;
 	void mouseReleaseEvent(QMouseEvent* event) override;
+	void keyReleaseEvent(QKeyEvent* event);
 
 private:
 	void ensureRenderer();

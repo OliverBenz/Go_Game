@@ -38,9 +38,12 @@ static bool ensureSdlInit() {
 }
 
 SdlBoardWidget::SdlBoardWidget(Game& game, QWidget* parent) : QWidget(parent), m_game(game) {
+	setFocusPolicy(Qt::StrongFocus); // Required to get key events.
+
 	setAttribute(Qt::WA_NativeWindow);
 	setAttribute(Qt::WA_PaintOnScreen);
 	setAttribute(Qt::WA_OpaquePaintEvent);
+	
 	setMouseTracking(false);
 }
 
@@ -79,6 +82,23 @@ void SdlBoardWidget::mouseReleaseEvent(QMouseEvent* event) {
 		translateClick(event->pos());
 	}
 	QWidget::mouseReleaseEvent(event);
+}
+
+void SdlBoardWidget::keyReleaseEvent(QKeyEvent* event) {
+	std::cout << "KEY: " << event->key() << "\n";
+	switch (event->key()) {
+	case Qt::Key_P:
+		m_game.pushEvent(PassEvent{});
+		break;
+	case Qt::Key_R:
+		m_game.pushEvent(ResignEvent{});
+		break;
+	default:
+		QWidget::keyPressEvent(event);
+		return; // Don't accept the event.
+	}
+
+	event->accept(); // Set event handled
 }
 
 void SdlBoardWidget::onBoardChange() {
