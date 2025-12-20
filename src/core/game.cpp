@@ -45,7 +45,7 @@ void Game::handleEvent(const PutStoneEvent& event) {
 	if (isNextPositionLegal(m_position, m_position.currentPlayer, event.c, *m_hasher, m_seenHashes, next)) {
 		m_position = std::move(next);
 		m_seenHashes.insert(m_position.hash);
-		m_notificationHandler.signal(GameSignal::BoardChange);
+		m_eventHub.signal(GameSignal::BoardChange);
 	}
 }
 
@@ -60,7 +60,7 @@ void Game::handleEvent(const PassEvent& event) {
 
 	m_position = std::move(next);
 	m_seenHashes.insert(m_position.hash);
-	m_notificationHandler.signal(GameSignal::BoardChange);
+	m_eventHub.signal(GameSignal::BoardChange);
 }
 
 void Game::handleEvent(const ResignEvent& event) {
@@ -72,11 +72,11 @@ void Game::handleEvent(const ShutdownEvent& event) {
 }
 
 void Game::subscribeEvents(IGameListener* listener, uint64_t signalMask) {
-	m_notificationHandler.subscribe(listener, signalMask);
+	m_eventHub.subscribe(listener, signalMask);
 }
 
 void Game::unsubscribeEvents(IGameListener* listener) {
-	m_notificationHandler.unsubscribe(listener);
+	m_eventHub.unsubscribe(listener);
 }
 
 } // namespace go

@@ -1,16 +1,16 @@
-#include "core/notificationHandler.hpp"
+#include "core/eventHub.hpp"
 
 #include <algorithm>
 
 namespace go {
 
-void NotificationHandler::subscribe(IGameListener* listener, uint64_t signalMask) {
+void EventHub::subscribe(IGameListener* listener, uint64_t signalMask) {
 	std::lock_guard<std::mutex> lock(m_listenerMutex);
 
 	m_listeners.push_back({listener, signalMask});
 }
 
-void NotificationHandler::unsubscribe(IGameListener* listener) {
+void EventHub::unsubscribe(IGameListener* listener) {
     std::lock_guard<std::mutex> lock(m_listenerMutex);
 
     m_listeners.erase(
@@ -25,7 +25,7 @@ void NotificationHandler::unsubscribe(IGameListener* listener) {
     );
 }
 
-void NotificationHandler::signal(GameSignal signal) {
+void EventHub::signal(GameSignal signal) {
 	std::lock_guard<std::mutex> lock(m_listenerMutex);
 
 	for (const auto& [listener, signalMask]: m_listeners) {

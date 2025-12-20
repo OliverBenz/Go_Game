@@ -3,7 +3,7 @@
 #include "core/IZobristHash.hpp"
 #include "core/SafeQueue.hpp"
 #include "core/gameEvent.hpp"
-#include "core/notificationHandler.hpp"
+#include "core/eventHub.hpp"
 #include "core/position.hpp"
 #include "core/types.hpp"
 
@@ -42,12 +42,11 @@ private:
 	bool m_gameActive;
 
 	Position m_position;
-	EventQueue m_eventQueue;
+	EventQueue m_eventQueue; //!< Queue of internal game events we have to handle.
+	EventHub m_eventHub;     //!< Hub to signal updates of the game state to external components.
 
 	std::unordered_set<uint64_t> m_seenHashes; //!< History of board states.
 	std::unique_ptr<IZobristHash> m_hasher;    //!< Store the last 2 moves. Allows to check repeating board state.
-
-	NotificationHandler m_notificationHandler;
 };
 
 } // namespace go

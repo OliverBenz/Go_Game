@@ -8,12 +8,13 @@
 
 namespace go {
 
-struct ListenerEntry {
-	IGameListener* listener; //!< Pointer to the listener.
-	uint64_t signalMask;     //!< What events the listener cares about.
-};
+//! Allows external components to be updated on internal game events.
+class EventHub {
+	struct ListenerEntry {
+		IGameListener* listener; //!< Pointer to the listener.
+		uint64_t signalMask;     //!< What events the listener cares about.
+	};
 
-class NotificationHandler {
 public:
 	void subscribe(IGameListener* listener, uint64_t signalMask);
 	void unsubscribe(IGameListener* listener);
