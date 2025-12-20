@@ -1,15 +1,25 @@
 # Go Game Client
+A simple Go engine designed to keep modular, clean and efficient.
+The core library shall be kept free of bloat so you can even enjoy a game of Go in the terminal of weak hardware.
 
+## Motivation
+The motivation for this project is simple. 
+I don't enjoy playing on the computer and don't have Go-interested people near me.
+So let's replace the opponent with a robotic arm and play other people online but over the board.
+
+### Goal
+The final goal is to have a full robotic Go set.
+We may document a parts list for the hardware and provide the software here.
+A user may then purchase this hardware at the best available price and experience the fun of assembling everything.
+Finally flashing this software to get access to local and online games, puzzles, and training against bots.
+All open source so you can tinker around as you like.
 
 ## Components
-
 ### Internal Components
-
 Name        | Description 
 ------------|------------
 Core        | Library for game rules, basic types, board state validation, etc.
 Networking  | Library for networking related functionality. Sending/Receiving game information and synchronizing multiplayer games.
-Game        | Library for game state handling. e.g. GameMode: [Local 1v1, Local Bots, Multiplayer, etc].
 GameTerm    | Executable defining the terminal renderer. Inherits and uses the Game library.
 GameGUI     | Executable defining the gui renderer with SDL2. Inherits and uses the Game library.
 
@@ -26,14 +36,3 @@ CMake  | Collection of CMake files.
 Logger | Library for logging functionality.
 Asio   | Library for networking support.
 GTest  | Google unit testing library.
-
-
-## Networking
-For simple remote 2 player sessions, the data is sent in format
-"0042BAA1690987654"
-- The first 4 digits being the move number [0,9999]
-- The next 1 char for the player (B=Black, W=White)
-- The next 2 chars for board position (as in sgf format)
-- The next 10 chars: UNIX timestamp in seconds.
-
-So the above example would be Move: 42, Player: Black, Position: AA (A1), Timestamp: ...
