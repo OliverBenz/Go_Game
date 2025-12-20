@@ -15,6 +15,8 @@
           pkgs.cmake
           pkgs.SDL2
           pkgs.SDL2_image
+          pkgs.qt6.qtbase
+          pkgs.qt6.qtwayland
           pkgs.glfw
           pkgs.opencv
           pkgs.zlib
