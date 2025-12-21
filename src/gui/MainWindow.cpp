@@ -8,9 +8,15 @@
 namespace go::ui {
 
 MainWindow::MainWindow(Game& game, QWidget* parent) : QMainWindow(parent), m_game(game) {
+	// Setup Window
 	setWindowTitle("Go Game");
 	buildLayout();
 
+	// Connect slots
+	connect(m_passButton, &QPushButton::clicked, this, &MainWindow::onPassClicked);
+	connect(m_resignButton, &QPushButton::clicked, this, &MainWindow::onResignClicked);
+
+	// Setup Game Stuff
 	setCurrentPlayerText();
 	setGameStateText();
 	m_game.subscribeEvents(this, GS_PlayerChange | GS_StateChange);
@@ -104,6 +110,14 @@ void MainWindow::setCurrentPlayerText() {
 void MainWindow::setGameStateText() {
 	const auto text = std::format("Game: {}", m_game.isActive() ? "Active" : "Finished");
 	m_statusLabel->setText(text.c_str());
+}
+
+void MainWindow::onPassClicked() {
+	m_game.pushEvent(PassEvent{});
+}
+
+void MainWindow::onResignClicked() {
+	m_game.pushEvent(ResignEvent{});
 }
 
 } // namespace go::ui

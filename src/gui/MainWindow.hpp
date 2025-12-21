@@ -27,17 +27,23 @@ private:
 	void buildLayout();
 
 	void setCurrentPlayerText(); //!< Get current player from game and update the label.
-	void setGameStateText();     //! Get game state from game and update the label.
+	void setGameStateText();     //!< Get game state from game and update the label.
+
+private: // Slots
+	void onPassClicked();
+	void onResignClicked();
 
 private:
 	Game& m_game;
 
 	SdlBoardWidget* m_boardWidget = nullptr;
-	QLabel* m_statusLabel         = nullptr;
 	QTabWidget* m_sideTabs        = nullptr;
-	QPushButton* m_passButton     = nullptr;
-	QPushButton* m_resignButton   = nullptr;
-	QLabel* m_currPlayerLabel     = nullptr;
+
+	QLabel* m_statusLabel     = nullptr;
+	QLabel* m_currPlayerLabel = nullptr;
+
+	QPushButton* m_passButton   = nullptr;
+	QPushButton* m_resignButton = nullptr;
 };
 
 } // namespace go::ui
