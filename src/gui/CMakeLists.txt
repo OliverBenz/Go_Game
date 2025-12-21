@@ -1,27 +1,18 @@
 # Settings
 set(targetName goUi)
 
-# External libraries
-find_package(SDL2 REQUIRED)
-find_package(SDL2_image REQUIRED)
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
 add_executable(${targetName}
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
     ${CMAKE_CURRENT_LIST_DIR}/boardRenderer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MainWindow.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/SdlBoardWidget.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/BoardWidget.cpp
 )
 
 target_link_libraries(${targetName} PRIVATE
     goCore
-    SDL2::SDL2
-    SDL2_image::SDL2_image
     Qt6::Widgets
-)
-target_include_directories(${targetName} PRIVATE
-    ${SDL2_INCLUDE_DIRS}
-    ${SDL2_IMAGE_INCLUDE_DIRS}
 )
 set_target_properties(${targetName} PROPERTIES AUTOMOC ON) # Auto handling of QT Meta-Object Compiler
 target_compile_definitions(${targetName} PRIVATE TEXTURE_BLACK="${CMAKE_SOURCE_DIR}/assets/anime_black.png")

@@ -56,7 +56,7 @@ void MainWindow::buildLayout() {
 	auto* contentLayout = new QHBoxLayout();
 	contentLayout->setSpacing(12);
 
-	m_boardWidget = new SdlBoardWidget(m_game, central);
+	m_boardWidget = new BoardWidget(m_game, central);
 	m_boardWidget->setMinimumSize(640, 640);
 	contentLayout->addWidget(m_boardWidget);
 

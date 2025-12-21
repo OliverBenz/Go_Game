@@ -3,49 +3,46 @@
 #include "core/board.hpp"
 #include "core/types.hpp"
 
-#include <SDL.h>
-#include <vector>
+#include <QImage>
+#include <QPainter>
 
-namespace go::sdl {
+namespace go::ui {
 
-// TODO:
-// - Cleanup function and variable names(board name redundant, specify pixel or type)
-// - Wrap raw pointer in smart pointers?
 class BoardRenderer {
 public:
 	BoardRenderer() = default;
-	BoardRenderer(unsigned nodes, unsigned boardSizePx, SDL_Renderer* renderer);
-	~BoardRenderer();
+	explicit BoardRenderer(unsigned nodes);
 
-	void draw(const Board& board, SDL_Renderer* renderer);
+	void setBoardSizePx(unsigned boardSizePx);
+	void draw(QPainter& painter, const Board& board) const;
 	bool isReady() const;
 
 	//! Try to convert pixel values to a board coordinate.
-	bool pixelToCoord(int pX, int pY, Coord& coord);
+	bool pixelToCoord(int pX, int pY, Coord& coord) const;
 
 private:
-	void drawBackground(SDL_Renderer* renderer);
-	void drawStones(const Board& board, SDL_Renderer* renderer);
-	void drawStone(Id x, Id y, Board::Value player, SDL_Renderer* renderer);
+	void drawBackground(QPainter& painter) const;
+	void drawStones(QPainter& painter, const Board& board) const;
+	void drawStone(QPainter& painter, Id x, Id y, Board::Value player) const;
 
 	//! Transforms pixel value to board coordinate.
-	bool pixelToCoord(int px, unsigned& coord);
-
-	static SDL_Texture* load_texture(const char* path, SDL_Renderer* renderer);
+	bool pixelToCoord(int px, unsigned& coord) const;
+	void updateMetrics(unsigned boardSizePx);
+	void updateStoneTextures();
 
 private:
-	unsigned m_boardSize = 0; //!< Pixels for the whole board (without coordinate text).
-	unsigned m_stoneSize = 0; //!< Pixel Radius of a stone.
-	unsigned m_nodes     = 0; //!< Number of line intersection (Game board size).
+	unsigned m_boardSize  = 0; //!< Pixels for the whole board (without coordinate text).
+	unsigned m_stoneSize  = 0; //!< Pixel Radius of a stone.
+	unsigned m_nodes      = 0; //!< Number of line intersection (Game board size).
+	unsigned m_drawStepPx = 0; //!< Half a stone offset from border [px]
+	unsigned m_coordStart = 0; //!< (x,y) starting coordinate of lines [px]
+	unsigned m_coordEnd   = 0; //!< (x,y) ending coordinate of lines [px]
 
-	// TODO: Check stones dont overlap by 1 pixel
-	unsigned m_drawStepSize = m_stoneSize / 2;              //!< Half a stone offset from border [px]
-	unsigned m_coordStart   = m_drawStepSize;               //!< (x,y) starting coordinate of lines [px]
-	unsigned m_coordEnd     = m_boardSize - m_drawStepSize; //!< (x,y) ending coordinate of lines [px]
-
-	SDL_Texture* m_textureBlack = nullptr;
-	SDL_Texture* m_textureWhite = nullptr;
-	bool m_ready                = false; //!< Textures have been loaded.
+	QImage m_textureBlack;
+	QImage m_textureWhite;
+	QImage m_scaledBlack;
+	QImage m_scaledWhite;
+	bool m_ready = false; //!< Textures have been loaded.
 };
 
-} // namespace go::sdl
+} // namespace go::ui
