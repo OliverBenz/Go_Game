@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SdlBoardWidget.hpp"
+#include "BoardWidget.hpp"
 #include "core/game.hpp"
 
 #include <QCloseEvent>
@@ -36,8 +36,8 @@ private: // Slots
 private:
 	Game& m_game;
 
-	SdlBoardWidget* m_boardWidget = nullptr;
-	QTabWidget* m_sideTabs        = nullptr;
+	BoardWidget* m_boardWidget = nullptr;
+	QTabWidget* m_sideTabs     = nullptr;
 
 	QLabel* m_statusLabel     = nullptr;
 	QLabel* m_currPlayerLabel = nullptr;

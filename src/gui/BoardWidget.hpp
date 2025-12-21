@@ -9,27 +9,26 @@
 
 namespace go::ui {
 
-class SdlBoardWidget : public QWidget, public IGameListener {
+class BoardWidget : public QWidget, public IGameListener {
 	Q_OBJECT
 
 public:
-	explicit SdlBoardWidget(Game& game, QWidget* parent = nullptr);
-	~SdlBoardWidget() override;
+	explicit BoardWidget(Game& game, QWidget* parent = nullptr);
+	~BoardWidget() override;
 
 	void onGameEvent(GameSignal signal) override;
 
 protected:
 	void showEvent(QShowEvent* event) override;
 	void resizeEvent(QResizeEvent* event) override;
+	void paintEvent(QPaintEvent* event) override;
 	void mouseReleaseEvent(QMouseEvent* event) override;
-	void keyReleaseEvent(QKeyEvent* event);
+	void keyReleaseEvent(QKeyEvent* event) override;
 
 private:
-	void ensureRenderer();
-	void recreateBoardRenderer();
-	void renderBoard();
 	void queueRender();
 	void translateClick(const QPoint& pos);
+	void renderBoard();
 
 	unsigned boardPixelSize() const;
 	QPoint boardOffset(unsigned boardSize) const;
@@ -37,11 +36,9 @@ private:
 private:
 	Game& m_game;
 
-	SDL_Window* m_sdlWindow   = nullptr;
-	SDL_Renderer* m_renderer  = nullptr;
-	bool m_initialized        = false;
 	bool m_listenerRegistered = false;
-	std::unique_ptr<go::sdl::BoardRenderer> m_boardRenderer;
+	unsigned m_lastBoardSize  = 0;
+	BoardRenderer m_boardRenderer;
 };
 
 } // namespace go::ui
