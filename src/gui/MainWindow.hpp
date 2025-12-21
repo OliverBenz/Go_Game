@@ -26,6 +26,9 @@ protected:
 private:
 	void buildLayout();
 
+	void setCurrentPlayerText(); //!< Get current player from game and update the label.
+	void setGameStateText();     //! Get game state from game and update the label.
+
 private:
 	Game& m_game;
 

@@ -7,20 +7,22 @@
 
 namespace go::ui {
 
-static std::string currPlayerText(Player player) {
-	return std::format("Current Player: {}", player == Player::Black ? "Black" : "White");
-}
-
 MainWindow::MainWindow(Game& game, QWidget* parent) : QMainWindow(parent), m_game(game) {
 	setWindowTitle("Go Game");
 	buildLayout();
-	m_game.subscribeEvents(this, GS_PlayerChange);
+
+	setCurrentPlayerText();
+	setGameStateText();
+	m_game.subscribeEvents(this, GS_PlayerChange | GS_StateChange);
 }
 
-void MainWindow::onGameEvent(GameSignal signal) {
+void MainWindow::onGameEvent(const GameSignal signal) {
 	switch (signal) {
 	case GS_PlayerChange:
-		m_currPlayerLabel->setText(currPlayerText(m_game.currentPlayer()).c_str());
+		setCurrentPlayerText();
+		break;
+	case GS_StateChange:
+		setGameStateText();
 		break;
 	default:
 		break;
@@ -41,7 +43,7 @@ void MainWindow::buildLayout() {
 	mainLayout->setSpacing(8);
 
 	// Top: Label
-	m_statusLabel = new QLabel("Game active", central);
+	m_statusLabel = new QLabel("", central);
 	mainLayout->addWidget(m_statusLabel);
 
 	// Middle: Content section
@@ -84,7 +86,7 @@ void MainWindow::buildLayout() {
 	footerLayout->addWidget(m_resignButton);
 
 	// Label
-	m_currPlayerLabel = new QLabel(currPlayerText(m_game.currentPlayer()).c_str(), footer);
+	m_currPlayerLabel = new QLabel("", footer);
 	footerLayout->addWidget(m_currPlayerLabel);
 
 	footer->setLayout(footerLayout);
@@ -92,6 +94,16 @@ void MainWindow::buildLayout() {
 
 	central->setLayout(mainLayout);
 	setCentralWidget(central);
+}
+
+void MainWindow::setCurrentPlayerText() {
+	const auto text = std::format("Current Player: {}", m_game.currentPlayer() == Player::Black ? "Black" : "White");
+	m_currPlayerLabel->setText(text.c_str());
+}
+
+void MainWindow::setGameStateText() {
+	const auto text = std::format("Game: {}", m_game.isActive() ? "Active" : "Finished");
+	m_statusLabel->setText(text.c_str());
 }
 
 } // namespace go::ui
