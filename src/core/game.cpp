@@ -38,45 +38,68 @@ const Board& Game::board() const {
 	return m_position.board;
 }
 
+Player Game::currentPlayer() const {
+	return m_position.currentPlayer;
+}
+
+bool Game::isActive() const {
+	return m_gameActive;
+}
+
 void Game::handleEvent(const PutStoneEvent& event) {
 	assert(m_hasher);
 
 	Position next{m_position.board.size()};
 	if (isNextPositionLegal(m_position, m_position.currentPlayer, event.c, *m_hasher, m_seenHashes, next)) {
+		m_consecutivePasses = 0;
+
 		m_position = std::move(next);
 		m_seenHashes.insert(m_position.hash);
-		m_notificationHandler.signalBoardChange();
+
+		m_eventHub.signal(GS_BoardChange);
+		m_eventHub.signal(GS_PlayerChange);
 	}
 }
 
 void Game::handleEvent(const PassEvent& event) {
 	assert(m_hasher);
 
+	++m_consecutivePasses;
+	if (m_consecutivePasses == 2) {
+		m_gameActive = false;
+		m_eventHub.signal(GS_StateChange);
+		return;
+	}
+
 	Position next = m_position;
 	next.pass(*m_hasher);
 
-	if (m_seenHashes.contains(next.hash))
+	if (m_seenHashes.contains(next.hash)) {
 		return;
+	}
 
 	m_position = std::move(next);
 	m_seenHashes.insert(m_position.hash);
-	m_notificationHandler.signalBoardChange();
+
+	m_eventHub.signal(GS_PlayerChange);
 }
 
 void Game::handleEvent(const ResignEvent& event) {
 	m_gameActive = false;
+
+	m_eventHub.signal(GS_StateChange);
 }
 
 void Game::handleEvent(const ShutdownEvent& event) {
 	m_gameActive = false;
 }
 
-void Game::addNotificationListener(IGameListener* listener) {
-	m_notificationHandler.addListener(listener);
+void Game::subscribeEvents(IGameListener* listener, uint64_t signalMask) {
+	m_eventHub.subscribe(listener, signalMask);
 }
 
-void Game::removeNotificationListener(IGameListener* listener) {
-	m_notificationHandler.remListener(listener);
+void Game::unsubscribeEvents(IGameListener* listener) {
+	m_eventHub.unsubscribe(listener);
 }
 
 } // namespace go
