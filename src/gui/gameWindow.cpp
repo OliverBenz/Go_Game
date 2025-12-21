@@ -15,7 +15,7 @@ GameWindow::GameWindow(unsigned wndWidth, unsigned wndHeight, Game& game)
 	}
 
 	if (m_ready) {
-		m_game.subscribeEvents(this, static_cast<uint64_t>(GameSignal::BoardChange));
+		m_game.subscribeEvents(this, GS_BoardChange);
 	} else {
 		std::cerr << "SDL failed to initialize renderer resources, exiting.\n";
 		m_exit = true;
@@ -129,8 +129,10 @@ void GameWindow::run() {
 }
 void GameWindow::onGameEvent(GameSignal signal) {
 	switch (signal) {
-	case GameSignal::BoardChange:
+	case GS_BoardChange:
 		sendRedrawEvent();
+		break;
+	default:
 		break;
 	}
 }

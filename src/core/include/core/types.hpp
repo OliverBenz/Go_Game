@@ -14,9 +14,10 @@ struct Coord {
 enum class Player { Black = 1, White = 2 };
 
 //! Types of notifications.
-enum class GameSignal : uint64_t {
-	BoardChange  = 1 << 0,
-	PlayerChange = 1 << 1,
+enum GameSignal : uint64_t {
+	GS_None         = 0,
+	GS_BoardChange  = 1 << 0,
+	GS_PlayerChange = 1 << 1,
 };
 
 

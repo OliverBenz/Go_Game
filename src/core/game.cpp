@@ -45,7 +45,9 @@ void Game::handleEvent(const PutStoneEvent& event) {
 	if (isNextPositionLegal(m_position, m_position.currentPlayer, event.c, *m_hasher, m_seenHashes, next)) {
 		m_position = std::move(next);
 		m_seenHashes.insert(m_position.hash);
-		m_eventHub.signal(GameSignal::BoardChange);
+
+		m_eventHub.signal(GS_BoardChange);
+		m_eventHub.signal(GS_PlayerChange);
 	}
 }
 
@@ -55,12 +57,14 @@ void Game::handleEvent(const PassEvent& event) {
 	Position next = m_position;
 	next.pass(*m_hasher);
 
-	if (m_seenHashes.contains(next.hash))
+	if (m_seenHashes.contains(next.hash)) {
 		return;
+	}
 
 	m_position = std::move(next);
 	m_seenHashes.insert(m_position.hash);
-	m_eventHub.signal(GameSignal::BoardChange);
+
+	m_eventHub.signal(GS_PlayerChange);
 }
 
 void Game::handleEvent(const ResignEvent& event) {

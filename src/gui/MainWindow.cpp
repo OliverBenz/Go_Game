@@ -13,7 +13,9 @@ MainWindow::MainWindow(Game& game, QWidget* parent) : QMainWindow(parent), m_gam
 
 void MainWindow::onGameEvent(GameSignal signal) {
 	switch (signal) {
-	case GameSignal::PlayerChange:
+	case GS_PlayerChange:
+		break;
+	default:
 		break;
 	}
 }

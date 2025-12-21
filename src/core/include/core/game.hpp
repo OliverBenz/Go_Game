@@ -2,8 +2,8 @@
 
 #include "core/IZobristHash.hpp"
 #include "core/SafeQueue.hpp"
-#include "core/gameEvent.hpp"
 #include "core/eventHub.hpp"
+#include "core/gameEvent.hpp"
 #include "core/position.hpp"
 #include "core/types.hpp"
 

@@ -11,25 +11,18 @@ void EventHub::subscribe(IGameListener* listener, uint64_t signalMask) {
 }
 
 void EventHub::unsubscribe(IGameListener* listener) {
-    std::lock_guard<std::mutex> lock(m_listenerMutex);
+	std::lock_guard<std::mutex> lock(m_listenerMutex);
 
-    m_listeners.erase(
-        std::remove_if(
-            m_listeners.begin(),
-            m_listeners.end(),
-            [&](const ListenerEntry& e) {
-                return e.listener == listener;
-            }
-        ),
-        m_listeners.end()
-    );
+	m_listeners.erase(std::remove_if(m_listeners.begin(), m_listeners.end(),
+	                                 [&](const ListenerEntry& e) { return e.listener == listener; }),
+	                  m_listeners.end());
 }
 
 void EventHub::signal(GameSignal signal) {
 	std::lock_guard<std::mutex> lock(m_listenerMutex);
 
 	for (const auto& [listener, signalMask]: m_listeners) {
-		if (signalMask & static_cast<uint64_t>(signal)){
+		if (signalMask & signal) {
 			// TODO: How to ensure these listener side functions are not heavy.
 			//       Else they might block the game thread.
 			listener->onGameEvent(signal);

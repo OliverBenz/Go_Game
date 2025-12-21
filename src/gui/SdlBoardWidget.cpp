@@ -102,9 +102,11 @@ void SdlBoardWidget::keyReleaseEvent(QKeyEvent* event) {
 }
 
 void SdlBoardWidget::onGameEvent(GameSignal signal) {
-	switch(signal) {
-	case GameSignal::BoardChange:
+	switch (signal) {
+	case GS_BoardChange:
 		queueRender();
+		break;
+	default:
 		break;
 	}
 }
@@ -133,7 +135,7 @@ void SdlBoardWidget::ensureRenderer() {
 	recreateBoardRenderer();
 	m_initialized = true;
 
-	m_game.subscribeEvents(this, static_cast<uint64_t>(GameSignal::BoardChange));
+	m_game.subscribeEvents(this, GS_BoardChange);
 	m_listenerRegistered = true;
 
 	queueRender();
