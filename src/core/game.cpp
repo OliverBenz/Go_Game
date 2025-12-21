@@ -51,6 +51,8 @@ void Game::handleEvent(const PutStoneEvent& event) {
 
 	Position next{m_position.board.size()};
 	if (isNextPositionLegal(m_position, m_position.currentPlayer, event.c, *m_hasher, m_seenHashes, next)) {
+		m_consecutivePasses = 0;
+
 		m_position = std::move(next);
 		m_seenHashes.insert(m_position.hash);
 
@@ -61,6 +63,13 @@ void Game::handleEvent(const PutStoneEvent& event) {
 
 void Game::handleEvent(const PassEvent& event) {
 	assert(m_hasher);
+
+	++m_consecutivePasses;
+	if (m_consecutivePasses == 2) {
+		m_gameActive = false;
+		m_eventHub.signal(GS_StateChange);
+		return;
+	}
 
 	Position next = m_position;
 	next.pass(*m_hasher);
