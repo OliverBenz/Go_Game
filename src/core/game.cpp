@@ -38,6 +38,10 @@ const Board& Game::board() const {
 	return m_position.board;
 }
 
+Player Game::currentPlayer() const {
+	return m_position.currentPlayer;
+}
+
 void Game::handleEvent(const PutStoneEvent& event) {
 	assert(m_hasher);
 

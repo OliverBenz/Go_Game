@@ -3,17 +3,24 @@
 #include <QHBoxLayout>
 #include <QTabWidget>
 #include <QVBoxLayout>
+#include <format>
 
 namespace go::ui {
+
+static std::string currPlayerText(Player player) {
+	return std::format("Current Player: {}", player == Player::Black ? "Black" : "White");
+}
 
 MainWindow::MainWindow(Game& game, QWidget* parent) : QMainWindow(parent), m_game(game) {
 	setWindowTitle("Go Game");
 	buildLayout();
+	m_game.subscribeEvents(this, GS_PlayerChange);
 }
 
 void MainWindow::onGameEvent(GameSignal signal) {
 	switch (signal) {
 	case GS_PlayerChange:
+		m_currPlayerLabel->setText(currPlayerText(m_game.currentPlayer()).c_str());
 		break;
 	default:
 		break;
@@ -77,7 +84,7 @@ void MainWindow::buildLayout() {
 	footerLayout->addWidget(m_resignButton);
 
 	// Label
-	m_currPlayerLabel = new QLabel("Current Player: TBD", footer);
+	m_currPlayerLabel = new QLabel(currPlayerText(m_game.currentPlayer()).c_str(), footer);
 	footerLayout->addWidget(m_currPlayerLabel);
 
 	footer->setLayout(footerLayout);

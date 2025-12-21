@@ -28,6 +28,9 @@ public:
 	//! Get board data for rendering.
 	const Board& board() const;
 
+	//! Returns the currently active player.
+	Player currentPlayer() const;
+
 public:
 	void subscribeEvents(IGameListener* listener, uint64_t signalMask);
 	void unsubscribeEvents(IGameListener* listener);
