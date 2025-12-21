@@ -42,6 +42,10 @@ Player Game::currentPlayer() const {
 	return m_position.currentPlayer;
 }
 
+bool Game::isActive() const {
+	return m_gameActive;
+}
+
 void Game::handleEvent(const PutStoneEvent& event) {
 	assert(m_hasher);
 
@@ -73,6 +77,8 @@ void Game::handleEvent(const PassEvent& event) {
 
 void Game::handleEvent(const ResignEvent& event) {
 	m_gameActive = false;
+
+	m_eventHub.signal(GS_StateChange);
 }
 
 void Game::handleEvent(const ShutdownEvent& event) {

@@ -31,6 +31,9 @@ public:
 	//! Returns the currently active player.
 	Player currentPlayer() const;
 
+	//! Return if the game is active or not.
+	bool isActive() const;
+
 public:
 	void subscribeEvents(IGameListener* listener, uint64_t signalMask);
 	void unsubscribeEvents(IGameListener* listener);
