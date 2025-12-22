@@ -16,6 +16,7 @@ public:
 	explicit BoardWidget(Game& game, QWidget* parent = nullptr);
 	~BoardWidget() override;
 
+	//! Called by the game thread. Ensure not blocking.
 	void onGameEvent(GameSignal signal) override;
 
 protected:
@@ -26,6 +27,7 @@ protected:
 	void keyReleaseEvent(QKeyEvent* event) override;
 
 private:
+	//! Async queue render event. Prevents blocking of calling thread. 
 	void queueRender();
 	void translateClick(const QPoint& pos);
 	void renderBoard();
