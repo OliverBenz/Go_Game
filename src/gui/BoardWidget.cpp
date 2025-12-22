@@ -20,6 +20,11 @@ BoardWidget::BoardWidget(Game& game, QWidget* parent)
     : QWidget(parent), m_game(game), m_boardRenderer(static_cast<unsigned>(game.board().size())) {
 	setFocusPolicy(Qt::StrongFocus); // Required to get key events.
 	setMouseTracking(false);
+
+	if (!m_listenerRegistered) {
+		m_game.subscribeEvents(this, GS_BoardChange);
+		m_listenerRegistered = true;
+	}
 }
 
 BoardWidget::~BoardWidget() {
@@ -29,10 +34,6 @@ BoardWidget::~BoardWidget() {
 }
 
 void BoardWidget::showEvent(QShowEvent* event) {
-	if (!m_listenerRegistered) {
-		m_game.subscribeEvents(this, GS_BoardChange);
-		m_listenerRegistered = true;
-	}
 	QWidget::showEvent(event);
 }
 
@@ -44,7 +45,10 @@ void BoardWidget::resizeEvent(QResizeEvent* event) {
 void BoardWidget::mouseReleaseEvent(QMouseEvent* event) {
 	if (event->button() == Qt::LeftButton) {
 		translateClick(event->pos());
+		event->accept();
+        return;
 	}
+
 	QWidget::mouseReleaseEvent(event);
 }
 
@@ -53,22 +57,24 @@ void BoardWidget::keyReleaseEvent(QKeyEvent* event) {
 	switch (event->key()) {
 	case Qt::Key_P:
 		m_game.pushEvent(PassEvent{});
-		break;
+		event->accept();
+		return;
+
 	case Qt::Key_R:
 		m_game.pushEvent(ResignEvent{});
-		break;
-	default:
-		QWidget::keyPressEvent(event);
+		event->accept();
+		return;
+	
+		default:
+		QWidget::keyReleaseEvent(event);
 		return; // Don't accept the event.
 	}
-
-	event->accept(); // Set event handled
 }
 
 void BoardWidget::onGameEvent(GameSignal signal) {
 	switch (signal) {
 	case GS_BoardChange:
-		queueRender();
+		queueRender(); // Async queue.
 		break;
 	default:
 		break;
@@ -86,7 +92,7 @@ void BoardWidget::translateClick(const QPoint& pos) {
 	if (size == 0u) {
 		return;
 	}
-	if (local.x() < 0 || local.y() < 0 || local.x() > static_cast<int>(size) || local.y() > static_cast<int>(size)) {
+	if (local.x() < 0 || local.y() < 0 || local.x() >= static_cast<int>(size) || local.y() >= static_cast<int>(size)) {
 		return;
 	}
 

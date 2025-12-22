@@ -104,12 +104,12 @@ void MainWindow::buildLayout() {
 
 void MainWindow::setCurrentPlayerText() {
 	const auto text = std::format("Current Player: {}", m_game.currentPlayer() == Player::Black ? "Black" : "White");
-	m_currPlayerLabel->setText(text.c_str());
+	m_currPlayerLabel->setText(QString::fromStdString(text));
 }
 
 void MainWindow::setGameStateText() {
 	const auto text = std::format("Game: {}", m_game.isActive() ? "Active" : "Finished");
-	m_statusLabel->setText(text.c_str());
+	m_statusLabel->setText(QString::fromStdString(text));
 }
 
 void MainWindow::onPassClicked() {
