@@ -16,14 +16,16 @@ class MainWindow : public QMainWindow, public IGameListener {
 
 public:
 	explicit MainWindow(Game& game, QWidget* parent = nullptr);
-	~MainWindow() override = default;
+	~MainWindow() override;
 
+	//! Called by the game thread. Ensure not blocking.
 	void onGameEvent(GameSignal signal) override;
 
 protected:
 	void closeEvent(QCloseEvent* event) override;
 
 private:
+	//! Initial setup constructing the layout of the window.
 	void buildLayout();
 
 	void setCurrentPlayerText(); //!< Get current player from game and update the label.
@@ -39,8 +41,8 @@ private:
 	BoardWidget* m_boardWidget = nullptr;
 	QTabWidget* m_sideTabs     = nullptr;
 
-	QLabel* m_statusLabel     = nullptr;
-	QLabel* m_currPlayerLabel = nullptr;
+	QLabel* m_statusLabel     = nullptr; //!< Game status text (active, finished).
+	QLabel* m_currPlayerLabel = nullptr; //!< Current player text.
 
 	QPushButton* m_passButton   = nullptr;
 	QPushButton* m_resignButton = nullptr;

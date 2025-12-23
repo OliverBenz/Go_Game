@@ -22,7 +22,13 @@ MainWindow::MainWindow(Game& game, QWidget* parent) : QMainWindow(parent), m_gam
 	m_game.subscribeEvents(this, GS_PlayerChange | GS_StateChange);
 }
 
+MainWindow::~MainWindow() {
+	m_game.unsubscribeEvents(this);
+}
+
 void MainWindow::onGameEvent(const GameSignal signal) {
+	// TODO: This is called by core game thread
+	//  Game thread should not update stuff on the UI but push notifications and let the UI handle it.
 	switch (signal) {
 	case GS_PlayerChange:
 		setCurrentPlayerText();

@@ -35,6 +35,7 @@ void Game::run() {
 }
 
 const Board& Game::board() const {
+	// TODO: Other threads access this. We ensure game thread does not update board during a read.
 	return m_position.board;
 }
 
