@@ -21,8 +21,11 @@ public:
 	bool pixelToCoord(int pX, int pY, Coord& coord) const;
 
 private:
+	//! Draw the board background.
 	void drawBackground(QPainter& painter) const;
+	//! Draw all stones given a board.
 	void drawStones(QPainter& painter, const Board& board) const;
+	//! Draw a single stone at a given index.
 	void drawStone(QPainter& painter, Id x, Id y, Board::Value player) const;
 
 	//! Transforms pixel value to board coordinate.
@@ -32,7 +35,7 @@ private:
 
 private:
 	unsigned m_boardSize  = 0; //!< Pixels for the whole board (without coordinate text).
-	unsigned m_stoneSize  = 0; //!< Pixel Radius of a stone.
+	unsigned m_stoneSize  = 0; //!< Pixel diameter of a stone.
 	unsigned m_nodes      = 0; //!< Number of line intersection (Game board size).
 	unsigned m_drawStepPx = 0; //!< Half a stone offset from border [px]
 	unsigned m_coordStart = 0; //!< (x,y) starting coordinate of lines [px]

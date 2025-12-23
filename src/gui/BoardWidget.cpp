@@ -39,14 +39,17 @@ void BoardWidget::showEvent(QShowEvent* event) {
 
 void BoardWidget::resizeEvent(QResizeEvent* event) {
 	QWidget::resizeEvent(event);
+
+	m_boardRenderer.setBoardSizePx(boardPixelSize());
+
 	queueRender();
 }
 
 void BoardWidget::mouseReleaseEvent(QMouseEvent* event) {
 	if (event->button() == Qt::LeftButton) {
-		translateClick(event->pos());
+		handleClick(event->pos());
 		event->accept();
-        return;
+		return;
 	}
 
 	QWidget::mouseReleaseEvent(event);
@@ -64,8 +67,8 @@ void BoardWidget::keyReleaseEvent(QKeyEvent* event) {
 		m_game.pushEvent(ResignEvent{});
 		event->accept();
 		return;
-	
-		default:
+
+	default:
 		QWidget::keyReleaseEvent(event);
 		return; // Don't accept the event.
 	}
@@ -85,19 +88,21 @@ void BoardWidget::queueRender() {
 	QMetaObject::invokeMethod(this, [this]() { update(); }, Qt::QueuedConnection);
 }
 
-void BoardWidget::translateClick(const QPoint& pos) {
-	const auto size   = boardPixelSize();
-	const auto offset = boardOffset(size);
-	const auto local  = pos - offset;
-	if (size == 0u) {
-		return;
-	}
-	if (local.x() < 0 || local.y() < 0 || local.x() >= static_cast<int>(size) || local.y() >= static_cast<int>(size)) {
+void BoardWidget::handleClick(const QPoint& pos) {
+	const auto sizePx = boardPixelSize();
+	const auto local  = pos - boardOffset(sizePx);
+	if (sizePx == 0u) {
 		return;
 	}
 
+	// Clicked in bounds
+	if (local.x() < 0 || local.y() < 0 || local.x() >= static_cast<int>(sizePx) ||
+	    local.y() >= static_cast<int>(sizePx)) {
+		return;
+	}
+
+	// Try push event
 	Coord coord{};
-	m_boardRenderer.setBoardSizePx(size);
 	if (m_boardRenderer.pixelToCoord(local.x(), local.y(), coord)) {
 		m_game.pushEvent(PutStoneEvent{coord});
 	}
@@ -114,16 +119,11 @@ void BoardWidget::renderBoard() {
 		return;
 	}
 
-	if (size != m_lastBoardSize) {
-		m_boardRenderer.setBoardSizePx(size);
-		m_lastBoardSize = size;
-	}
-
 	const auto offset = boardOffset(size);
 	QPainter painter(this);
 	painter.fillRect(rect(), QColor(20, 20, 20));
 	painter.save();
-	painter.translate(offset);
+	painter.translate(offset); // Center in drawing area
 	m_boardRenderer.draw(painter, m_game.board());
 	painter.restore();
 }

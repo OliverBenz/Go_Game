@@ -18,7 +18,7 @@ BoardRenderer::BoardRenderer(const unsigned nodes) : m_nodes(nodes) {
 		target = reader.read();
 		if (target.isNull()) {
 			std::cerr << std::format("Failed to load '{}': {}\n", path, reader.errorString().toStdString());
-			m_ready = false;
+			this->m_ready = false;
 		}
 	};
 
@@ -35,7 +35,7 @@ void BoardRenderer::setBoardSizePx(const unsigned boardSizePx) {
 }
 
 void BoardRenderer::updateMetrics(const unsigned boardSizePx) {
-	m_boardSize  = boardSizePx / m_nodes * m_nodes;
+	m_boardSize  = (boardSizePx / m_nodes) * m_nodes; // Ensure divisible by m_nodes
 	m_stoneSize  = m_boardSize / m_nodes;
 	m_drawStepPx = m_stoneSize / 2;
 	m_coordStart = m_drawStepPx;

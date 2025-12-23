@@ -5,7 +5,6 @@
 #include "core/game.hpp"
 
 #include <QWidget>
-#include <memory>
 
 namespace go::ui {
 
@@ -27,19 +26,21 @@ protected:
 	void keyReleaseEvent(QKeyEvent* event) override;
 
 private:
-	//! Async queue render event. Prevents blocking of calling thread. 
+	//! Asynchronously queue a render event. Prevents blocking of calling thread.
 	void queueRender();
-	void translateClick(const QPoint& pos);
+	//! Resolve click position to board coordinate and push game event if valid.
+	void handleClick(const QPoint& pos);
 	void renderBoard();
 
+	//! Get the board size in pixels.
 	unsigned boardPixelSize() const;
+	//! Offset to get to the center of the board for drawing.
 	QPoint boardOffset(unsigned boardSize) const;
 
 private:
 	Game& m_game;
 
 	bool m_listenerRegistered = false;
-	unsigned m_lastBoardSize  = 0;
 	BoardRenderer m_boardRenderer;
 };
 
