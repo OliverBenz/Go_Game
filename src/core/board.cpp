@@ -12,16 +12,15 @@ std::size_t Board::size() const {
 	return m_size;
 }
 
-void Board::setAt(const Coord c, Value Value) {
-	assert(Value != Board::Value::Empty);
-	assert(0 <= c.x && c.x <= m_size - 1 && 0 <= c.y &&
-	       c.y <= m_size - 1); // Game should heck isValidMove trying to set
+void Board::setAt(const Coord c, Value value) {
+	assert(value != Board::Value::Empty);
+	assert(c.x < m_size && c.y < m_size); // Game should heck isValidMove trying to set
 
-	m_board[c.y * m_size + c.x] = Value;
+	m_board[c.y * m_size + c.x] = value;
 }
 
 Board::Value Board::getAt(const Coord c) const {
-	assert(0 <= c.x && c.x <= m_size - 1 && 0 <= c.y && c.y <= m_size - 1);
+	assert(c.x < m_size && c.y < m_size);
 
 	return m_board[c.y * m_size + c.x];
 }

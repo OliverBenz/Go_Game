@@ -62,7 +62,7 @@ void Game::handleEvent(const PutStoneEvent& event) {
 	}
 }
 
-void Game::handleEvent(const PassEvent& event) {
+void Game::handleEvent(const PassEvent&) {
 	assert(m_hasher);
 
 	++m_consecutivePasses;
@@ -85,13 +85,13 @@ void Game::handleEvent(const PassEvent& event) {
 	m_eventHub.signal(GS_PlayerChange);
 }
 
-void Game::handleEvent(const ResignEvent& event) {
+void Game::handleEvent(const ResignEvent&) {
 	m_gameActive = false;
 
 	m_eventHub.signal(GS_StateChange);
 }
 
-void Game::handleEvent(const ShutdownEvent& event) {
+void Game::handleEvent(const ShutdownEvent&) {
 	m_gameActive = false;
 }
 

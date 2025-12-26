@@ -36,7 +36,7 @@ target_include_directories(${targetName}
 )
 
 # Setup project settings
-# set_project_warnings(${targetName})  # Which warnings to enable
+set_project_warnings(${targetName})  # Which warnings to enable
 set_compile_options(${targetName})   # Which extra compiler flags to enable
 set_output_directory(${targetName})  # Set the output directory of the library
 

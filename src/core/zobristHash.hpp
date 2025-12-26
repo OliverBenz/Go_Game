@@ -53,9 +53,9 @@ void ZobristHash<SIZE>::initRandomTable() {
 	std::mt19937_64 rng(0xA5F3C7E2B1D94ULL); //!< Fixed seed for reproducibility
 	std::uniform_int_distribution<uint64_t> dist;
 
-	for (int x = 0; x < SIZE; ++x)
-		for (int y = 0; y < SIZE; ++y)
-			for (int c = 0; c < 2; ++c)
+	for (std::size_t x = 0; x < SIZE; ++x)
+		for (std::size_t y = 0; y < SIZE; ++y)
+			for (std::size_t c = 0; c < 2; ++c)
 				m_table[x][y][c] = dist(rng);
 
 	m_playerToggle = dist(rng);
