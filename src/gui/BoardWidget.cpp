@@ -1,6 +1,7 @@
 #include "BoardWidget.hpp"
 
 #include "core/gameEvent.hpp"
+#include "Logging.hpp"
 
 #include <QColor>
 #include <QKeyEvent>
@@ -12,7 +13,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <iostream>
 
 namespace go::ui {
 
@@ -46,6 +46,11 @@ void BoardWidget::resizeEvent(QResizeEvent* event) {
 }
 
 void BoardWidget::mouseReleaseEvent(QMouseEvent* event) {
+#ifndef NDEBUG
+	auto logger = Logger();
+	logger.Log(Logging::LogLevel::Info, std::format("Mouse click at: ({}, {})", event->pos().x(), event->pos().y()));
+#endif
+
 	if (event->button() == Qt::LeftButton) {
 		handleClick(event->pos());
 		event->accept();
@@ -56,7 +61,11 @@ void BoardWidget::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void BoardWidget::keyReleaseEvent(QKeyEvent* event) {
-	std::cout << "KEY: " << event->key() << "\n";
+#ifndef NDEBUG
+	auto logger = Logger();
+	logger.Log(Logging::LogLevel::Info, std::format("Keyboard click: {}", event->key()));
+#endif
+
 	switch (event->key()) {
 	case Qt::Key_P:
 		m_game.pushEvent(PassEvent{});

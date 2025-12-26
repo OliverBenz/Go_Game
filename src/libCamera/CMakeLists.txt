@@ -15,7 +15,7 @@ add_executable(${targetName}
 )
 
 target_include_directories(${targetName} PRIVATE ${OpenCV_INCLUDE_DIRS})
-target_link_libraries(${targetName} ${OpenCV_LIBS})
+target_link_libraries(${targetName} PRIVATE ${OpenCV_LIBS})
 
 
 # Setup project settings
