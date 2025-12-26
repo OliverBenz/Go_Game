@@ -25,9 +25,9 @@
         ];
 
         shellHook = ''
-          echo "Dev shell ready. Use 'go-ui' to run the GUI application."
+          echo "Dev shell ready. Use 'go-ui' to run the GUI application on x64 Debug."
 
-          alias go-ui='nixGL  ./out/bin/goUi'
+          alias go-ui='nixGL  ./out/bin/x64/Debug/goUi'
         '';
       };
     };
