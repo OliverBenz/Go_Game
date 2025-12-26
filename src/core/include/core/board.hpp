@@ -18,7 +18,7 @@ public:
 
 	//! With x,y \in [0, size-1]
 	//! \note Game coordinates origin is at bottom left of board and start at 0. Column: A->0, B->1, etc
-	void setAt(Coord c, Value fieldValue);
+	void setAt(Coord c, Value value);
 	Value getAt(Coord c) const;
 
 	//! Returns whether a certain board coordinate is free or occupied.
