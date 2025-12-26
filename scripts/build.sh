@@ -2,8 +2,9 @@
 
 . ./settings.sh
 
-mkdir ../build
-cd ../build
+echo "Entering Development Environment"
 echo "Using configuration: $configuration"
-cmake -DCMAKE_BUILD_TYPE=$configuration -DBUILD_TESTS=$buildTests -DBUILD_EXAMPLES=$buildExamples ..
-make -j $compileCoreCount
+nix develop .. --command bash -c "
+  cmake -S .. -B ../build -DCMAKE_BUILD_TYPE=$configuration
+  cmake --build ../build -j
+"
