@@ -4,7 +4,10 @@
 #include "Logger/LogOutputConsole.hpp"
 #include "Logger/LogOutputFile.hpp"
 
+#include <filesystem>
+#include <format>
 #include <iostream>
+#include <mutex>
 
 namespace go::ui {
 
@@ -15,9 +18,16 @@ static void InitializeLogger() {
 	config.SetLogEnabled(true);
 	config.SetMinLogLevel(Logging::LogLevel::Any);
 
-    // TODO: Better path
-	auto logFile = std::make_shared<Logging::LogOutputFile>("Logfile.txt");
-	config.AddLogOutput(logFile);
+	// Get and create default logging dir
+	const auto logPath = Logging::GetDefaultLogDir("GoGame");
+
+	std::error_code ec{};
+	std::filesystem::create_directories(logPath, ec);
+	if (!ec) {
+		config.AddLogOutput(std::make_shared<Logging::LogOutputFile>(logPath / "GuiLogs.txt"));
+	} else {
+		std::cerr << std::format("[Logger] Could not create directory: {}\nApplication will not log to file.", logPath.string());
+	}
 
 #ifndef NDEBUG
 	config.AddLogOutput(std::make_shared<Logging::LogOutputConsole>());
@@ -25,13 +35,10 @@ static void InitializeLogger() {
 }
 
 Logging::Logger Logger() {
-	static bool initialized = false;
-	if (!initialized) {
-		InitializeLogger();
-		initialized = true;
-	}
+	static std::once_flag logInitFlag;
+	std::call_once(logInitFlag, InitializeLogger);
 
 	return Logging::Logger(config);
 }
 
-}
+} // namespace go::ui
