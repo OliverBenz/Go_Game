@@ -22,7 +22,7 @@ bool isSuicide(const Board& board, Player player, Coord c);
 bool isValidMove(const Board& board, Player player, Coord c);
 
 //! Compute resulting position if the move is legal (including superko via history). Returns false when illegal.
-bool isNextPositionLegal(const Position& current, Player player, Coord c, IZobristHash& hasher,
-                         const std::unordered_set<uint64_t>& history, Position& out);
+bool isNextPositionLegal(const Position& current, Player player, Coord c, IZobristHash& hasher, const std::unordered_set<uint64_t>& history,
+                         Position& out);
 
 } // namespace go

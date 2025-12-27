@@ -33,7 +33,7 @@ BraceWrapping:
 BreakBeforeBinaryOperators: None
 BreakConstructorInitializers: BeforeColon
 BreakInheritanceList: BeforeColon
-ColumnLimit: 120
+ColumnLimit: 140
 ContinuationIndentWidth: 8
 IndentPPDirectives: None
 IndentWidth: 4

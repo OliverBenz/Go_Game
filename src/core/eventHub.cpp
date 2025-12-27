@@ -13,9 +13,9 @@ void EventHub::subscribe(IGameListener* listener, uint64_t signalMask) {
 void EventHub::unsubscribe(IGameListener* listener) {
 	std::lock_guard<std::mutex> lock(m_listenerMutex);
 
-	m_listeners.erase(std::remove_if(m_listeners.begin(), m_listeners.end(),
-	                                 [&](const ListenerEntry& e) { return e.listener == listener; }),
-	                  m_listeners.end());
+	m_listeners.erase(
+	        std::remove_if(m_listeners.begin(), m_listeners.end(), [&](const ListenerEntry& e) { return e.listener == listener; }),
+	        m_listeners.end());
 }
 
 void EventHub::signal(GameSignal signal) {
