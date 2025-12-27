@@ -1,7 +1,7 @@
 #include "BoardWidget.hpp"
 
-#include "core/gameEvent.hpp"
 #include "Logging.hpp"
+#include "core/gameEvent.hpp"
 
 #include <QColor>
 #include <QKeyEvent>
@@ -105,8 +105,7 @@ void BoardWidget::handleClick(const QPoint& pos) {
 	}
 
 	// Clicked in bounds
-	if (local.x() < 0 || local.y() < 0 || local.x() >= static_cast<int>(sizePx) ||
-	    local.y() >= static_cast<int>(sizePx)) {
+	if (local.x() < 0 || local.y() < 0 || local.x() >= static_cast<int>(sizePx) || local.y() >= static_cast<int>(sizePx)) {
 		return;
 	}
 

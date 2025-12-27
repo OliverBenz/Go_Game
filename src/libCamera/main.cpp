@@ -188,8 +188,7 @@ int main() {
 	// Load your 6 reference images
 	std::vector<cv::Mat> images;
 	for (auto i = 1; i != 7; ++i) {
-		cv::Mat img =
-		        cv::imread("/home/oliver/Data/dev/Go_Game/tests/img/boards_easy/angle_" + std::to_string(i) + ".jpeg");
+		cv::Mat img = cv::imread("/home/oliver/Data/dev/Go_Game/tests/img/boards_easy/angle_" + std::to_string(i) + ".jpeg");
 		if (img.empty()) {
 			std::cerr << "Could not read " << i << std::endl;
 			return -1;

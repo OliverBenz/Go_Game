@@ -15,9 +15,8 @@ static bool inBounds(const Board& board, Coord c) {
 	return c.x < board.size() && c.y < board.size();
 }
 
-static std::size_t groupAnalysis(const Board& board, const Coord startCoord, const Player player,
-                                 std::vector<Coord>& group, const std::optional<Coord> pretendStone,
-                                 const std::optional<Coord> blockedLiberty) {
+static std::size_t groupAnalysis(const Board& board, const Coord startCoord, const Player player, std::vector<Coord>& group,
+                                 const std::optional<Coord> pretendStone, const std::optional<Coord> blockedLiberty) {
 	const auto boardSize = board.size();
 
 	auto isPlayerStone = [&](Coord c) {
@@ -191,8 +190,8 @@ bool isValidMove(const Board& board, Player player, Coord c) {
 	return !isSuicide(board, player, c);
 }
 
-bool isNextPositionLegal(const Position& current, Player player, Coord c, IZobristHash& hasher,
-                         const std::unordered_set<uint64_t>& history, Position& out) {
+bool isNextPositionLegal(const Position& current, Player player, Coord c, IZobristHash& hasher, const std::unordered_set<uint64_t>& history,
+                         Position& out) {
 	if (!isValidMove(current.board, player, c))
 		return false;
 

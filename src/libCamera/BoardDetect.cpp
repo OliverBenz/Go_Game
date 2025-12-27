@@ -65,8 +65,7 @@ bool BoardDetect::VerifyDetectStones() {
 	return true;
 }
 
-std::vector<std::pair<unsigned, bool>>
-BoardDetect::calcStonePositionIndex(const std::vector<std::pair<cv::Vec3f>>& stones) {
+std::vector<std::pair<unsigned, bool>> BoardDetect::calcStonePositionIndex(const std::vector<std::pair<cv::Vec3f>>& stones) {
 	// Board warp may have small scaling errors (both physical warp and image warp)
 	// Stones not perfectly centered in intersections
 	return {};
