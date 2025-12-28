@@ -65,7 +65,7 @@ void TcpServer::accept_loop() {
 				break;
 			}
 
-            auto logger = Logger();
+			auto logger = Logger();
 			logger.Log(Logging::LogLevel::Error, "[Network] Accept failed - " + ec.message());
 
 			continue;
@@ -77,12 +77,13 @@ void TcpServer::accept_loop() {
 		m_clientThreads.emplace_back([this, socket_ptr, connected_clients]() { handle_client(socket_ptr, connected_clients); });
 		++connected_clients;
 
-        auto logger = Logger();
-        logger.Log(Logging::LogLevel::Info, std::format("[Network] Client {} connected from '{}'.", connected_clients, socket_ptr->remote_endpoint().address().to_string()));
-    }
+		auto logger = Logger();
+		logger.Log(Logging::LogLevel::Info, std::format("[Network] Client {} connected from '{}'.", connected_clients,
+		                                                socket_ptr->remote_endpoint().address().to_string()));
+	}
 
-    auto logger = Logger();
-    logger.Log(Logging::LogLevel::Debug, "[Network] Accept loop finished. Both clients connected.");
+	auto logger = Logger();
+	logger.Log(Logging::LogLevel::Debug, "[Network] Accept loop finished. Both clients connected.");
 }
 
 void TcpServer::handle_client(std::shared_ptr<asio::ip::tcp::socket> socket, std::size_t client_index) {
@@ -98,16 +99,15 @@ void TcpServer::handle_client(std::shared_ptr<asio::ip::tcp::socket> socket, std
 			// In a fixed-size protocol, skip the header and always read FIXED_PACKET_PAYLOAD_BYTES here.
 			const auto payload = read_payload(*socket, payload_size);
 
-            auto logger = Logger();
-            logger.Log(Logging::LogLevel::Info, std::format("[Network] Client {} sent '{}'.", client_index + 1, payload));
+			auto logger = Logger();
+			logger.Log(Logging::LogLevel::Info, std::format("[Network] Client {} sent '{}'.", client_index + 1, payload));
 
-            send_ack(*socket, "SUCCESS");
-
+			send_ack(*socket, "SUCCESS");
 		}
 	} catch (const std::exception& ex) {
 		if (m_isRunning) {
-            auto logger = Logger();
-            logger.Log(Logging::LogLevel::Error, std::format("[Network] Client '{}' session ended: '{}'", (client_index + 1), ex.what()));
+			auto logger = Logger();
+			logger.Log(Logging::LogLevel::Error, std::format("[Network] Client '{}' session ended: '{}'", (client_index + 1), ex.what()));
 		}
 	}
 }

@@ -73,10 +73,10 @@ std::string TcpClient::read() {
 	// For fixed-size packets, swap this for a straight read of FIXED_PACKET_PAYLOAD_BYTES bytes.
 	auto payload = read_payload(payload_size);
 
-    auto logger = Logger();
-    logger.Log(Logging::LogLevel::Debug, "[Network] Client received payload: " + payload);
+	auto logger = Logger();
+	logger.Log(Logging::LogLevel::Debug, "[Network] Client received payload: " + payload);
 
-    return payload;
+	return payload;
 }
 
 std::string TcpClient::send_and_receive(std::string_view payload) {
