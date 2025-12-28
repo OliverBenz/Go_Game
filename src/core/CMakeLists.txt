@@ -29,6 +29,7 @@ add_library(${targetName} STATIC
     ${headers}
     ${sources}
 )
+add_library(go::core ALIAS ${targetName})
 
 target_include_directories(${targetName}
     PUBLIC

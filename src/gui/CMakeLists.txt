@@ -12,7 +12,7 @@ add_executable(${targetName}
 )
 
 target_link_libraries(${targetName} PRIVATE
-    goCore
+    go::core
     Logger::Logger
     Qt6::Widgets
 )

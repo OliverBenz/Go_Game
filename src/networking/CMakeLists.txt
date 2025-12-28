@@ -17,6 +17,7 @@ set(sources
 add_library(${targetName} STATIC
     ${headers} ${sources}
 )
+add_library(go::network ALIAS ${targetName})
 
 target_include_directories(${targetName}
     PUBLIC
