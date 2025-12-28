@@ -5,7 +5,7 @@
 #include <cstdint>
 
 namespace go {
-namespace networking {
+namespace network {
 
 inline constexpr std::size_t MAX_PLAYERS    = 2;
 inline constexpr std::uint16_t DEFAULT_PORT = 12345;
@@ -42,5 +42,5 @@ constexpr std::uint32_t from_network_u32(std::uint32_t value) {
 	return to_network_u32(value);
 }
 
-} // namespace networking
+} // namespace network
 } // namespace go

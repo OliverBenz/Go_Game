@@ -11,10 +11,10 @@
 #include <thread>
 #include <vector>
 
-#include "networking/protocol.hpp"
+#include "network/protocol.hpp"
 
 namespace go {
-namespace networking {
+namespace network {
 
 // Blocking TCP server that accepts up to two clients (Black/White) and
 // acknowledges any length-prefixed message it receives.
@@ -50,5 +50,5 @@ private:
 	std::vector<std::thread> m_clientThreads;
 };
 
-} // namespace networking
+} // namespace network
 } // namespace go

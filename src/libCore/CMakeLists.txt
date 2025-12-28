@@ -1,5 +1,5 @@
 # Settings
-set(targetName goCore)
+set(targetName libCore)
 
 # Get files to build
 set(headers

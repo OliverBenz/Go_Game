@@ -1,4 +1,4 @@
-#include "networking/server.hpp"
+#include "network/server.hpp"
 #include "Logging.hpp"
 
 #include <asio/read.hpp>
@@ -9,7 +9,7 @@
 #include <utility>
 
 namespace go {
-namespace networking {
+namespace network {
 
 TcpServer::TcpServer(std::uint16_t port, std::size_t max_clients)
     : m_acceptor(m_ioContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)), m_maxClients(max_clients) {
@@ -137,5 +137,5 @@ void TcpServer::send_ack(asio::ip::tcp::socket& socket, std::string_view message
 	asio::write(socket, buffers);
 }
 
-} // namespace networking
+} // namespace network
 } // namespace go

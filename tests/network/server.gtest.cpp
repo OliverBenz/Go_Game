@@ -1,5 +1,5 @@
-#include "networking/server.hpp"
-#include "networking/client.hpp"
+#include "network/server.hpp"
+#include "network/client.hpp"
 
 #include <gtest/gtest.h>
 
@@ -7,11 +7,11 @@ namespace go::gtest {
 
 // TODO: Verify board state after every place
 TEST(Networking, Server) {
-	networking::TcpServer server;
+	network::TcpServer server;
 	server.start();
 
-	networking::TcpClient client1("127.0.0.1");
-	networking::TcpClient client2("127.0.0.1");
+	network::TcpClient client1("127.0.0.1");
+	network::TcpClient client2("127.0.0.1");
 
 	client1.connect();
 	client2.connect();

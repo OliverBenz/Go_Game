@@ -1,4 +1,4 @@
-#include "networking/client.hpp"
+#include "network/client.hpp"
 #include "Logging.hpp"
 
 #include <asio/connect.hpp>
@@ -10,7 +10,7 @@
 #include <utility>
 
 namespace go {
-namespace networking {
+namespace network {
 
 TcpClient::TcpClient(std::string host, std::uint16_t port)
     : m_resolver(m_ioContext), m_socket(m_ioContext), m_host(std::move(host)), m_port(port) {
@@ -100,5 +100,5 @@ std::string TcpClient::read_payload(std::uint32_t expected_bytes) {
 	return payload;
 }
 
-} // namespace networking
+} // namespace network
 } // namespace go
