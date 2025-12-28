@@ -1,14 +1,13 @@
 # Settings
-set(targetName "core.gtest")
+set(targetName "network.gtest")
 
 # Create executable
 add_executable(${targetName}
-    ${CMAKE_CURRENT_LIST_DIR}/game.gtest.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/moveChecker.gtest.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/server.gtest.cpp
 )
 
 # Link to required libraries
-target_link_libraries(${targetName} PUBLIC go::core GTest::gtest_main)
+target_link_libraries(${targetName} PUBLIC go::network GTest::gtest_main)
 set_target_properties(${targetName} PROPERTIES FOLDER "${ideFolderSource}")
 
 # Setup project settings
