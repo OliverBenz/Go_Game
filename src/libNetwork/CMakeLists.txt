@@ -1,11 +1,11 @@
 # Settings
-set(targetName Networking)
+set(targetName libNetwork)
 
 # Get files to build
 set(headers
-    ${CMAKE_CURRENT_LIST_DIR}/include/networking/protocol.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/include/networking/server.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/include/networking/client.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/network/protocol.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/network/server.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/network/client.hpp
     ${CMAKE_CURRENT_LIST_DIR}/Logging.hpp
 )
 

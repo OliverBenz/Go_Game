@@ -6,10 +6,10 @@
 #include <string>
 #include <string_view>
 
-#include "networking/protocol.hpp"
+#include "network/protocol.hpp"
 
 namespace go {
-namespace networking {
+namespace network {
 
 // Minimal synchronous TCP client that sends a length-prefixed packet and waits for the server to acknowledge it.
 class TcpClient {
@@ -41,5 +41,5 @@ private:
 	bool m_isConnected{false};
 };
 
-} // namespace networking
+} // namespace network
 } // namespace go
