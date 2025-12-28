@@ -4,4 +4,6 @@ include(cmake/CompilerWarnings.cmake)
 include(cmake/CustomCommands.cmake)
 
 # Add libraries
-include(FetchLibraries.cmake)
+include(gtest.cmake)
+include(logger.cmake)
+include(asio.cmake)

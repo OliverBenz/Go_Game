@@ -1,17 +1,6 @@
 # Settings
 set(targetName Networking)
 
-# External libraries
-# TODO: Have this stuff under lib and use latest asio version
-add_library(asio INTERFACE)
-target_include_directories(asio INTERFACE "${CMAKE_SOURCE_DIR}/lib/asio/include")
-target_link_libraries(asio INTERFACE pthread)
-target_compile_definitions(asio
-    PRIVATE
-        ASIO_STANDALONE
-        ASIO_NO_DEPRECATED
-)
-
 # Get files to build
 set(headers
     ${CMAKE_CURRENT_LIST_DIR}/include/networking/protocol.hpp
