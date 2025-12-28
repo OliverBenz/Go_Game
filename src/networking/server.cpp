@@ -1,10 +1,10 @@
 #include "networking/server.hpp"
+#include "Logging.hpp"
 
 #include <asio/read.hpp>
 #include <asio/write.hpp>
 
 #include <array>
-#include <iostream> // TODO: Use Logger
 #include <stdexcept>
 #include <utility>
 
@@ -65,17 +65,21 @@ void TcpServer::accept_loop() {
 				break;
 			}
 
-			std::cerr << "Networking: accept failed - " << ec.message() << '\n';
+            auto logger = Logger();
+			logger.Log(Logging::LogLevel::Error, "[Network] Accept failed - " + ec.message());
+
 			continue;
 		}
 
 		// TODO: Verify this pattern
 		auto socket_ptr = std::make_shared<asio::ip::tcp::socket>(std::move(socket));
-		std::cout << "Networking: client " << (connected_clients + 1) << " connected from " << socket_ptr->remote_endpoint() << '\n';
 
 		m_clientThreads.emplace_back([this, socket_ptr, connected_clients]() { handle_client(socket_ptr, connected_clients); });
 		++connected_clients;
-	}
+
+        auto logger = Logger();
+        logger.Log(Logging::LogLevel::Info, std::format("[Network] Client {} connected from '{}'.", connected_clients, socket_ptr->remote_endpoint().address().to_string()));
+    }
 }
 
 void TcpServer::handle_client(std::shared_ptr<asio::ip::tcp::socket> socket, std::size_t client_index) {
@@ -85,18 +89,22 @@ void TcpServer::handle_client(std::shared_ptr<asio::ip::tcp::socket> socket, std
 			const auto payload_size = from_network_u32(header.payload_size);
 
 			if (payload_size > MAX_PAYLOAD_BYTES) {
-				throw std::runtime_error("Networking: payload too large for demo server");
+				throw std::runtime_error("[Network] payload too large for demo server");
 			}
 
 			// In a fixed-size protocol, skip the header and always read FIXED_PACKET_PAYLOAD_BYTES here.
 			const auto payload = read_payload(*socket, payload_size);
 
-			std::cout << "Networking: client " << (client_index + 1) << " sent \"" << payload << "\"\n";
-			send_ack(*socket, "SUCCESS");
+            auto logger = Logger();
+            logger.Log(Logging::LogLevel::Info, std::format("[Network] Client {} sent '{}'.", client_index + 1, payload));
+
+            send_ack(*socket, "SUCCESS");
+
 		}
 	} catch (const std::exception& ex) {
 		if (m_isRunning) {
-			std::cerr << "Networking: client " << (client_index + 1) << " session ended - " << ex.what() << '\n';
+            auto logger = Logger();
+            logger.Log(Logging::LogLevel::Error, std::format("[Network] Client '{}' session ended: '{}'", (client_index + 1), ex.what()));
 		}
 	}
 }

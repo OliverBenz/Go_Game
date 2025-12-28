@@ -6,11 +6,13 @@ set(headers
     ${CMAKE_CURRENT_LIST_DIR}/include/networking/protocol.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/networking/server.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/networking/client.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/Logging.hpp
 )
 
 set(sources
     ${CMAKE_CURRENT_LIST_DIR}/server.cpp
     ${CMAKE_CURRENT_LIST_DIR}/client.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Logging.cpp
 )
 
 
@@ -28,6 +30,8 @@ target_include_directories(${targetName}
 target_link_libraries(${targetName}
     PUBLIC
         asio
+    PRIVATE
+        Logger::Logger
 )
 
 # Setup project settings
