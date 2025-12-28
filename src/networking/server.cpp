@@ -80,6 +80,9 @@ void TcpServer::accept_loop() {
         auto logger = Logger();
         logger.Log(Logging::LogLevel::Info, std::format("[Network] Client {} connected from '{}'.", connected_clients, socket_ptr->remote_endpoint().address().to_string()));
     }
+
+    auto logger = Logger();
+    logger.Log(Logging::LogLevel::Debug, "[Network] Accept loop finished. Both clients connected.");
 }
 
 void TcpServer::handle_client(std::shared_ptr<asio::ip::tcp::socket> socket, std::size_t client_index) {
