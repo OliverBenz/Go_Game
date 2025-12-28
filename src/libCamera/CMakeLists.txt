@@ -17,6 +17,8 @@ add_executable(${targetName}
 target_include_directories(${targetName} PRIVATE ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(${targetName} PRIVATE ${OpenCV_LIBS})
 
+# TODO: Move to tests once the library stands
+target_compile_definitions(${targetName} PRIVATE PATH_TEST_IMG="${CMAKE_SOURCE_DIR}/tests/camera/resources/")
 
 # Setup project settings
 # set_project_warnings(${targetName})  # Which warnings to enable
