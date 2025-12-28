@@ -1,30 +1,46 @@
 # Settings
-# set(targetName goNetworking)
-
+set(targetName Networking)
 
 # External libraries
 # TODO: Have this stuff under lib and use latest asio version
 add_library(asio INTERFACE)
 target_include_directories(asio INTERFACE "${CMAKE_SOURCE_DIR}/lib/asio/include")
 target_link_libraries(asio INTERFACE pthread)
+target_compile_definitions(asio
+    PRIVATE
+        ASIO_STANDALONE
+        ASIO_NO_DEPRECATED
+)
+
+# Get files to build
+set(headers
+    ${CMAKE_CURRENT_LIST_DIR}/include/networking/protocol.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/networking/server.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/networking/client.hpp
+)
+
+set(sources
+    ${CMAKE_CURRENT_LIST_DIR}/server.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/client.cpp
+)
 
 
-# TODO: This should be in a library
+add_library(${targetName} STATIC
+    ${headers} ${sources}
+)
 
-add_executable(goNetClient ${CMAKE_CURRENT_LIST_DIR}/client.cpp)
-# set_project_warnings(${targetName})  # Which warnings to enable
-target_link_libraries(goNetClient PRIVATE asio)
-set_compile_options(goNetClient)   # Which extra compiler flags to enable
-set_output_directory(goNetClient)  # Set the output directory of the library
+target_include_directories(${targetName}
+    PUBLIC
+        ${CMAKE_CURRENT_LIST_DIR}/include
+)
 
-add_executable(goNetServer ${CMAKE_CURRENT_LIST_DIR}/server.cpp)
-# set_project_warnings(${targetName})  # Which warnings to enable
-target_link_libraries(goNetServer PRIVATE asio)
-set_compile_options(goNetServer)   # Which extra compiler flags to enable
-set_output_directory(goNetServer)  # Set the output directory of the library
+# TODO: Implement PIMPLs to hide asio. Make this a private linking
+target_link_libraries(${targetName}
+    PUBLIC
+        asio
+)
 
-
-# Specify version
-# target_compile_definitions(${targetName} PUBLIC VERSION_MAJOR=0)
-# target_compile_definitions(${targetName} PUBLIC VERSION_MINOR=0)
-# target_compile_definitions(${targetName} PUBLIC VERSION_PATCH=1)
+# Setup project settings
+set_project_warnings(${targetName})
+set_compile_options(${targetName})
+set_output_directory(${targetName})
