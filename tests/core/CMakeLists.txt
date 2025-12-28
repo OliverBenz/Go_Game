@@ -9,7 +9,7 @@ add_executable(${targetName}
 )
 
 # Link to required libraries
-target_link_libraries(${targetName} PUBLIC goCore GTest::gtest_main)
+target_link_libraries(${targetName} PUBLIC go::core GTest::gtest_main)
 set_target_properties(${targetName} PROPERTIES FOLDER "${ideFolderSource}")
 
 # Setup project settings
