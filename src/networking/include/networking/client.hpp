@@ -1,0 +1,45 @@
+#pragma once
+
+#include <asio.hpp>
+
+#include <cstdint>
+#include <string>
+#include <string_view>
+
+#include "networking/protocol.hpp"
+
+namespace go {
+namespace networking {
+
+// Minimal synchronous TCP client that sends a length-prefixed packet and waits for the server to acknowledge it.
+class TcpClient {
+public:
+	TcpClient(std::string host, std::uint16_t port = DEFAULT_PORT);
+	~TcpClient();
+
+	void connect();
+	void disconnect();
+
+	void send(std::string_view payload);
+	std::string read();
+	std::string send_and_receive(std::string_view payload);
+
+	bool isConnected() const;
+
+private:
+	BasicMessageHeader read_header();
+	std::string read_payload(std::uint32_t expected_bytes);
+
+private:
+	asio::io_context m_ioContext{};
+	asio::ip::tcp::resolver m_resolver;
+	asio::ip::tcp::socket m_socket;
+
+	std::string m_host;   //! Server IP
+	std::uint16_t m_port; //! Server Port
+
+	bool m_isConnected{false};
+};
+
+} // namespace networking
+} // namespace go
