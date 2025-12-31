@@ -120,6 +120,7 @@ void GameServer::processEvent(const ServerEvent& event) {
 		           std::format("[GameServer] Client {} connected from '{}'.", event.clientIndex + 1, event.payload));
 		break;
 	case ServerEventType::ClientDisconnected:
+		// TODO: Handle reconnect.
 		logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Client {} disconnected.", event.clientIndex + 1));
 		break;
 	case ServerEventType::ClientMessage:
@@ -144,8 +145,42 @@ void GameServer::processClientMessage(const ServerEvent& event) {
 		return;
 	}
 
-	// TODO: Parse payload into core GameEvent types (AttemptPutStone, Pass, Resign) and push into m_game.
-	// m_game.pushEvent(...); // Keep mapping logic confined here.
+	// Parse payload into core GameEvent types (AttemptPutStone, Pass, Resign) and push into m_game.
+	// Simple text protocol for now: PUT:x,y
+	static constexpr std::string_view putPrefix = "PUT:";
+	if (event.payload.rfind(putPrefix, 0) == 0) {
+		ServerEvent putEvent = event;
+		const auto content   = event.payload.substr(putPrefix.size());
+
+		// Expect "x,y"
+		auto commaPos = content.find(',');
+		if (commaPos == std::string::npos) {
+			logger.Log(Logging::LogLevel::Error, "[GameServer] Malformed PUT payload (missing comma).");
+			return;
+		}
+
+		try {
+			const auto x = static_cast<unsigned>(std::stoul(content.substr(0, commaPos)));
+			const auto y = static_cast<unsigned>(std::stoul(content.substr(commaPos + 1)));
+
+			handleTryPutStone(putEvent.clientIndex, Coord{x, y});
+		} catch (const std::exception&) { logger.Log(Logging::LogLevel::Error, "[GameServer] Malformed PUT payload (invalid numbers)."); }
+
+		return;
+	}
+
+	// TODO: Pass / Resign messages can be parsed similarly (PASS / RESIGN).
+}
+
+void GameServer::handleTryPutStone(std::size_t clientIndex, const Coord& c) {
+	auto logger = Logger();
+
+	// Attach session key and enqueue into game; Game decides legality.
+	logger.Log(Logging::LogLevel::Info,
+	           std::format("[GameServer] Attempting PutStone from client {} at ({}, {}).", clientIndex + 1, c.x, c.y));
+
+	// TODO: Only push if isPlayerTurn(clientIndex), etc
+	m_game.pushEvent(PutStoneEvent{c});
 }
 
 void GameServer::forwardChat(std::size_t fromIndex, std::string_view message) {
@@ -173,6 +208,7 @@ std::string GameServer::ensureSession(std::size_t clientIndex) {
 }
 
 std::optional<std::size_t> GameServer::opponentIndex(std::size_t clientIndex) const {
+	// TODO: Fix usage, then assert and remove optional
 	if (clientIndex >= m_sessions.size()) {
 		return std::nullopt;
 	}
