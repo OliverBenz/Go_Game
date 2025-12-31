@@ -14,13 +14,13 @@ namespace network {
 // Minimal synchronous TCP client that sends a length-prefixed packet and waits for the server to acknowledge it.
 class TcpClient {
 public:
-	TcpClient(std::string host, std::uint16_t port = DEFAULT_PORT);
+	TcpClient();
 	~TcpClient();
 
-	void connect();
+	void connect(std::string host, std::uint16_t port = DEFAULT_PORT);
 	void disconnect();
 
-	void send(std::string_view payload);
+	bool send(std::string_view payload);
 	std::string read();
 	std::string send_and_receive(std::string_view payload);
 
@@ -34,9 +34,6 @@ private:
 	asio::io_context m_ioContext{};
 	asio::ip::tcp::resolver m_resolver;
 	asio::ip::tcp::socket m_socket;
-
-	std::string m_host;   //! Server IP
-	std::uint16_t m_port; //! Server Port
 
 	bool m_isConnected{false};
 };

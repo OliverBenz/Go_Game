@@ -8,12 +8,12 @@ namespace server {
 class GameServer {
 public:
 	GameServer(Game& game) : m_game{game} {
+		m_network.start();
 	}
 
 private:
 	Game& m_game;
 	network::TcpServer m_network;
-	network::ChatService m_chat;
 };
 
 } // namespace server

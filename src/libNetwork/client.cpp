@@ -12,20 +12,19 @@
 namespace go {
 namespace network {
 
-TcpClient::TcpClient(std::string host, std::uint16_t port)
-    : m_resolver(m_ioContext), m_socket(m_ioContext), m_host(std::move(host)), m_port(port) {
+TcpClient::TcpClient() : m_resolver(m_ioContext), m_socket(m_ioContext) {
 }
 
 TcpClient::~TcpClient() {
 	disconnect();
 }
 
-void TcpClient::connect() {
+void TcpClient::connect(std::string host, std::uint16_t port) {
 	if (m_isConnected) {
 		return;
 	}
 
-	const auto endpoints = m_resolver.resolve(m_host, std::to_string(m_port));
+	const auto endpoints = m_resolver.resolve(host, std::to_string(port));
 	asio::connect(m_socket, endpoints);
 	m_isConnected = true;
 }
@@ -44,13 +43,13 @@ bool TcpClient::isConnected() const {
 	return m_isConnected;
 }
 
-void TcpClient::send(std::string_view payload) {
+bool TcpClient::send(std::string_view payload) {
 	if (!m_isConnected) {
-		connect();
+		return false;
 	}
 
 	if (payload.size() > MAX_PAYLOAD_BYTES) {
-		throw std::runtime_error("Networking: payload too large for demo client");
+		return false;
 	}
 
 	BasicMessageHeader header{};
@@ -60,6 +59,7 @@ void TcpClient::send(std::string_view payload) {
 
 	// For fixed-size packets, emit exactly FIXED_PACKET_PAYLOAD_BYTES here and drop the header.
 	asio::write(m_socket, buffers);
+	return true;
 }
 
 std::string TcpClient::read() {
@@ -80,8 +80,10 @@ std::string TcpClient::read() {
 }
 
 std::string TcpClient::send_and_receive(std::string_view payload) {
-	send(payload);
-	return read();
+	if (send(payload)) {
+		return read();
+	}
+	return "";
 }
 
 BasicMessageHeader TcpClient::read_header() {
