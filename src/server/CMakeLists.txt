@@ -2,8 +2,13 @@
 set(targetName goServer)
 
 # Get files to build
-set(headers)
+set(headers
+    ${CMAKE_CURRENT_LIST_DIR}/GameServer.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/Logging.hpp
+)
 set(sources
+    ${CMAKE_CURRENT_LIST_DIR}/GameServer.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Logging.cpp
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
 )
 

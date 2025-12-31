@@ -5,14 +5,16 @@
 #include <asio/write.hpp>
 
 #include <array>
+#include <cassert>
+#include <format>
+#include <optional>
 #include <stdexcept>
 #include <utility>
 
 namespace go {
 namespace network {
 
-TcpServer::TcpServer(std::uint16_t port)
-    : m_acceptor(m_ioContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)) {
+TcpServer::TcpServer(std::uint16_t port) : m_acceptor(m_ioContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)) {
 }
 
 TcpServer::~TcpServer() {
@@ -30,6 +32,17 @@ void TcpServer::start() {
 void TcpServer::stop() {
 	if (!m_isRunning.exchange(false)) {
 		return;
+	}
+
+	{
+		asio::error_code ec;
+		for (auto& socket: m_clientSockets) {
+			if (!socket) {
+				continue;
+			}
+			socket->shutdown(asio::socket_base::shutdown_both, ec);
+			socket->close(ec);
+		}
 	}
 
 	asio::error_code ec;
@@ -72,16 +85,22 @@ void TcpServer::accept_loop() {
 		}
 
 		// TODO: Verify this pattern
-		auto socket_ptr = std::make_shared<asio::ip::tcp::socket>(std::move(socket));
+		auto socket_ptr                       = std::make_shared<asio::ip::tcp::socket>(std::move(socket));
+		m_clientSockets.at(connected_clients) = socket_ptr;
 
-		// Start thread to handle new client 
+		// Start thread to handle new client
 		assert(connected_clients < m_clientThreads.max_size());
-		m_clientThreads.at(connected_clients) = std::thread([this, socket_ptr, connected_clients]() { handle_client(socket_ptr, connected_clients); });
+		m_clientThreads.at(connected_clients) =
+		        std::thread([this, socket_ptr, connected_clients]() { handle_client(socket_ptr, connected_clients); });
 		++connected_clients;
 
 		auto logger = Logger();
 		logger.Log(Logging::LogLevel::Info, std::format("[Network] Client {} connected from '{}'.", connected_clients,
 		                                                socket_ptr->remote_endpoint().address().to_string()));
+
+		if (m_onConnect) {
+			m_onConnect(connected_clients - 1, socket_ptr->remote_endpoint());
+		}
 	}
 
 	auto logger = Logger();
@@ -104,6 +123,13 @@ void TcpServer::handle_client(std::shared_ptr<asio::ip::tcp::socket> socket, std
 			auto logger = Logger();
 			logger.Log(Logging::LogLevel::Info, std::format("[Network] Client {} sent '{}'.", client_index + 1, payload));
 
+			if (m_onMessage) {
+				if (auto reply = m_onMessage(client_index, payload)) {
+					send_ack(*socket, *reply);
+					continue;
+				}
+			}
+
 			send_ack(*socket, "SUCCESS");
 		}
 	} catch (const std::exception& ex) {
@@ -111,6 +137,10 @@ void TcpServer::handle_client(std::shared_ptr<asio::ip::tcp::socket> socket, std
 			auto logger = Logger();
 			logger.Log(Logging::LogLevel::Error, std::format("[Network] Client '{}' session ended: '{}'", (client_index + 1), ex.what()));
 		}
+	}
+
+	if (m_onDisconnect) {
+		m_onDisconnect(client_index);
 	}
 }
 
@@ -137,6 +167,37 @@ void TcpServer::send_ack(asio::ip::tcp::socket& socket, std::string_view message
 	// TODO: Verify not just single write?
 	std::array<asio::const_buffer, 2> buffers = {asio::buffer(&header, sizeof(header)), asio::buffer(message.data(), message.size())};
 	asio::write(socket, buffers);
+}
+
+void TcpServer::setOnConnect(ConnectHandler handler) {
+	m_onConnect = std::move(handler);
+}
+
+void TcpServer::setOnMessage(MessageHandler handler) {
+	m_onMessage = std::move(handler);
+}
+
+void TcpServer::setOnDisconnect(DisconnectHandler handler) {
+	m_onDisconnect = std::move(handler);
+}
+
+std::shared_ptr<asio::ip::tcp::socket> TcpServer::getClientSocket(std::size_t client_index) {
+	// TODO: Check after usage: Better to assert?
+	if (client_index >= m_clientSockets.size()) {
+		return {};
+	}
+	return m_clientSockets.at(client_index);
+}
+
+void TcpServer::sendToClient(std::size_t client_index, std::string_view payload) {
+	auto socket = getClientSocket(client_index);
+	if (!socket) {
+		auto logger = Logger();
+		logger.Log(Logging::LogLevel::Error, std::format("[Network] sendToClient failed, socket missing for index {}.", client_index));
+		return;
+	}
+
+	send_ack(*socket, payload);
 }
 
 } // namespace network

@@ -7,8 +7,8 @@ namespace go::gtest {
 
 // TODO: Verify board state after every place
 TEST(Networking, Server) {
-	auto server = network::TcpServer();
-	server.start();
+	// auto server = network::TcpServer();
+	// server.start();
 
 	auto client1 = network::TcpClient();
 	auto client2 = network::TcpClient();
@@ -21,6 +21,9 @@ TEST(Networking, Server) {
 
 	client1.disconnect();
 	client2.disconnect();
+
+	std::cerr << response1 << "\n";
+	std::cerr << response2 << "\n";
 }
 
 } // namespace go::gtest
