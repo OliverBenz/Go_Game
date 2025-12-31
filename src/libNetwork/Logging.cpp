@@ -24,7 +24,7 @@ static void InitializeLogger() {
 	std::error_code ec{};
 	std::filesystem::create_directories(logPath, ec);
 	if (!ec) {
-		config.AddLogOutput(std::make_shared<Logging::LogOutputFile>(logPath / "GuiLogs.txt"));
+		config.AddLogOutput(std::make_shared<Logging::LogOutputFile>(logPath / "log.txt"));
 	} else {
 		std::cerr << std::format("[Logger] Could not create directory: {}\nApplication will not log to file.", logPath.string());
 	}
