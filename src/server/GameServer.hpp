@@ -17,12 +17,13 @@ class Game;
 namespace server {
 
 // Events flowing from network threads into the server thread.
+// Keep these small PODs so network callbacks remain cheap.
 enum class ServerEventType { ClientConnected, ClientDisconnected, ClientMessage, Shutdown };
 
 struct ServerEvent {
 	ServerEventType type{};
 	std::size_t clientIndex{}; //!< 0 = Black, 1 = White
-	std::string payload{};     //!< Raw payload from the client (length-prefixed by libNetwork)
+	std::string payload{};     //!< Raw payload from the client (length-prefixed by libNetwork). Protocol examples: "PUT:3,4", "CHAT:hello".
 	std::string sessionKey{};  //!< Assigned per client; used for lightweight auth/tracking.
 };
 
@@ -58,7 +59,9 @@ private:
 	void processEvent(const ServerEvent& event);
 	void processClientMessage(const ServerEvent& event);
 
-	// Chat outline: forward to opponent, keep payload raw. Later extend with structured chat packets.
+	//! Translate a validated TryPutStone into the game event queue.
+	void handleTryPutStone(std::size_t clientIndex, const Coord& c);
+	//! Chat outline: forward to opponent, keep payload raw. Later extend with structured chat packets.
 	void forwardChat(std::size_t fromIndex, std::string_view message);
 
 	std::string ensureSession(std::size_t clientIndex);
