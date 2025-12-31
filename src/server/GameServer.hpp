@@ -1,5 +1,6 @@
 #pragma once
 
+#include "network/protocol.hpp"
 #include "network/server.hpp"
 
 #include "core/SafeQueue.hpp"
@@ -54,18 +55,23 @@ private:
 	std::optional<std::string> onClientMessage(std::size_t clientIndex, const std::string& payload);
 	void onClientDisconnected(std::size_t clientIndex);
 
-	// Server thread: drain queue and act.
-	void serverLoop();
-	void processEvent(const ServerEvent& event);
-	void processClientMessage(const ServerEvent& event);
-
-	//! Translate a validated TryPutStone into the game event queue.
-	void handleTryPutStone(std::size_t clientIndex, const Coord& c);
-	//! Chat outline: forward to opponent, keep payload raw. Later extend with structured chat packets.
-	void forwardChat(std::size_t fromIndex, std::string_view message);
+	void serverLoop();                           //!< Server thread: drain queue and act.
+	void processEvent(const ServerEvent& event); //!< Server loop calls this. Reads event type and distributes.
 
 	std::string ensureSession(std::size_t clientIndex);
 	std::optional<std::size_t> opponentIndex(std::size_t clientIndex) const;
+
+private: // Processing of server events.
+	void processClientMessage(const ServerEvent& event);
+	void processClientConnect(const ServerEvent& event);
+	void processClientDisconnect(const ServerEvent& event);
+	void processShutdown(const ServerEvent& event);
+
+private: // Processing of the network events that are sent in the server event message payload.
+	void handleNetworkEvent(const ServerEvent& srvEvent, const network::NwPutStoneEvent& nwEvent);
+	void handleNetworkEvent(const ServerEvent& srvEvent, const network::NwPassEvent& nwEvent);
+	void handleNetworkEvent(const ServerEvent& srvEvent, const network::NwResignEvent& nwEvent);
+	void handleNetworkEvent(const ServerEvent& srvEvent, const network::NwChatEvent& nwEvent);
 
 private:
 	Game& m_game;

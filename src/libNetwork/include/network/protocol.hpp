@@ -4,8 +4,31 @@
 #include <cstddef>
 #include <cstdint>
 
+#include <optional>
+#include <string>
+#include <variant>
+
 namespace go {
 namespace network {
+
+// Network events
+struct NwPutStoneEvent {
+	unsigned x;
+	unsigned y;
+};
+struct NwPassEvent {};
+struct NwResignEvent {};
+struct NwChatEvent {
+	std::string message;
+};
+
+using NwEvent = std::variant<NwPutStoneEvent, NwPassEvent, NwResignEvent, NwChatEvent>;
+
+//! Network event to message string.
+std::string toMessage(NwEvent event);
+//! Message string to network event.
+std::optional<NwEvent> fromMessage(const std::string& message);
+
 
 inline constexpr std::size_t MAX_PLAYERS    = 2;
 inline constexpr std::uint16_t DEFAULT_PORT = 12345;

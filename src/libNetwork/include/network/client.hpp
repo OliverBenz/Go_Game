@@ -20,13 +20,17 @@ public:
 	void connect(std::string host, std::uint16_t port = DEFAULT_PORT);
 	void disconnect();
 
-	bool send(std::string_view payload);
+	bool send(NwEvent event);
+
 	std::string read();
+	// TODO: This not needed right now. Maybe keep as a ping function?
 	std::string send_and_receive(std::string_view payload);
 
 	bool isConnected() const;
 
 private:
+	bool send(std::string_view payload);
+
 	BasicMessageHeader read_header();
 	std::string read_payload(std::uint32_t expected_bytes);
 
