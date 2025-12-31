@@ -11,8 +11,8 @@
 namespace go {
 namespace network {
 
-TcpServer::TcpServer(std::uint16_t port, std::size_t max_clients)
-    : m_acceptor(m_ioContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)), m_maxClients(max_clients) {
+TcpServer::TcpServer(std::uint16_t port)
+    : m_acceptor(m_ioContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)) {
 }
 
 TcpServer::~TcpServer() {
@@ -51,7 +51,7 @@ void TcpServer::stop() {
 void TcpServer::accept_loop() {
 	std::size_t connected_clients = 0;
 
-	while (m_isRunning && connected_clients < m_maxClients) {
+	while (m_isRunning && connected_clients < MAX_PLAYERS) {
 		asio::ip::tcp::socket socket(m_ioContext);
 		asio::error_code ec;
 		m_acceptor.accept(socket, ec);
@@ -74,7 +74,9 @@ void TcpServer::accept_loop() {
 		// TODO: Verify this pattern
 		auto socket_ptr = std::make_shared<asio::ip::tcp::socket>(std::move(socket));
 
-		m_clientThreads.emplace_back([this, socket_ptr, connected_clients]() { handle_client(socket_ptr, connected_clients); });
+		// Start thread to handle new client 
+		assert(connected_clients < m_clientThreads.max_size());
+		m_clientThreads.at(connected_clients) = std::thread([this, socket_ptr, connected_clients]() { handle_client(socket_ptr, connected_clients); });
 		++connected_clients;
 
 		auto logger = Logger();

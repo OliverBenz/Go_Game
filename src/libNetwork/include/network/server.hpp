@@ -2,6 +2,7 @@
 
 #include <asio.hpp>
 
+#include <array>
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
@@ -9,7 +10,6 @@
 #include <string>
 #include <string_view>
 #include <thread>
-#include <vector>
 
 #include "network/protocol.hpp"
 
@@ -20,7 +20,7 @@ namespace network {
 // acknowledges any length-prefixed message it receives.
 class TcpServer {
 public:
-	explicit TcpServer(std::uint16_t port = DEFAULT_PORT, std::size_t max_clients = MAX_PLAYERS);
+	explicit TcpServer(std::uint16_t port = DEFAULT_PORT);
 	~TcpServer();
 
 	//! Start listening for connections on the configured port.
@@ -46,11 +46,10 @@ private:
 	asio::io_context m_ioContext{};
 	asio::ip::tcp::acceptor m_acceptor;
 
-	const std::size_t m_maxClients;
 	std::atomic<bool> m_isRunning{false};
 
-	std::thread m_acceptThread;               //!< Thread for listening for client connections.
-	std::vector<std::thread> m_clientThreads; //!< Each client gets their thread. (Dont do this for observers; only players.)
+	std::thread m_acceptThread;                           //!< Thread for listening for client connections.
+	std::array<std::thread, MAX_PLAYERS> m_clientThreads; //!< Each client gets their thread. (Dont do this for observers; only players.)
 };
 
 } // namespace network
