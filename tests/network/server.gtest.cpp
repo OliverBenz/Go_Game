@@ -7,14 +7,14 @@ namespace go::gtest {
 
 // TODO: Verify board state after every place
 TEST(Networking, Server) {
-	network::TcpServer server;
+	auto server = network::TcpServer();
 	server.start();
 
-	network::TcpClient client1("127.0.0.1");
-	network::TcpClient client2("127.0.0.1");
+	auto client1 = network::TcpClient();
+	auto client2 = network::TcpClient();
 
-	client1.connect();
-	client2.connect();
+	client1.connect("127.0.0.1");
+	client2.connect("127.0.0.1");
 
 	const auto response1 = client1.send_and_receive("hello from client 1");
 	const auto response2 = client2.send_and_receive("hello from client 2");

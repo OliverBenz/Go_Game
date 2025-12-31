@@ -30,12 +30,15 @@ public:
 	void stop();
 
 private:
-	//! Waiting for our two clients to connect.
+	//! Waiting for our two clients to connect. Runs in accept thread.
 	void accept_loop();
 
+	//! Runs on each client thread. Handle incoming messages. Sends ack.
 	void handle_client(std::shared_ptr<asio::ip::tcp::socket> socket, std::size_t client_index);
+
 	BasicMessageHeader read_header(asio::ip::tcp::socket& socket);
 	std::string read_payload(asio::ip::tcp::socket& socket, std::uint32_t expected_bytes);
+
 	//! Send acknowledgment to the client in response to receiving a message.
 	void send_ack(asio::ip::tcp::socket& socket, std::string_view message);
 
@@ -46,8 +49,8 @@ private:
 	const std::size_t m_maxClients;
 	std::atomic<bool> m_isRunning{false};
 
-	std::thread m_acceptThread;
-	std::vector<std::thread> m_clientThreads;
+	std::thread m_acceptThread;               //!< Thread for listening for client connections.
+	std::vector<std::thread> m_clientThreads; //!< Each client gets their thread. (Dont do this for observers; only players.)
 };
 
 } // namespace network
