@@ -116,84 +116,48 @@ void GameServer::processEvent(const ServerEvent& event) {
 
 	switch (event.type) {
 	case ServerEventType::ClientConnected:
-		logger.Log(Logging::LogLevel::Info,
-		           std::format("[GameServer] Client {} connected from '{}'.", event.clientIndex + 1, event.payload));
+		processClientConnect(event);
 		break;
 	case ServerEventType::ClientDisconnected:
-		// TODO: Handle reconnect.
-		logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Client {} disconnected.", event.clientIndex + 1));
+		processClientDisconnect(event);
 		break;
 	case ServerEventType::ClientMessage:
 		processClientMessage(event);
 		break;
 	case ServerEventType::Shutdown:
-		logger.Log(Logging::LogLevel::Debug, "[GameServer] Shutdown event received.");
-		m_isRunning = false;
+		processShutdown(event);
 		break;
 	}
 }
 
 void GameServer::processClientMessage(const ServerEvent& event) {
+	static constexpr char LOG_MSG[] = "[GameServer] Message from client {} (session {}): '{}'.";
+	auto logger                     = Logger();
+	logger.Log(Logging::LogLevel::Debug, std::format(LOG_MSG, event.clientIndex + 1, event.sessionKey, event.payload));
+
+	// Server event message contains a network event. Parse and handle.
+	const auto networkEvent = network::fromMessage(event.payload);
+	if (!networkEvent) {
+		return;
+	}
+	std::visit([&](const auto& e) { handleNetworkEvent(event, e); }, *networkEvent);
+}
+
+void GameServer::processClientConnect(const ServerEvent& event) {
 	auto logger = Logger();
-	logger.Log(Logging::LogLevel::Debug, std::format("[GameServer] Message from client {} (session {}): '{}'.", event.clientIndex + 1,
-	                                                 event.sessionKey, event.payload));
-
-	// Outline: CHAT:<text> is forwarded to the opponent. Future message types can be parsed here.
-	static constexpr std::string_view chatPrefix = "CHAT:";
-	if (event.payload.rfind(chatPrefix, 0) == 0) {
-		forwardChat(event.clientIndex, event.payload.substr(chatPrefix.size()));
-		return;
-	}
-
-	// Parse payload into core GameEvent types (AttemptPutStone, Pass, Resign) and push into m_game.
-	// Simple text protocol for now: PUT:x,y
-	static constexpr std::string_view putPrefix = "PUT:";
-	if (event.payload.rfind(putPrefix, 0) == 0) {
-		ServerEvent putEvent = event;
-		const auto content   = event.payload.substr(putPrefix.size());
-
-		// Expect "x,y"
-		auto commaPos = content.find(',');
-		if (commaPos == std::string::npos) {
-			logger.Log(Logging::LogLevel::Error, "[GameServer] Malformed PUT payload (missing comma).");
-			return;
-		}
-
-		try {
-			const auto x = static_cast<unsigned>(std::stoul(content.substr(0, commaPos)));
-			const auto y = static_cast<unsigned>(std::stoul(content.substr(commaPos + 1)));
-
-			handleTryPutStone(putEvent.clientIndex, Coord{x, y});
-		} catch (const std::exception&) { logger.Log(Logging::LogLevel::Error, "[GameServer] Malformed PUT payload (invalid numbers)."); }
-
-		return;
-	}
-
-	// TODO: Pass / Resign messages can be parsed similarly (PASS / RESIGN).
+	logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Client {} connected from '{}'.", event.clientIndex + 1, event.payload));
 }
-
-void GameServer::handleTryPutStone(std::size_t clientIndex, const Coord& c) {
+void GameServer::processClientDisconnect(const ServerEvent& event) {
 	auto logger = Logger();
-
-	// Attach session key and enqueue into game; Game decides legality.
-	logger.Log(Logging::LogLevel::Info,
-	           std::format("[GameServer] Attempting PutStone from client {} at ({}, {}).", clientIndex + 1, c.x, c.y));
-
-	// TODO: Only push if isPlayerTurn(clientIndex), etc
-	m_game.pushEvent(PutStoneEvent{c});
+	// TODO: Handle reconnect.
+	logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Client {} disconnected.", event.clientIndex + 1));
+}
+void GameServer::processShutdown(const ServerEvent&) {
+	auto logger = Logger();
+	logger.Log(Logging::LogLevel::Debug, "[GameServer] Shutdown event received.");
+	m_isRunning = false;
 }
 
-void GameServer::forwardChat(std::size_t fromIndex, std::string_view message) {
-	const auto opponent = opponentIndex(fromIndex);
-	if (!opponent.has_value()) {
-		auto logger = Logger();
-		logger.Log(Logging::LogLevel::Warning, "[GameServer] Chat dropped: opponent not connected.");
-		return;
-	}
-
-	const std::string envelope = std::format("CHAT_FROM:{}:{}", ensureSession(fromIndex), message);
-	m_network.sendToClient(*opponent, envelope);
-}
 
 std::string GameServer::ensureSession(std::size_t clientIndex) {
 	if (clientIndex >= m_sessions.size()) {
@@ -213,6 +177,37 @@ std::optional<std::size_t> GameServer::opponentIndex(std::size_t clientIndex) co
 		return std::nullopt;
 	}
 	return clientIndex == 0 ? std::optional<std::size_t>{1} : std::optional<std::size_t>{0};
+}
+
+void GameServer::handleNetworkEvent(const ServerEvent& srvEvent, const network::NwPutStoneEvent& nwEvent) {
+	auto logger = Logger();
+
+	// Attach session key and enqueue into game; Game decides legality.
+	logger.Log(Logging::LogLevel::Info,
+	           std::format("[GameServer] Attempting PutStone from client {} at ({}, {}).", srvEvent.clientIndex + 1, nwEvent.x, nwEvent.y));
+
+	// TODO: Only push if isPlayerTurn(clientIndex), etc
+	m_game.pushEvent(PutStoneEvent{Coord{nwEvent.x, nwEvent.y}});
+}
+
+void GameServer::handleNetworkEvent(const ServerEvent&, const network::NwPassEvent&) {
+	// TODO:
+}
+
+void GameServer::handleNetworkEvent(const ServerEvent&, const network::NwResignEvent&) {
+	// TODO:
+}
+
+void GameServer::handleNetworkEvent(const ServerEvent& srvEvent, const network::NwChatEvent& nwEvent) {
+	const auto opponent = opponentIndex(srvEvent.clientIndex);
+	if (!opponent.has_value()) {
+		auto logger = Logger();
+		logger.Log(Logging::LogLevel::Warning, "[GameServer] Chat dropped: opponent not connected.");
+		return;
+	}
+
+	const std::string envelope = std::format("CHAT_FROM:{}:{}", ensureSession(srvEvent.clientIndex), nwEvent.message);
+	m_network.sendToClient(*opponent, envelope);
 }
 
 } // namespace go::server

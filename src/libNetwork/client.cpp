@@ -1,4 +1,6 @@
 #include "network/client.hpp"
+#include "network/protocol.hpp"
+
 #include "Logging.hpp"
 
 #include <asio/connect.hpp>
@@ -41,6 +43,10 @@ void TcpClient::disconnect() {
 }
 bool TcpClient::isConnected() const {
 	return m_isConnected;
+}
+
+bool TcpClient::send(NwEvent event) {
+	return send(toMessage(event));
 }
 
 bool TcpClient::send(std::string_view payload) {
