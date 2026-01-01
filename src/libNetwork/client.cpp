@@ -1,8 +1,6 @@
 #include "network/client.hpp"
 #include "network/protocol.hpp"
 
-#include "Logging.hpp"
-
 #include <asio/connect.hpp>
 #include <asio/read.hpp>
 #include <asio/write.hpp>
@@ -78,9 +76,6 @@ std::string TcpClient::read() {
 
 	// For fixed-size packets, swap this for a straight read of FIXED_PACKET_PAYLOAD_BYTES bytes.
 	auto payload = read_payload(payload_size);
-
-	auto logger = Logger();
-	logger.Log(Logging::LogLevel::Debug, "[Network] Client received payload: " + payload);
 
 	return payload;
 }

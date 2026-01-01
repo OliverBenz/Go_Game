@@ -1,5 +1,4 @@
 #include "network/server.hpp"
-#include "Logging.hpp"
 
 #include <asio/read.hpp>
 #include <asio/write.hpp>
@@ -78,9 +77,6 @@ void TcpServer::accept_loop() {
 				break;
 			}
 
-			auto logger = Logger();
-			logger.Log(Logging::LogLevel::Error, "[Network] Accept failed - " + ec.message());
-
 			continue;
 		}
 
@@ -94,17 +90,10 @@ void TcpServer::accept_loop() {
 		        std::thread([this, socket_ptr, connected_clients]() { handle_client(socket_ptr, connected_clients); });
 		++connected_clients;
 
-		auto logger = Logger();
-		logger.Log(Logging::LogLevel::Info, std::format("[Network] Client {} connected from '{}'.", connected_clients,
-		                                                socket_ptr->remote_endpoint().address().to_string()));
-
 		if (m_onConnect) {
 			m_onConnect(connected_clients - 1, socket_ptr->remote_endpoint());
 		}
 	}
-
-	auto logger = Logger();
-	logger.Log(Logging::LogLevel::Debug, "[Network] Accept loop finished. Both clients connected.");
 }
 
 void TcpServer::handle_client(std::shared_ptr<asio::ip::tcp::socket> socket, std::size_t client_index) {
@@ -120,9 +109,6 @@ void TcpServer::handle_client(std::shared_ptr<asio::ip::tcp::socket> socket, std
 			// In a fixed-size protocol, skip the header and always read FIXED_PACKET_PAYLOAD_BYTES here.
 			const auto payload = read_payload(*socket, payload_size);
 
-			auto logger = Logger();
-			logger.Log(Logging::LogLevel::Info, std::format("[Network] Client {} sent '{}'.", client_index + 1, payload));
-
 			if (m_onMessage) {
 				if (auto reply = m_onMessage(client_index, payload)) {
 					send_ack(*socket, *reply);
@@ -132,12 +118,7 @@ void TcpServer::handle_client(std::shared_ptr<asio::ip::tcp::socket> socket, std
 
 			send_ack(*socket, "SUCCESS");
 		}
-	} catch (const std::exception& ex) {
-		if (m_isRunning) {
-			auto logger = Logger();
-			logger.Log(Logging::LogLevel::Error, std::format("[Network] Client '{}' session ended: '{}'", (client_index + 1), ex.what()));
-		}
-	}
+	} catch (const std::exception& ex) {}
 
 	if (m_onDisconnect) {
 		m_onDisconnect(client_index);
@@ -192,8 +173,6 @@ std::shared_ptr<asio::ip::tcp::socket> TcpServer::getClientSocket(std::size_t cl
 void TcpServer::sendToClient(std::size_t client_index, std::string_view payload) {
 	auto socket = getClientSocket(client_index);
 	if (!socket) {
-		auto logger = Logger();
-		logger.Log(Logging::LogLevel::Error, std::format("[Network] sendToClient failed, socket missing for index {}.", client_index));
 		return;
 	}
 
