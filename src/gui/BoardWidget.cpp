@@ -112,7 +112,8 @@ void BoardWidget::handleClick(const QPoint& pos) {
 	// Try push event
 	Coord coord{};
 	if (m_boardRenderer.pixelToCoord(local.x(), local.y(), coord)) {
-		m_game.pushEvent(PutStoneEvent{coord});
+		// TODO: Not use value from game.
+		m_game.pushEvent(PutStoneEvent{m_game.currentPlayer(), coord});
 	}
 }
 
