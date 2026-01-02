@@ -75,6 +75,7 @@ void GameServer::onClientConnected(std::size_t clientIndex, const asio::ip::tcp:
 	        ServerEvent{.type = ServerEventType::ClientConnected, .clientIndex = clientIndex, .payload = endpoint.address().to_string()});
 }
 
+// TODO: Client session assigned on connection. Not on message
 std::optional<std::string> GameServer::onClientMessage(std::size_t clientIndex, const std::string& payload) {
 	const auto session = ensureSession(clientIndex);
 	m_eventQueue.Push(ServerEvent{
@@ -158,9 +159,8 @@ void GameServer::processShutdown(const ServerEvent&) {
 	m_isRunning = false;
 }
 
-
 std::string GameServer::ensureSession(std::size_t clientIndex) {
-	if (clientIndex >= m_sessions.size()) {
+	if (clientIndex >= network::MAX_PLAYERS) {
 		return {};
 	}
 
@@ -173,32 +173,57 @@ std::string GameServer::ensureSession(std::size_t clientIndex) {
 
 std::optional<std::size_t> GameServer::opponentIndex(std::size_t clientIndex) const {
 	// TODO: Fix usage, then assert and remove optional
-	if (clientIndex >= m_sessions.size()) {
+	if (clientIndex >= network::MAX_PLAYERS) {
 		return std::nullopt;
 	}
-	return clientIndex == 0 ? std::optional<std::size_t>{1} : std::optional<std::size_t>{0};
+	return std::optional<std::size_t>{1 - clientIndex};
 }
 
-void GameServer::handleNetworkEvent(const ServerEvent& srvEvent, const network::NwPutStoneEvent& nwEvent) {
+Player GameServer::seatToPlayer(std::size_t clientIndex) const {
+	return clientIndex == 0 ? Player::Black : Player::White;
+}
+
+void GameServer::handleNetworkEvent(const ServerEvent& srvEvent, const network::NwPutStoneEvent& putEvent) {
 	auto logger = Logger();
 
-	// Attach session key and enqueue into game; Game decides legality.
+	if (!m_game.isActive()) {
+		logger.Log(Logging::LogLevel::Warning, "[GameServer] Rejecting PutStone: game is not active.");
+		return;
+	}
+
+	// Push into the core game loop; legality (ko, captures, etc.) is still enforced there.
+	const auto move   = Coord{putEvent.x, putEvent.y};
+	const auto player = seatToPlayer(srvEvent.clientIndex);
 	logger.Log(Logging::LogLevel::Info,
-	           std::format("[GameServer] Attempting PutStone from client {} at ({}, {}).", srvEvent.clientIndex + 1, nwEvent.x, nwEvent.y));
+	           std::format("[GameServer] Accepting PutStone from client {} at ({}, {}).", srvEvent.clientIndex + 1, move.x, move.y));
 
-	// TODO: Only push if isPlayerTurn(clientIndex), etc
-	m_game.pushEvent(PutStoneEvent{Coord{nwEvent.x, nwEvent.y}});
+	m_game.pushEvent(PutStoneEvent{player, move});
 }
 
-void GameServer::handleNetworkEvent(const ServerEvent&, const network::NwPassEvent&) {
-	// TODO:
+void GameServer::handleNetworkEvent(const ServerEvent& srvEvent, const network::NwPassEvent&) {
+	auto logger = Logger();
+
+	if (!m_game.isActive()) {
+		logger.Log(Logging::LogLevel::Warning, "[GameServer] Rejecting Pass: game is not active.");
+		return;
+	}
+
+	m_game.pushEvent(PassEvent{seatToPlayer(srvEvent.clientIndex)});
 }
 
-void GameServer::handleNetworkEvent(const ServerEvent&, const network::NwResignEvent&) {
-	// TODO:
+void GameServer::handleNetworkEvent(const ServerEvent& srvEvent, const network::NwResignEvent&) {
+	auto logger = Logger();
+
+	if (!m_game.isActive()) {
+		logger.Log(Logging::LogLevel::Warning, "[GameServer] Rejecting Resign: game already inactive.");
+		return;
+	}
+
+	m_game.pushEvent(ResignEvent{});
+	logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Client {} resigned.", srvEvent.clientIndex + 1));
 }
 
-void GameServer::handleNetworkEvent(const ServerEvent& srvEvent, const network::NwChatEvent& nwEvent) {
+void GameServer::handleNetworkEvent(const ServerEvent& srvEvent, const network::NwChatEvent& chatEvent) {
 	const auto opponent = opponentIndex(srvEvent.clientIndex);
 	if (!opponent.has_value()) {
 		auto logger = Logger();
@@ -206,7 +231,7 @@ void GameServer::handleNetworkEvent(const ServerEvent& srvEvent, const network::
 		return;
 	}
 
-	const std::string envelope = std::format("CHAT_FROM:{}:{}", ensureSession(srvEvent.clientIndex), nwEvent.message);
+	const std::string envelope = std::format("CHAT_FROM:{}:{}", ensureSession(srvEvent.clientIndex), chatEvent.message);
 	m_network.sendToClient(*opponent, envelope);
 }
 
