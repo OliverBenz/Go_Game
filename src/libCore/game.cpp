@@ -50,6 +50,10 @@ bool Game::isActive() const {
 void Game::handleEvent(const PutStoneEvent& event) {
 	assert(m_hasher);
 
+	if (event.player != m_position.currentPlayer) {
+		return;
+	}
+
 	Position next{m_position.board.size()};
 	if (isNextPositionLegal(m_position, m_position.currentPlayer, event.c, *m_hasher, m_seenHashes, next)) {
 		m_consecutivePasses = 0;
@@ -62,8 +66,12 @@ void Game::handleEvent(const PutStoneEvent& event) {
 	}
 }
 
-void Game::handleEvent(const PassEvent&) {
+void Game::handleEvent(const PassEvent& event) {
 	assert(m_hasher);
+
+	if (event.player != m_position.currentPlayer) {
+		return;
+	}
 
 	++m_consecutivePasses;
 	if (m_consecutivePasses == 2) {
