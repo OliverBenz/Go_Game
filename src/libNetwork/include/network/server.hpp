@@ -18,16 +18,14 @@
 namespace go {
 namespace network {
 
-// Blocking TCP server that accepts up to two clients (Black/White) and
-// acknowledges any length-prefixed message it receives.
+//! Blocking TCP server that accepts up to two clients (Black/White) and acknowledges any length-prefixed message it receives.
 class TcpServer {
-public:
-	using ConnectHandler =
-	        std::function<void(std::size_t /*clientIndex*/, const asio::ip::tcp::endpoint&)>; //!< Inform host when a new client connects.
-	using MessageHandler    = std::function<std::optional<std::string>(
-            std::size_t /*clientIndex*/, const std::string&)>; //!< Return optional payload to send as reply; nullopt => default ack.
-	using DisconnectHandler = std::function<void(std::size_t /*clientIndex*/)>; //!< Inform host when a client disconnects.
+public: // Callback handlers. Intentionally don't return data. Keep lightweight.
+	using ConnectHandler    = std::function<void(std::size_t /*clientIndex*/, const asio::ip::tcp::endpoint&)>; //!< Inform host when a new client connects.
+	using MessageHandler    = std::function<void(std::size_t /*clientIndex*/, const std::string&)>;             //!< Inform host on client message
+	using DisconnectHandler = std::function<void(std::size_t /*clientIndex*/)>;                                 //!< Inform host when a client disconnects.
 
+public:
 	explicit TcpServer(std::uint16_t port = DEFAULT_PORT);
 	~TcpServer();
 

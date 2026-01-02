@@ -86,8 +86,7 @@ void TcpServer::accept_loop() {
 
 		// Start thread to handle new client
 		assert(connected_clients < m_clientThreads.max_size());
-		m_clientThreads.at(connected_clients) =
-		        std::thread([this, socket_ptr, connected_clients]() { handle_client(socket_ptr, connected_clients); });
+		m_clientThreads.at(connected_clients) = std::thread([this, socket_ptr, connected_clients]() { handle_client(socket_ptr, connected_clients); });
 		++connected_clients;
 
 		if (m_onConnect) {
