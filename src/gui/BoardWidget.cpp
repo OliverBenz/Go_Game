@@ -16,8 +16,7 @@
 
 namespace go::ui {
 
-BoardWidget::BoardWidget(Game& game, QWidget* parent)
-    : QWidget(parent), m_game(game), m_boardRenderer(static_cast<unsigned>(game.board().size())) {
+BoardWidget::BoardWidget(Game& game, QWidget* parent) : QWidget(parent), m_game(game), m_boardRenderer(static_cast<unsigned>(game.board().size())) {
 	setFocusPolicy(Qt::StrongFocus); // Required to get key events.
 	setMouseTracking(false);
 

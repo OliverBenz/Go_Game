@@ -59,8 +59,7 @@ static std::size_t groupAnalysis(const Board& board, const Coord startCoord, con
 				continue;
 			}
 
-			if (board.getAt(neighbor) == Board::Value::Empty &&
-			    (!blockedLiberty || (blockedLiberty->x != neighbor.x || blockedLiberty->y != neighbor.y)) &&
+			if (board.getAt(neighbor) == Board::Value::Empty && (!blockedLiberty || (blockedLiberty->x != neighbor.x || blockedLiberty->y != neighbor.y)) &&
 			    !libertyVisited[neighbor.x][neighbor.y]) {
 				libertyVisited[neighbor.x][neighbor.y] = true;
 				++liberties;
@@ -190,8 +189,7 @@ bool isValidMove(const Board& board, Player player, Coord c) {
 	return !isSuicide(board, player, c);
 }
 
-bool isNextPositionLegal(const Position& current, Player player, Coord c, IZobristHash& hasher, const std::unordered_set<uint64_t>& history,
-                         Position& out) {
+bool isNextPositionLegal(const Position& current, Player player, Coord c, IZobristHash& hasher, const std::unordered_set<uint64_t>& history, Position& out) {
 	if (!isValidMove(current.board, player, c))
 		return false;
 
