@@ -109,10 +109,7 @@ void TcpServer::handle_client(std::shared_ptr<asio::ip::tcp::socket> socket, std
 			const auto payload = read_payload(*socket, payload_size);
 
 			if (m_onMessage) {
-				if (auto reply = m_onMessage(client_index, payload)) {
-					send_ack(*socket, *reply);
-					continue;
-				}
+				m_onMessage(client_index, payload);
 			}
 
 			send_ack(*socket, "SUCCESS");

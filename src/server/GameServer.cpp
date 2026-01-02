@@ -137,20 +137,20 @@ void GameServer::processClientConnect(const ServerEvent& event) {
 
 void GameServer::processClientMessage(const ServerEvent& event) {
 	const auto session = m_sessions[event.clientIndex];
-	if(!session.sessionKey) {
+	if(!session.has_value() || session.value().sessionKey.empty()) {
 		return; // TODO: Send rejection code.
 	}
 	
 	static constexpr char LOG_MSG[] = "[GameServer] Message from client {} (session {}): '{}'.";
 	auto logger                     = Logger();
-	logger.Log(Logging::LogLevel::Debug, std::format(LOG_MSG, event.clientIndex + 1, session.sessionKey, event.payload));
+	logger.Log(Logging::LogLevel::Debug, std::format(LOG_MSG, event.clientIndex + 1, session.value().sessionKey, event.payload));
 
 	// Server event message contains a network event. Parse and handle.
 	const auto networkEvent = network::fromMessage(event.payload);
 	if (!networkEvent) {
 		return;
 	}
-	std::visit([&](const auto& e) { handleNetworkEvent(session, e); }, *networkEvent);
+	std::visit([&](const auto& e) { handleNetworkEvent(session.value(), e); }, *networkEvent);
 }
 
 void GameServer::processClientDisconnect(const ServerEvent& event) {
@@ -202,7 +202,7 @@ void GameServer::handleNetworkEvent(const PlayerSession& session, const network:
 	// Push into the core game loop; legality (ko, captures, etc.) is still enforced there.
 	const auto move   = Coord{event.x, event.y};
 	const auto player = session.player;
-	logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Accepting PutStone from client {} at ({}, {}).", (int)session.player, move.x, move.y));
+	logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Accepting PutStone from client {} at ({}, {}).", static_cast<int>(session.player), move.x, move.y));
 
 	m_game.pushEvent(PutStoneEvent{player, move});
 }
@@ -227,11 +227,11 @@ void GameServer::handleNetworkEvent(const PlayerSession& session, const network:
 	}
 
 	m_game.pushEvent(ResignEvent{});
-	logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Client {} resigned.", (int)session.player));
+	logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Client {} resigned.", static_cast<int>(session.player)));
 }
 
 void GameServer::handleNetworkEvent(const PlayerSession& session, const network::NwChatEvent& event) {
-	const auto opponent = opponentIndex(srvEvent.clientIndex);
+	const auto opponent = opponentIndex(session.clientIndex);
 	if (!opponent.has_value()) {
 		auto logger = Logger();
 		logger.Log(Logging::LogLevel::Warning, "[GameServer] Chat dropped: opponent not connected.");
@@ -239,7 +239,7 @@ void GameServer::handleNetworkEvent(const PlayerSession& session, const network:
 	}
 
 	const std::string envelope = std::format("CHAT_FROM:{}:{}", session.sessionKey, event.message);
-	m_network.sendToClient(*opponent, envelope);
+	m_network.sendToClient(opponent.value(), envelope);
 }
 
 } // namespace go::server
