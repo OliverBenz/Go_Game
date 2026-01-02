@@ -44,10 +44,8 @@ public:
 	GameServer(Game& game, std::uint16_t port = network::DEFAULT_PORT);
 	~GameServer();
 
-	//! Boot the network listener and the server event loop.
-	void start();
-	//! Signal shutdown to the server loop and stop the network listener.
-	void stop();
+	void start(); //!< Boot the network listener and the server event loop.
+	void stop();  //!< Signal shutdown to the server loop and stop the network listener.
 
 private:
 	// Network callbacks (run on libNetwork threads) just enqueue lightweight events.
@@ -59,7 +57,8 @@ private:
 	void processEvent(const ServerEvent& event); //!< Server loop calls this. Reads event type and distributes.
 
 	std::string ensureSession(std::size_t clientIndex);
-	std::optional<std::size_t> opponentIndex(std::size_t clientIndex) const;
+	std::optional<std::size_t> opponentIndex(std::size_t clientIndex) const; //!< Client index of opponent.
+	Player seatToPlayer(std::size_t clientIndex) const;                      //!< Seat 0 -> Black, Seat 1 -> White.
 
 private: // Processing of server events.
 	void processClientMessage(const ServerEvent& event);
@@ -68,10 +67,10 @@ private: // Processing of server events.
 	void processShutdown(const ServerEvent& event);
 
 private: // Processing of the network events that are sent in the server event message payload.
-	void handleNetworkEvent(const ServerEvent& srvEvent, const network::NwPutStoneEvent& nwEvent);
-	void handleNetworkEvent(const ServerEvent& srvEvent, const network::NwPassEvent& nwEvent);
-	void handleNetworkEvent(const ServerEvent& srvEvent, const network::NwResignEvent& nwEvent);
-	void handleNetworkEvent(const ServerEvent& srvEvent, const network::NwChatEvent& nwEvent);
+	void handleNetworkEvent(const ServerEvent& srvEvent, const network::NwPutStoneEvent& putEvent);
+	void handleNetworkEvent(const ServerEvent& srvEvent, const network::NwPassEvent& passEvent);
+	void handleNetworkEvent(const ServerEvent& srvEvent, const network::NwResignEvent& resignEvent);
+	void handleNetworkEvent(const ServerEvent& srvEvent, const network::NwChatEvent& chatEvent);
 
 private:
 	Game& m_game;
