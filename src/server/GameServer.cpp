@@ -30,8 +30,7 @@ static std::string CreateSessionKey() {
 
 GameServer::GameServer(Game& game, std::uint16_t port) : m_game{game}, m_network{port} {
 	// Wire up network callbacks but keep them thin: they only enqueue events.
-	m_network.setOnConnect(
-	        [this](std::size_t clientIndex, const asio::ip::tcp::endpoint& endpoint) { onClientConnected(clientIndex, endpoint); });
+	m_network.setOnConnect([this](std::size_t clientIndex, const asio::ip::tcp::endpoint& endpoint) { return onClientConnected(clientIndex, endpoint); });
 	m_network.setOnMessage([this](std::size_t clientIndex, const std::string& payload) { return onClientMessage(clientIndex, payload); });
 	m_network.setOnDisconnect([this](std::size_t clientIndex) { onClientDisconnected(clientIndex); });
 }
@@ -70,23 +69,15 @@ void GameServer::stop() {
 }
 
 void GameServer::onClientConnected(std::size_t clientIndex, const asio::ip::tcp::endpoint& endpoint) {
-	// Network thread -> enqueue and return ASAP.
-	m_eventQueue.Push(
-	        ServerEvent{.type = ServerEventType::ClientConnected, .clientIndex = clientIndex, .payload = endpoint.address().to_string()});
+	m_eventQueue.Push(ServerEvent{.type = ServerEventType::ClientConnected, .clientIndex = clientIndex, .payload = endpoint.address().to_string()});
 }
 
-// TODO: Client session assigned on connection. Not on message
-std::optional<std::string> GameServer::onClientMessage(std::size_t clientIndex, const std::string& payload) {
-	const auto session = ensureSession(clientIndex);
+void GameServer::onClientMessage(std::size_t clientIndex, const std::string& payload) {
 	m_eventQueue.Push(ServerEvent{
 	        .type        = ServerEventType::ClientMessage,
 	        .clientIndex = clientIndex,
 	        .payload     = payload,
-	        .sessionKey  = session,
 	});
-
-	// Send lightweight session echo so the client gets a prompt response while the server thread processes.
-	return std::format("SESSION:{}", session);
 }
 
 void GameServer::onClientDisconnected(std::size_t clientIndex) {
@@ -131,27 +122,43 @@ void GameServer::processEvent(const ServerEvent& event) {
 	}
 }
 
+void GameServer::processClientConnect(const ServerEvent& event) {
+	// TODO: This session handling should be reworked.
+	const auto session = ensureSession(event.clientIndex);
+	if(session.empty()) {
+		return;
+	}
+	m_network.sendToClient(event.clientIndex, "SESSION:{}" + session);
+
+	auto logger = Logger();
+	logger.Log(Logging::LogLevel::Info,
+	           std::format("[GameServer] Client {} connected from '{}'. Session Key: '{}'", event.clientIndex + 1, event.payload, session));
+}
+
 void GameServer::processClientMessage(const ServerEvent& event) {
+	const auto session = m_sessions[event.clientIndex];
+	if(!session.sessionKey) {
+		return; // TODO: Send rejection code.
+	}
+	
 	static constexpr char LOG_MSG[] = "[GameServer] Message from client {} (session {}): '{}'.";
 	auto logger                     = Logger();
-	logger.Log(Logging::LogLevel::Debug, std::format(LOG_MSG, event.clientIndex + 1, event.sessionKey, event.payload));
+	logger.Log(Logging::LogLevel::Debug, std::format(LOG_MSG, event.clientIndex + 1, session.sessionKey, event.payload));
 
 	// Server event message contains a network event. Parse and handle.
 	const auto networkEvent = network::fromMessage(event.payload);
 	if (!networkEvent) {
 		return;
 	}
-	std::visit([&](const auto& e) { handleNetworkEvent(event, e); }, *networkEvent);
+	std::visit([&](const auto& e) { handleNetworkEvent(session, e); }, *networkEvent);
 }
 
-void GameServer::processClientConnect(const ServerEvent& event) {
-	auto logger = Logger();
-	logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Client {} connected from '{}'.", event.clientIndex + 1, event.payload));
-}
 void GameServer::processClientDisconnect(const ServerEvent& event) {
 	auto logger = Logger();
 	// TODO: Handle reconnect.
 	logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Client {} disconnected.", event.clientIndex + 1));
+
+	// TODO: Handle session close
 }
 void GameServer::processShutdown(const ServerEvent&) {
 	auto logger = Logger();
@@ -159,13 +166,14 @@ void GameServer::processShutdown(const ServerEvent&) {
 	m_isRunning = false;
 }
 
+// TODO: This session handling stuff is still awful. Improve.
 std::string GameServer::ensureSession(std::size_t clientIndex) {
 	if (clientIndex >= network::MAX_PLAYERS) {
 		return {};
 	}
 
 	if (!m_sessions[clientIndex].has_value()) {
-		m_sessions[clientIndex] = PlayerSession{CreateSessionKey(), clientIndex};
+		m_sessions[clientIndex] = PlayerSession{seatToPlayer(clientIndex), CreateSessionKey()};
 	}
 
 	return m_sessions[clientIndex]->sessionKey;
@@ -183,7 +191,7 @@ Player GameServer::seatToPlayer(std::size_t clientIndex) const {
 	return clientIndex == 0 ? Player::Black : Player::White;
 }
 
-void GameServer::handleNetworkEvent(const ServerEvent& srvEvent, const network::NwPutStoneEvent& putEvent) {
+void GameServer::handleNetworkEvent(const PlayerSession& session, const network::NwPutStoneEvent& event) {
 	auto logger = Logger();
 
 	if (!m_game.isActive()) {
@@ -192,15 +200,14 @@ void GameServer::handleNetworkEvent(const ServerEvent& srvEvent, const network::
 	}
 
 	// Push into the core game loop; legality (ko, captures, etc.) is still enforced there.
-	const auto move   = Coord{putEvent.x, putEvent.y};
-	const auto player = seatToPlayer(srvEvent.clientIndex);
-	logger.Log(Logging::LogLevel::Info,
-	           std::format("[GameServer] Accepting PutStone from client {} at ({}, {}).", srvEvent.clientIndex + 1, move.x, move.y));
+	const auto move   = Coord{event.x, event.y};
+	const auto player = session.player;
+	logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Accepting PutStone from client {} at ({}, {}).", (int)session.player, move.x, move.y));
 
 	m_game.pushEvent(PutStoneEvent{player, move});
 }
 
-void GameServer::handleNetworkEvent(const ServerEvent& srvEvent, const network::NwPassEvent&) {
+void GameServer::handleNetworkEvent(const PlayerSession& session, const network::NwPassEvent&) {
 	auto logger = Logger();
 
 	if (!m_game.isActive()) {
@@ -208,10 +215,10 @@ void GameServer::handleNetworkEvent(const ServerEvent& srvEvent, const network::
 		return;
 	}
 
-	m_game.pushEvent(PassEvent{seatToPlayer(srvEvent.clientIndex)});
+	m_game.pushEvent(PassEvent{session.player});
 }
 
-void GameServer::handleNetworkEvent(const ServerEvent& srvEvent, const network::NwResignEvent&) {
+void GameServer::handleNetworkEvent(const PlayerSession& session, const network::NwResignEvent&) {
 	auto logger = Logger();
 
 	if (!m_game.isActive()) {
@@ -220,10 +227,10 @@ void GameServer::handleNetworkEvent(const ServerEvent& srvEvent, const network::
 	}
 
 	m_game.pushEvent(ResignEvent{});
-	logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Client {} resigned.", srvEvent.clientIndex + 1));
+	logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Client {} resigned.", (int)session.player));
 }
 
-void GameServer::handleNetworkEvent(const ServerEvent& srvEvent, const network::NwChatEvent& chatEvent) {
+void GameServer::handleNetworkEvent(const PlayerSession& session, const network::NwChatEvent& event) {
 	const auto opponent = opponentIndex(srvEvent.clientIndex);
 	if (!opponent.has_value()) {
 		auto logger = Logger();
@@ -231,7 +238,7 @@ void GameServer::handleNetworkEvent(const ServerEvent& srvEvent, const network::
 		return;
 	}
 
-	const std::string envelope = std::format("CHAT_FROM:{}:{}", ensureSession(srvEvent.clientIndex), chatEvent.message);
+	const std::string envelope = std::format("CHAT_FROM:{}:{}", session.sessionKey, event.message);
 	m_network.sendToClient(*opponent, envelope);
 }
 

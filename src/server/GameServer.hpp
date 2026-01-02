@@ -29,8 +29,8 @@ struct ServerEvent {
 };
 
 struct PlayerSession {
+	Player player;
 	std::string sessionKey;
-	std::size_t seatIndex; // 0 = Black, 1 = White
 };
 
 //! Bridges libNetwork (pure TCP bytes) and the core game (GameEvents).
@@ -48,9 +48,9 @@ public:
 	void stop();  //!< Signal shutdown to the server loop and stop the network listener.
 
 private:
-	// Network callbacks (run on libNetwork threads) just enqueue lightweight events.
+	// Network callbacks (run on libNetwork threads) just enqueue events.
 	void onClientConnected(std::size_t clientIndex, const asio::ip::tcp::endpoint& endpoint);
-	std::optional<std::string> onClientMessage(std::size_t clientIndex, const std::string& payload);
+	void onClientMessage(std::size_t clientIndex, const std::string& payload);
 	void onClientDisconnected(std::size_t clientIndex);
 
 	void serverLoop();                           //!< Server thread: drain queue and act.
@@ -61,22 +61,21 @@ private:
 	Player seatToPlayer(std::size_t clientIndex) const;                      //!< Seat 0 -> Black, Seat 1 -> White.
 
 private: // Processing of server events.
-	void processClientMessage(const ServerEvent& event);
-	void processClientConnect(const ServerEvent& event);
-	void processClientDisconnect(const ServerEvent& event);
-	void processShutdown(const ServerEvent& event);
+	void processClientMessage(const ServerEvent& event);    //!< Translate payload to network event and handle.
+	void processClientConnect(const ServerEvent& event);    //!< Creates session key.
+	void processClientDisconnect(const ServerEvent& event); //!< Destroys session key.
+	void processShutdown(const ServerEvent& event);         //!< Shutdown server.
 
 private: // Processing of the network events that are sent in the server event message payload.
-	void handleNetworkEvent(const ServerEvent& srvEvent, const network::NwPutStoneEvent& putEvent);
-	void handleNetworkEvent(const ServerEvent& srvEvent, const network::NwPassEvent& passEvent);
-	void handleNetworkEvent(const ServerEvent& srvEvent, const network::NwResignEvent& resignEvent);
-	void handleNetworkEvent(const ServerEvent& srvEvent, const network::NwChatEvent& chatEvent);
+	void handleNetworkEvent(const PlayerSession& session, const network::NwPutStoneEvent& event);
+	void handleNetworkEvent(const PlayerSession& session, const network::NwPassEvent& event);
+	void handleNetworkEvent(const PlayerSession& session, const network::NwResignEvent& event);
+	void handleNetworkEvent(const PlayerSession& session, const network::NwChatEvent& event);
 
 private:
 	Game& m_game;
 	network::TcpServer m_network;
 
-	// Session tracking is owned by the server layer (not the network).
 	std::array<std::optional<PlayerSession>, network::MAX_PLAYERS> m_sessions;
 
 	// Event queue between network threads and server thread.
