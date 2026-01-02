@@ -7,9 +7,12 @@
 namespace go {
 
 struct PutStoneEvent {
+	Player player;
 	Coord c;
 };
-struct PassEvent {};
+struct PassEvent {
+	Player player;
+};
 struct ResignEvent {};
 struct ShutdownEvent {};
 
