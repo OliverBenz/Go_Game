@@ -127,9 +127,9 @@ bool BoardRenderer::pixelToCoord(const int px, unsigned& coord) const {
 		return false;
 	}
 
-	const auto coordRel = static_cast<float>(px - static_cast<int>(m_coordStart)) /
-	                      static_cast<float>(m_stoneSize); // Calculate board coordinate from pixel values.
-	const auto coordRound = std::round(coordRel);          // Round to nearest coordinate.
+	const auto coordRel =
+	        static_cast<float>(px - static_cast<int>(m_coordStart)) / static_cast<float>(m_stoneSize); // Calculate board coordinate from pixel values.
+	const auto coordRound = std::round(coordRel);                                                      // Round to nearest coordinate.
 
 	// Click has to be close enough to a point and on the board.
 	if (std::abs(coordRound - coordRel) > TOLERANCE || coordRound < 0 || coordRound > static_cast<float>(m_nodes) - 1) {
