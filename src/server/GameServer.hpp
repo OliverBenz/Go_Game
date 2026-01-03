@@ -33,12 +33,7 @@ struct PlayerSession {
 	std::string sessionKey;
 };
 
-//! Bridges libNetwork (pure TCP bytes) and the core game (GameEvents).
-//! Responsibilities:
-//! - Own the TcpServer and translate network lifecycle into a queue of ServerEvents.
-//! - Run a dedicated server thread that pops events and forwards them to the game engine.
-//! - Maintain per-client session keys to identify players without leaking network concerns into game logic.
-//! - Outline chat handling: messages prefixed with CHAT: are forwarded to the opponent.
+//! Application layer
 class GameServer {
 public:
 	GameServer(Game& game, std::uint16_t port = network::DEFAULT_PORT);
