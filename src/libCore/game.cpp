@@ -5,7 +5,7 @@
 
 namespace go {
 
-Game::Game(const std::size_t boardSize) : m_gameActive{true}, m_position{boardSize} {
+Game::Game(const std::size_t boardSize) : m_gameActive{false}, m_position{boardSize} {
 	switch (m_position.board.size()) {
 	case 9u:
 		m_hasher = std::make_unique<ZobristHash<9u>>();
@@ -28,6 +28,8 @@ void Game::pushEvent(GameEvent event) {
 }
 
 void Game::run() {
+	m_gameActive = true;
+	
 	while (m_gameActive) {
 		const auto event = m_eventQueue.Pop();
 		std::visit([&](auto&& ev) { handleEvent(ev); }, event);
