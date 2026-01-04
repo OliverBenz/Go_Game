@@ -55,7 +55,7 @@ private:
 	std::optional<std::size_t> opponentIndex(std::size_t clientIndex) const; //!< Client index of opponent.
 	Player seatToPlayer(std::size_t clientIndex) const;                      //!< Seat 0 -> Black, Seat 1 -> White.
 
-private: // Processing of server events.
+private:                                                    // Processing of server events.
 	void processClientMessage(const ServerEvent& event);    //!< Translate payload to network event and handle.
 	void processClientConnect(const ServerEvent& event);    //!< Creates session key.
 	void processClientDisconnect(const ServerEvent& event); //!< Destroys session key.

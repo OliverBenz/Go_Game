@@ -11,6 +11,9 @@
 namespace go {
 namespace network {
 
+using SessionId = std::string;
+using Message   = std::string;
+
 // Network events
 struct NwPutStoneEvent {
 	unsigned x;

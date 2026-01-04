@@ -21,15 +21,13 @@ public:
 	void disconnect();
 
 	bool send(NwEvent event);
-
 	std::string read();
-	// TODO: This not needed right now. Maybe keep as a ping function?
-	std::string send_and_receive(std::string_view payload);
 
 	bool isConnected() const;
 
 private:
 	bool send(std::string_view payload);
+	std::string ping(std::string_view payload); //!< Send payload and receive ack.
 
 	BasicMessageHeader read_header();
 	std::string read_payload(std::uint32_t expected_bytes);
