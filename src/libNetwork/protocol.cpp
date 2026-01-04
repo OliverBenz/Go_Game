@@ -29,15 +29,16 @@ std::string toMessage(NwEvent event) {
 
 std::optional<NwEvent> fromMessage(const std::string& message) {
 	if (message.rfind(MSG_PUT, 0) == 0) {
-		// Expect "x,y"
-		auto commaPos = message.find(',');
+		// Expect "PUT:x,y"
+		const auto payload = message.substr(MSG_PUT.size());
+		auto commaPos = payload.find(',');
 		if (commaPos == std::string::npos) {
 			return {};
 		}
 
 		try {
-			const auto x = static_cast<unsigned>(std::stoul(message.substr(0, commaPos)));
-			const auto y = static_cast<unsigned>(std::stoul(message.substr(commaPos + 1)));
+			const auto x = static_cast<unsigned>(std::stoul(payload.substr(0, commaPos)));
+			const auto y = static_cast<unsigned>(std::stoul(payload.substr(commaPos + 1)));
 
 			return NwPutStoneEvent{.x = x, .y = y};
 		} catch (const std::exception&) {}
@@ -46,15 +47,15 @@ std::optional<NwEvent> fromMessage(const std::string& message) {
 	}
 
 	if (message.rfind(MSG_CHAT, 0) == 0) {
-		NwChatEvent{.message = message.substr(MSG_CHAT.size())};
+		return NwChatEvent{.message = message.substr(MSG_CHAT.size())};
 	}
 
-	if (message.rfind(MSG_PASS, 0) == 0) {
-		NwPassEvent{};
+	if (message == MSG_PASS) {
+		return NwPassEvent{};
 	}
 
-	if (message.rfind(MSG_RESIGN, 0) == 0) {
-		NwResignEvent{};
+	if (message == MSG_RESIGN) {
+		return NwResignEvent{};
 	}
 
 	// Invalid

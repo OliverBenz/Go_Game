@@ -55,6 +55,28 @@ void TcpServer::stop() {
 	}
 }
 
+bool TcpServer::send(SessionId sessionId, Message msg) {
+	// TODO: Should be handled more clean.
+	std::lock_guard<std::mutex> lock(m_connectionsMutex);
+	for (const auto& connection: m_connections) {
+		if (connection && connection->sessionId() == sessionId) {
+			connection->send(msg);
+			return true;
+		}
+	}
+	return false;
+}
+
+void TcpServer::reject(SessionId sessionId) {
+	std::lock_guard<std::mutex> lock(m_connectionsMutex);
+	auto it = std::ranges::find_if(m_connections, [&](const auto& conn) { return conn && conn->sessionId() == sessionId; });
+
+	if (it != m_connections.end()) {
+		(*it)->stop();
+		it->reset(); // remove from array
+	}
+}
+
 void TcpServer::acceptLoop() {
 	while (m_running) {
 		asio::ip::tcp::socket socket(m_ioContext);

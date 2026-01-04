@@ -19,7 +19,7 @@
 namespace go {
 namespace network {
 
-//! Connection Manager.
+//! Connection Manager. Accepts and manages client connections.
 class TcpServer {
 public:
 	struct Callbacks {
@@ -33,6 +33,9 @@ public:
 	void start();                      //!< Start accepting clients.
 	void connect(Callbacks callbacks); //!< Connect callback functions to get event signalling.
 	void stop();                       //!< Disconnect clients and stop the server.
+
+	bool send(SessionId sessionId, Message msg); //!< Send message to the client with given sessionId.
+	void reject(SessionId sessionId);            //!< Reject the client with given sessionId.
 
 private:
 	void acceptLoop(); //!< Wait and create two client connections.
