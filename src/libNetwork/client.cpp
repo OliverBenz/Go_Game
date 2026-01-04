@@ -80,7 +80,7 @@ std::string TcpClient::read() {
 	return payload;
 }
 
-std::string TcpClient::send_and_receive(std::string_view payload) {
+std::string TcpClient::ping(std::string_view payload) {
 	if (send(payload)) {
 		return read();
 	}

@@ -1,47 +1,29 @@
 #include "network/server.hpp"
 
-#include <asio/read.hpp>
-#include <asio/write.hpp>
+#include <asio/ip/tcp.hpp>
 
-#include <array>
-#include <cassert>
-#include <format>
-#include <optional>
-#include <stdexcept>
 #include <utility>
 
-namespace go {
-namespace network {
+namespace go::network {
 
-TcpServer::TcpServer(std::uint16_t port) : m_acceptor(m_ioContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)) {
-}
-
-TcpServer::~TcpServer() {
-	stop();
+TcpServer::TcpServer(std::uint16_t port) : m_ioContext(), m_acceptor(m_ioContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)) {
 }
 
 void TcpServer::start() {
-	if (m_isRunning.exchange(true)) {
+	if (m_running.exchange(true)) {
 		return;
 	}
 
-	m_acceptThread = std::thread([this]() { accept_loop(); });
+	m_acceptThread = std::thread([this]() { acceptLoop(); });
+}
+
+void TcpServer::connect(Callbacks callbacks) {
+	m_callbacks = std::move(callbacks);
 }
 
 void TcpServer::stop() {
-	if (!m_isRunning.exchange(false)) {
+	if (!m_running.exchange(false)) {
 		return;
-	}
-
-	{
-		asio::error_code ec;
-		for (auto& socket: m_clientSockets) {
-			if (!socket) {
-				continue;
-			}
-			socket->shutdown(asio::socket_base::shutdown_both, ec);
-			socket->close(ec);
-		}
 	}
 
 	asio::error_code ec;
@@ -49,26 +31,37 @@ void TcpServer::stop() {
 	m_acceptor.close(ec);
 	m_ioContext.stop();
 
+	std::array<std::shared_ptr<Connection>, MAX_PLAYERS> connections;
+	{
+		std::lock_guard<std::mutex> lock(m_connectionsMutex);
+		connections = m_connections;
+	}
+
+	for (auto& connection: connections) {
+		if (connection) {
+			connection->stop();
+		}
+	}
+
+	{
+		std::lock_guard<std::mutex> lock(m_connectionsMutex);
+		for (auto& connection: m_connections) {
+			connection.reset();
+		}
+	}
+
 	if (m_acceptThread.joinable()) {
 		m_acceptThread.join();
 	}
-
-	for (auto& thread: m_clientThreads) {
-		if (thread.joinable()) {
-			thread.join();
-		}
-	}
 }
 
-void TcpServer::accept_loop() {
-	std::size_t connected_clients = 0;
-
-	while (m_isRunning && connected_clients < MAX_PLAYERS) {
+void TcpServer::acceptLoop() {
+	while (m_running) {
 		asio::ip::tcp::socket socket(m_ioContext);
 		asio::error_code ec;
 		m_acceptor.accept(socket, ec);
 
-		if (!m_isRunning) {
+		if (!m_running) {
 			break;
 		}
 
@@ -76,104 +69,65 @@ void TcpServer::accept_loop() {
 			if (ec == asio::error::operation_aborted) {
 				break;
 			}
-
 			continue;
 		}
 
-		// TODO: Verify this pattern
-		auto socket_ptr                       = std::make_shared<asio::ip::tcp::socket>(std::move(socket));
-		m_clientSockets.at(connected_clients) = socket_ptr;
-
-		// Start thread to handle new client
-		assert(connected_clients < m_clientThreads.max_size());
-		m_clientThreads.at(connected_clients) = std::thread([this, socket_ptr, connected_clients]() { handle_client(socket_ptr, connected_clients); });
-		++connected_clients;
-
-		if (m_onConnect) {
-			m_onConnect(connected_clients - 1, socket_ptr->remote_endpoint());
-		}
-	}
-}
-
-void TcpServer::handle_client(std::shared_ptr<asio::ip::tcp::socket> socket, std::size_t client_index) {
-	try {
-		while (m_isRunning) {
-			const auto header       = read_header(*socket);
-			const auto payload_size = from_network_u32(header.payload_size);
-
-			if (payload_size > MAX_PAYLOAD_BYTES) {
-				throw std::runtime_error("[Network] payload too large for demo server");
+		std::size_t slot = MAX_PLAYERS;
+		{
+			std::lock_guard<std::mutex> lock(m_connectionsMutex);
+			for (std::size_t i = 0; i < m_connections.size(); ++i) {
+				if (!m_connections[i]) {
+					slot = i;
+					break;
+				}
 			}
-
-			// In a fixed-size protocol, skip the header and always read FIXED_PACKET_PAYLOAD_BYTES here.
-			const auto payload = read_payload(*socket, payload_size);
-
-			if (m_onMessage) {
-				m_onMessage(client_index, payload);
-			}
-
-			send_ack(*socket, "SUCCESS");
 		}
-	} catch (const std::exception& ex) {}
 
-	if (m_onDisconnect) {
-		m_onDisconnect(client_index);
+		if (slot == MAX_PLAYERS) {
+			asio::error_code closeEc;
+			socket.shutdown(asio::socket_base::shutdown_both, closeEc);
+			socket.close(closeEc);
+			continue;
+		}
+
+		auto connection = createConnection(std::move(socket), slot);
+		{
+			std::lock_guard<std::mutex> lock(m_connectionsMutex);
+			m_connections[slot] = connection;
+		}
+
+		connection->start();
 	}
 }
 
-BasicMessageHeader TcpServer::read_header(asio::ip::tcp::socket& socket) {
-	BasicMessageHeader header{};
-	asio::read(socket, asio::buffer(&header, sizeof(header)));
-	return header;
+std::shared_ptr<Connection> TcpServer::createConnection(asio::ip::tcp::socket socket, std::size_t clientIndex) {
+	Connection::Callbacks callbacks;
+	callbacks.onConnect = [this](Connection& connection) {
+		if (m_callbacks.onConnect) {
+			m_callbacks.onConnect(connection.sessionId());
+		}
+	};
+	callbacks.onMessage = [this](Connection& connection, const Message& message) {
+		if (m_callbacks.onMessage) {
+			m_callbacks.onMessage(connection.sessionId(), message);
+		}
+	};
+	callbacks.onDisconnect = [this](Connection& connection) {
+		const auto index = connection.clientIndex();
+		{
+			std::lock_guard<std::mutex> lock(m_connectionsMutex);
+			if (index < m_connections.size()) {
+				if (m_connections[index].get() == &connection) {
+					m_connections[index].reset();
+				}
+			}
+		}
+		if (m_callbacks.onDisconnect) {
+			m_callbacks.onDisconnect(connection.sessionId());
+		}
+	};
+
+	return std::make_shared<Connection>(std::move(socket), clientIndex, std::move(callbacks));
 }
 
-std::string TcpServer::read_payload(asio::ip::tcp::socket& socket, std::uint32_t expected_bytes) {
-	if (expected_bytes == 0) {
-		return {};
-	}
-
-	std::string payload(expected_bytes, '\0');
-	asio::read(socket, asio::buffer(payload.data(), payload.size()));
-	return payload;
-}
-
-void TcpServer::send_ack(asio::ip::tcp::socket& socket, std::string_view message) {
-	BasicMessageHeader header{};
-	header.payload_size = to_network_u32(static_cast<std::uint32_t>(message.size()));
-
-	// TODO: Verify not just single write?
-	std::array<asio::const_buffer, 2> buffers = {asio::buffer(&header, sizeof(header)), asio::buffer(message.data(), message.size())};
-	asio::write(socket, buffers);
-}
-
-void TcpServer::setOnConnect(ConnectHandler handler) {
-	m_onConnect = std::move(handler);
-}
-
-void TcpServer::setOnMessage(MessageHandler handler) {
-	m_onMessage = std::move(handler);
-}
-
-void TcpServer::setOnDisconnect(DisconnectHandler handler) {
-	m_onDisconnect = std::move(handler);
-}
-
-std::shared_ptr<asio::ip::tcp::socket> TcpServer::getClientSocket(std::size_t client_index) {
-	// TODO: Check after usage: Better to assert?
-	if (client_index >= m_clientSockets.size()) {
-		return {};
-	}
-	return m_clientSockets.at(client_index);
-}
-
-void TcpServer::sendToClient(std::size_t client_index, std::string_view payload) {
-	auto socket = getClientSocket(client_index);
-	if (!socket) {
-		return;
-	}
-
-	send_ack(*socket, payload);
-}
-
-} // namespace network
-} // namespace go
+} // namespace go::network
