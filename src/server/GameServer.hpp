@@ -3,8 +3,7 @@
 #include "network/protocol.hpp"
 #include "network/server.hpp"
 
-#include "core/SafeQueue.hpp"
-#include "core/gameEvent.hpp"
+#include "core/game.hpp"
 
 #include <array>
 #include <atomic>
@@ -14,7 +13,6 @@
 #include <thread>
 
 namespace go {
-class Game;
 namespace server {
 
 // Events flowing from network threads into the server thread.
@@ -23,20 +21,22 @@ enum class ServerEventType { ClientConnected, ClientDisconnected, ClientMessage,
 
 struct ServerEvent {
 	ServerEventType type{};
-	std::size_t clientIndex{}; //!< 0 = Black, 1 = White
-	std::string payload{};     //!< Raw payload from the client (length-prefixed by libNetwork). Protocol examples: "PUT:3,4", "CHAT:hello".
-	std::string sessionKey{};  //!< Assigned per client; used for lightweight auth/tracking.
+	std::string sessionId{}; //!< Assigned per client; used for lightweight auth/tracking.
+	std::string payload{};   //!< Raw payload from the client (length-prefixed by libNetwork). Protocol examples: "PUT:3,4", "CHAT:hello".
 };
 
+//! Map between network layer and application layer.
 struct PlayerSession {
-	Player player;
-	std::string sessionKey;
+	Player player;         //!< Game layer client identification.
+	std::string sessionId; //!< Network layer client identification.
 };
 
-//! Application layer
+//! Game server on two layers.
+//! - Network layer    : Communicate with TcpServer, identifies a client through sessionId.
+//! - Application layer: Communicate with Game, identifies player through Player enum.
 class GameServer {
 public:
-	GameServer(Game& game, std::uint16_t port = network::DEFAULT_PORT);
+	GameServer(std::uint16_t port = network::DEFAULT_PORT);
 	~GameServer();
 
 	void start(); //!< Boot the network listener and the server event loop.
@@ -44,16 +44,18 @@ public:
 
 private:
 	// Network callbacks (run on libNetwork threads) just enqueue events.
-	void onClientConnected(std::size_t clientIndex, const asio::ip::tcp::endpoint& endpoint);
-	void onClientMessage(std::size_t clientIndex, const std::string& payload);
-	void onClientDisconnected(std::size_t clientIndex);
+	void onClientConnected(network::SessionId sessionId);
+	void onClientMessage(network::SessionId sessionId, const network::Message& payload);
+	void onClientDisconnected(network::SessionId sessionId);
 
 	void serverLoop();                           //!< Server thread: drain queue and act.
 	void processEvent(const ServerEvent& event); //!< Server loop calls this. Reads event type and distributes.
 
-	std::string ensureSession(std::size_t clientIndex);
-	std::optional<std::size_t> opponentIndex(std::size_t clientIndex) const; //!< Client index of opponent.
-	Player seatToPlayer(std::size_t clientIndex) const;                      //!< Seat 0 -> Black, Seat 1 -> White.
+	bool isClientConnected(network::SessionId sessionId) const; //!< Do we have an active session with given sessionId.
+	std::optional<Player> freePlayer() const;
+
+	network::SessionId sessionFromPlayer(Player player) const;    //!< Get sessionId of a player.
+	Player playerFromSession(network::SessionId sessionId) const; //!< Get player colour of corresp. sessionId.
 
 private:                                                    // Processing of server events.
 	void processClientMessage(const ServerEvent& event);    //!< Translate payload to network event and handle.
@@ -62,21 +64,22 @@ private:                                                    // Processing of ser
 	void processShutdown(const ServerEvent& event);         //!< Shutdown server.
 
 private: // Processing of the network events that are sent in the server event message payload.
-	void handleNetworkEvent(const PlayerSession& session, const network::NwPutStoneEvent& event);
-	void handleNetworkEvent(const PlayerSession& session, const network::NwPassEvent& event);
-	void handleNetworkEvent(const PlayerSession& session, const network::NwResignEvent& event);
-	void handleNetworkEvent(const PlayerSession& session, const network::NwChatEvent& event);
+	void handleNetworkEvent(Player player, const network::NwPutStoneEvent& event);
+	void handleNetworkEvent(Player player, const network::NwPassEvent& event);
+	void handleNetworkEvent(Player player, const network::NwResignEvent& event);
+	void handleNetworkEvent(Player player, const network::NwChatEvent& event);
 
 private:
-	Game& m_game;
-	network::TcpServer m_network;
+	Game m_game{9u};
+	std::thread m_gameThread;
 
-	std::array<std::optional<PlayerSession>, network::MAX_PLAYERS> m_sessions;
+	network::TcpServer m_network;
+	bool m_gameReady{false};
+
+	std::vector<PlayerSession> m_sessions;
 
 	// Event queue between network threads and server thread.
 	SafeQueue<ServerEvent> m_eventQueue;
-
-	std::thread m_serverThread;
 	std::atomic<bool> m_isRunning{false};
 };
 
