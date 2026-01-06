@@ -11,8 +11,8 @@
 namespace go {
 namespace network {
 
-using SessionId = std::string;
-using Message   = std::string;
+using ConnectionId = uint32_t;    //!< Identifies a connection on network layer.
+using Message      = std::string; //!< Message type.
 
 // Network events
 struct NwPutStoneEvent {
