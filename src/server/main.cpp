@@ -1,6 +1,6 @@
 #include "core/game.hpp"
 
-#include "GameServer.hpp"
+#include "gameServer.hpp"
 
 #include <thread>
 

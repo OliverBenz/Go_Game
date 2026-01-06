@@ -29,7 +29,7 @@ void Game::pushEvent(GameEvent event) {
 
 void Game::run() {
 	m_gameActive = true;
-	
+
 	while (m_gameActive) {
 		const auto event = m_eventQueue.Pop();
 		std::visit([&](auto&& ev) { handleEvent(ev); }, event);

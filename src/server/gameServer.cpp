@@ -1,4 +1,4 @@
-#include "GameServer.hpp"
+#include "gameServer.hpp"
 
 #include "Logging.hpp"
 #include "core/game.hpp"
@@ -16,9 +16,9 @@ namespace go::server {
 GameServer::GameServer(std::uint16_t port) : m_network{port} {
 	// Wire up network callbacks but keep them thin: they only enqueue events.
 	network::TcpServer::Callbacks callbacks;
-	callbacks.onConnect    = [this](network::SessionId sessionId) { return onClientConnected(std::move(sessionId)); };
-	callbacks.onMessage    = [this](network::SessionId sessionId, const network::Message& payload) { return onClientMessage(std::move(sessionId), payload); };
-	callbacks.onDisconnect = [this](network::SessionId sessionId) { onClientDisconnected(std::move(sessionId)); };
+	callbacks.onConnect    = [this](network::ConnectionId connectionId) { return onClientConnected(connectionId); };
+	callbacks.onMessage    = [this](network::ConnectionId connectionId, const network::Message& payload) { return onClientMessage(connectionId, payload); };
+	callbacks.onDisconnect = [this](network::ConnectionId connectionId) { onClientDisconnected(connectionId); };
 	m_network.connect(callbacks);
 }
 
@@ -55,20 +55,20 @@ void GameServer::stop() {
 	}
 }
 
-void GameServer::onClientConnected(network::SessionId sessionId) {
-	m_eventQueue.Push(ServerEvent{.type = ServerEventType::ClientConnected, .sessionId = std::move(sessionId)});
+void GameServer::onClientConnected(network::ConnectionId connectionId) {
+	m_eventQueue.Push(ServerEvent{.type = ServerEventType::ClientConnected, .connectionId = connectionId});
 }
 
-void GameServer::onClientMessage(network::SessionId sessionId, const network::Message& payload) {
+void GameServer::onClientMessage(network::ConnectionId connectionId, const network::Message& payload) {
 	m_eventQueue.Push(ServerEvent{
-	        .type      = ServerEventType::ClientMessage,
-	        .sessionId = sessionId,
-	        .payload   = payload,
+	        .type         = ServerEventType::ClientMessage,
+	        .connectionId = connectionId,
+	        .payload      = payload,
 	});
 }
 
-void GameServer::onClientDisconnected(network::SessionId sessionId) {
-	m_eventQueue.Push(ServerEvent{.type = ServerEventType::ClientDisconnected, .sessionId = sessionId});
+void GameServer::onClientDisconnected(network::ConnectionId connectionId) {
+	m_eventQueue.Push(ServerEvent{.type = ServerEventType::ClientDisconnected, .connectionId = connectionId});
 }
 
 void GameServer::serverLoop() {
@@ -115,71 +115,78 @@ void GameServer::processClientConnect(const ServerEvent& event) {
 	auto logger = Logger();
 
 	if (m_game.isActive()) {
-		m_network.reject(event.sessionId);
-		logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Rejected client '{}'.", event.sessionId));
-		return; // TODO: Does not handle reconnect.
+		m_network.reject(event.connectionId);
+		logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Rejected client '{}'.", event.connectionId));
+		return; // TODO: Does not handle reconnect or observers.
 	}
+
+	// TODO: Possible to have this connectionId already registered?
+	const auto sessionId = m_sessionManager.add(event.connectionId);
 
 	// If we have a player free
 	if (auto colour = freePlayer()) {
-		m_sessions.push_back(PlayerSession{*colour, event.sessionId});
-
-		m_network.send(event.sessionId, "SESSION:" + event.sessionId); // TODO: Move to protocol
-
-		logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Client '{}' connected from '{}'", event.sessionId, event.payload));
+		m_sessionManager.setSeat(sessionId, *colour == Player::Black ? Seat::Black : Seat::White);
+		m_network.send(event.connectionId, "SESSION:" + std::to_string(sessionId)); // TODO: Move to protocol
 	} else {
-		// Already two players
-		m_network.reject(event.sessionId);
-		logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Rejected client ''.", event.sessionId));
+		// Already two players. Observer now.
+		m_sessionManager.setSeat(sessionId, Seat::Observer);
 	}
+	logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Client '{}' connected.", sessionId));
 
 	// Start game
-	if (m_sessions.size() == network::MAX_PLAYERS) {
+	if (m_sessionManager.gameReady()) {
 		m_gameThread = std::thread([&] { m_game.run(); });
 	}
 }
 
 void GameServer::processClientMessage(const ServerEvent& event) {
-	if (!isClientConnected(event.sessionId)) {
+	const auto sessionId = m_sessionManager.getSessionId(event.connectionId);
+	if (!sessionId) {
 		auto logger = Logger();
-		logger.Log(Logging::LogLevel::Warning, std::format("[GameServer] Message from unknown session '{}'.", event.sessionId));
+		logger.Log(Logging::LogLevel::Warning, std::format("[GameServer] Message from connection '{}' without session.", event.connectionId));
 		return;
 	}
-	const auto player = playerFromSession(event.sessionId);
+	const auto seat = m_sessionManager.getSeat(sessionId);
+	if (seat != Seat::Black && seat != Seat::White) {
+		auto logger = Logger();
+		logger.Log(Logging::LogLevel::Warning, std::format("[GameServer] Message from observer session '{}'.", sessionId));
+		return;
+	}
 
 	// Server event message contains a network event. Parse and handle.
 	const auto networkEvent = network::fromMessage(event.payload);
 	if (!networkEvent) {
+		auto logger = Logger();
+		logger.Log(Logging::LogLevel::Warning, std::format("[GameServer] Could not parse client '{}' payload: '{}'.", sessionId, event.payload));
 		return;
 	}
 
 	{
 		static constexpr char LOG_MSG[] = "[GameServer] Message from client '{}': '{}'.";
-		auto logger = Logger();
-		logger.Log(Logging::LogLevel::Debug, std::format(LOG_MSG, event.sessionId, event.payload));
+		auto logger                     = Logger();
+		logger.Log(Logging::LogLevel::Debug, std::format(LOG_MSG, event.connectionId, event.payload));
 	}
 
-	std::visit([&](const auto& e) { handleNetworkEvent(player, e); }, *networkEvent);
+	std::visit([&](const auto& e) { handleNetworkEvent(seat == Seat::Black ? Player::Black : Player::White, e); }, *networkEvent);
 }
 
-// TODO: Handle reconnect.
 void GameServer::processClientDisconnect(const ServerEvent& event) {
-	if (!isClientConnected(event.sessionId)) {
+	const auto sessionId = m_sessionManager.getSessionId(event.connectionId);
+	if (!sessionId) {
+		// Should never happen
 		auto logger = Logger();
-		logger.Log(Logging::LogLevel::Warning, std::format("[GameServer] Disconnect from unknown session '{}'.", event.sessionId));
+		logger.Log(Logging::LogLevel::Error, "[GameServer] Connection ID not mapped to any session ID on disconnect.");
 		return;
 	}
 
 	// Remove session
-	auto it = std::ranges::find_if(m_sessions, [&](const PlayerSession& ps) { return ps.sessionId == event.sessionId; });
-	if (it != m_sessions.end()) {
-		m_sessions.erase(it);
+	m_sessionManager.setDisconnected(sessionId);
+	if (!m_game.isActive()) {
+		m_sessionManager.remove(sessionId); // Allow new player to join before game started.
 	}
 
-	// TODO: Pause game while waiting for reconnect.
-
 	auto logger = Logger();
-	logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Client '{}' disconnected.", event.sessionId));
+	logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Client '{}' disconnected.", sessionId));
 }
 
 void GameServer::processShutdown(const ServerEvent&) {
@@ -189,45 +196,12 @@ void GameServer::processShutdown(const ServerEvent&) {
 	m_isRunning = false;
 }
 
-network::SessionId GameServer::sessionFromPlayer(Player player) const {
-	for (const auto& session: m_sessions) {
-		if (session.player == player) {
-			return session.sessionId;
-		}
-	}
-	return {};
-}
-
-Player GameServer::playerFromSession(network::SessionId sessionId) const {
-	for (const auto& session: m_sessions) {
-		if (session.sessionId == sessionId) {
-			return session.player;
-		}
-	}
-
-	assert(false);
-	return Player::Black;
-}
-
-bool GameServer::isClientConnected(network::SessionId sessionId) const {
-	for (const auto& session: m_sessions) {
-		if (session.sessionId == sessionId) {
-			return true;
-		}
-	}
-	return false;
-}
-
 std::optional<Player> GameServer::freePlayer() const {
-	assert(m_sessions.size() <= network::MAX_PLAYERS);
-
-	switch (m_sessions.size()) {
-	case 0u:
+	if (!m_sessionManager.getConnectionIdBySeat(Seat::Black)) {
 		return Player::Black;
-	case 1u:
-		return opponent(m_sessions[0].player);
-	default:
-		return std::nullopt;
+	}
+	if (!m_sessionManager.getConnectionIdBySeat(Seat::White)) {
+		return Player::White;
 	}
 	return std::nullopt;
 }
@@ -273,14 +247,10 @@ void GameServer::handleNetworkEvent(Player player, const network::NwResignEvent&
 
 void GameServer::handleNetworkEvent(Player player, const network::NwChatEvent& event) {
 	// Forward message to opponent and echo to sender for simple client feedback.
-	const auto opponentId = sessionFromPlayer(opponent(player));
-	if (!opponentId.empty()) {
+	const auto opponentSeat = opponent(player) == Player::Black ? Seat::Black : Seat::White;
+	const auto opponentId   = m_sessionManager.getConnectionIdBySeat(opponentSeat);
+	if (opponentId != 0) {
 		m_network.send(opponentId, event.message);
-	}
-
-	const auto senderId = sessionFromPlayer(player);
-	if (!senderId.empty() && senderId != opponentId) {
-		m_network.send(senderId, event.message);
 	}
 }
 
