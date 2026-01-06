@@ -31,7 +31,7 @@ std::optional<NwEvent> fromMessage(const std::string& message) {
 	if (message.rfind(MSG_PUT, 0) == 0) {
 		// Expect "PUT:x,y"
 		const auto payload = message.substr(MSG_PUT.size());
-		auto commaPos = payload.find(',');
+		auto commaPos      = payload.find(',');
 		if (commaPos == std::string::npos) {
 			return {};
 		}

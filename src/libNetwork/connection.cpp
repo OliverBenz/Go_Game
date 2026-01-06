@@ -11,12 +11,8 @@
 
 namespace go::network {
 
-// TODO: Proper session id
-static std::atomic<std::uint64_t> s_nextSessionId{1};
-
-Connection::Connection(asio::ip::tcp::socket socket, std::size_t clientIndex, Callbacks callbacks)
-    : m_socket(std::move(socket)), m_strand(m_socket.get_executor()), m_clientIndex(clientIndex),
-      m_sessionId("session-" + std::to_string(s_nextSessionId.fetch_add(1))), m_callbacks(std::move(callbacks)) {
+Connection::Connection(asio::ip::tcp::socket socket, ConnectionId connectionId, Callbacks callbacks)
+    : m_socket(std::move(socket)), m_strand(m_socket.get_executor()), m_connectionId(connectionId), m_callbacks(std::move(callbacks)) {
 }
 
 void Connection::start() {
@@ -66,12 +62,8 @@ void Connection::send(const Message& msg) {
 	});
 }
 
-std::size_t Connection::clientIndex() const {
-	return m_clientIndex;
-}
-
-const SessionId& Connection::sessionId() const {
-	return m_sessionId;
+ConnectionId Connection::connectionId() const {
+	return m_connectionId;
 }
 
 void Connection::startWrite() {

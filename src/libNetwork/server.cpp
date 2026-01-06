@@ -6,6 +6,8 @@
 
 namespace go::network {
 
+static ConnectionId CONN_ID = 1u;
+
 TcpServer::TcpServer(std::uint16_t port) : m_ioContext(), m_acceptor(m_ioContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)) {
 }
 
@@ -31,23 +33,13 @@ void TcpServer::stop() {
 	m_acceptor.close(ec);
 	m_ioContext.stop();
 
-	std::array<std::shared_ptr<Connection>, MAX_PLAYERS> connections;
+	// Reset connections. (Stop and delete)
 	{
 		std::lock_guard<std::mutex> lock(m_connectionsMutex);
-		connections = m_connections;
-	}
-
-	for (auto& connection: connections) {
-		if (connection) {
-			connection->stop();
+		for (auto& [id, conn]: m_connections) {
+			conn.stop();
 		}
-	}
-
-	{
-		std::lock_guard<std::mutex> lock(m_connectionsMutex);
-		for (auto& connection: m_connections) {
-			connection.reset();
-		}
+		m_connections.clear();
 	}
 
 	if (m_acceptThread.joinable()) {
@@ -55,25 +47,23 @@ void TcpServer::stop() {
 	}
 }
 
-bool TcpServer::send(SessionId sessionId, Message msg) {
-	// TODO: Should be handled more clean.
+bool TcpServer::send(ConnectionId connectionId, Message msg) {
 	std::lock_guard<std::mutex> lock(m_connectionsMutex);
-	for (const auto& connection: m_connections) {
-		if (connection && connection->sessionId() == sessionId) {
-			connection->send(msg);
-			return true;
-		}
+
+	if (m_connections.contains(connectionId)) {
+		m_connections.at(connectionId).send(msg);
+		return true;
 	}
+
 	return false;
 }
 
-void TcpServer::reject(SessionId sessionId) {
+void TcpServer::reject(ConnectionId connectionId) {
 	std::lock_guard<std::mutex> lock(m_connectionsMutex);
-	auto it = std::ranges::find_if(m_connections, [&](const auto& conn) { return conn && conn->sessionId() == sessionId; });
 
-	if (it != m_connections.end()) {
-		(*it)->stop();
-		it->reset(); // remove from array
+	if (m_connections.contains(connectionId)) {
+		m_connections.at(connectionId).stop();
+		m_connections.erase(connectionId);
 	}
 }
 
@@ -94,63 +84,52 @@ void TcpServer::acceptLoop() {
 			continue;
 		}
 
-		std::size_t slot = MAX_PLAYERS;
+		// Create and start a new connection
 		{
 			std::lock_guard<std::mutex> lock(m_connectionsMutex);
-			for (std::size_t i = 0; i < m_connections.size(); ++i) {
-				if (!m_connections[i]) {
-					slot = i;
-					break;
-				}
+
+			const auto connectionId = CONN_ID++;
+			if (createConnection(std::move(socket), connectionId)) {
+				assert(m_connections.contains(connectionId));
+				m_connections.at(connectionId).start();
 			}
 		}
-
-		if (slot == MAX_PLAYERS) {
-			asio::error_code closeEc;
-			socket.shutdown(asio::socket_base::shutdown_both, closeEc);
-			socket.close(closeEc);
-			continue;
-		}
-
-		auto connection = createConnection(std::move(socket), slot);
-		{
-			std::lock_guard<std::mutex> lock(m_connectionsMutex);
-			m_connections[slot] = connection;
-		}
-
-		connection->start();
 	}
 }
 
-std::shared_ptr<Connection> TcpServer::createConnection(asio::ip::tcp::socket socket, std::size_t clientIndex) {
+bool TcpServer::createConnection(asio::ip::tcp::socket socket, ConnectionId connectionId) {
+	if (m_connections.contains(connectionId)) {
+		return false;
+	}
+
 	Connection::Callbacks callbacks;
 	callbacks.onConnect = [this](Connection& connection) {
 		if (m_callbacks.onConnect) {
-			m_callbacks.onConnect(connection.sessionId());
+			m_callbacks.onConnect(connection.connectionId());
 		}
 	};
 	callbacks.onMessage = [this](Connection& connection, const Message& message) {
 		if (m_callbacks.onMessage) {
-			m_callbacks.onMessage(connection.sessionId(), message);
+			m_callbacks.onMessage(connection.connectionId(), message);
 		}
 	};
 	callbacks.onDisconnect = [this](Connection& connection) {
-		const auto index = connection.clientIndex();
-		const auto sessionId = connection.sessionId();
-		asio::post(m_ioContext, [this, index, sessionId] {
+		const auto index = connection.connectionId();
+		asio::post(m_ioContext, [this, index] {
 			std::lock_guard<std::mutex> lock(m_connectionsMutex);
-			if (index < m_connections.size()) {
-				if (m_connections[index] && m_connections[index]->sessionId() == sessionId) {
-					m_connections[index].reset();
-				}
+
+			if (m_connections.contains(index)) {
+				m_connections.at(index).stop();
+				m_connections.erase(index);
 			}
 		});
 		if (m_callbacks.onDisconnect) {
-			m_callbacks.onDisconnect(sessionId);
+			m_callbacks.onDisconnect(index);
 		}
 	};
 
-	return std::make_shared<Connection>(std::move(socket), clientIndex, std::move(callbacks));
+	const auto [it, inserted] = m_connections.try_emplace(connectionId, std::move(socket), connectionId, std::move(callbacks));
+	return inserted;
 }
 
 } // namespace go::network
