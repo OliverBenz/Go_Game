@@ -137,7 +137,7 @@ std::shared_ptr<Connection> TcpServer::createConnection(asio::ip::tcp::socket so
 	callbacks.onDisconnect = [this](Connection& connection) {
 		const auto index = connection.clientIndex();
 		const auto sessionId = connection.sessionId();
-		asio::post(m_ioContext, [this, index, session] {
+		asio::post(m_ioContext, [this, index, sessionId] {
 			std::lock_guard<std::mutex> lock(m_connectionsMutex);
 			if (index < m_connections.size()) {
 				if (m_connections[index] && m_connections[index]->sessionId() == sessionId) {
