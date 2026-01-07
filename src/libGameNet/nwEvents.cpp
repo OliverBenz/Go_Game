@@ -1,4 +1,4 @@
-#include "gameNet/protocol.hpp"
+#include "gameNet/nwEvents.hpp"
 
 #include <format>
 #include <string_view>

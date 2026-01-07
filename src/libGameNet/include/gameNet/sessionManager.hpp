@@ -1,22 +1,15 @@
 #pragma once
 
+#include "gameNet/types.hpp"
 #include "network/protocol.hpp"
 
 #include <cstdint>
 #include <string>
 #include <unordered_map>
 
-namespace go::server {
+namespace go::gameNet {
 
 using SessionId = std::uint32_t;
-
-//! The role in the game.
-enum class Seat : std::uint8_t {
-	None     = 0,      //!< Just connected.
-	Black    = 1 << 1, //!< Plays for black.
-	White    = 1 << 2, //!< Plays for white.
-	Observer = 1 << 3  //!< Only gets updated on board change.
-};
 
 struct SessionContext {
 	network::ConnectionId connectionId; //!< Identify connection on network layer.
@@ -51,4 +44,4 @@ private:
 	std::unordered_map<network::ConnectionId, SessionId> m_connectionToSession;
 };
 
-} // namespace go::server
+} // namespace go::gameNet

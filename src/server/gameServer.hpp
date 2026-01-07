@@ -1,11 +1,11 @@
 #pragma once
 
 #include "core/game.hpp"
-#include "gameNet/protocol.hpp"
+#include "gameNet/nwEvents.hpp"
+#include "gameNet/sessionManager.hpp"
 #include "network/server.hpp"
 
 #include "serverEvents.hpp"
-#include "sessionManager.hpp"
 
 #include <array>
 #include <atomic>
@@ -63,7 +63,7 @@ private:
 
 	network::TcpServer m_network; //!< Communication with clients.
 
-	SessionManager m_sessionManager;
+	gameNet::SessionManager m_sessionManager;
 	SafeQueue<ServerEvent> m_eventQueue; //!< Event queue between network threads and server thread.
 };
 

@@ -1,8 +1,8 @@
-#include "sessionManager.hpp"
+#include "gameNet/sessionManager.hpp"
 
 #include <cassert>
 
-namespace go::server {
+namespace go::gameNet {
 
 static SessionId nextSessionId{1};
 
@@ -115,4 +115,4 @@ SessionId SessionManager::generateSessionId() const {
 }
 
 
-} // namespace go::server
+} // namespace go::gameNet
