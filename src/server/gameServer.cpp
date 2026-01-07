@@ -154,7 +154,7 @@ void GameServer::processClientMessage(const ServerEvent& event) {
 	}
 
 	// Server event message contains a network event. Parse and handle.
-	const auto networkEvent = network::fromMessage(event.payload);
+	const auto networkEvent = gameNet::fromMessage(event.payload);
 	if (!networkEvent) {
 		auto logger = Logger();
 		logger.Log(Logging::LogLevel::Warning, std::format("[GameServer] Could not parse client '{}' payload: '{}'.", sessionId, event.payload));
@@ -206,7 +206,7 @@ std::optional<Player> GameServer::freePlayer() const {
 	return std::nullopt;
 }
 
-void GameServer::handleNetworkEvent(Player player, const network::NwPutStoneEvent& event) {
+void GameServer::handleNetworkEvent(Player player, const gameNet::NwPutStoneEvent& event) {
 	auto logger = Logger();
 
 	if (!m_game.isActive()) {
@@ -221,7 +221,7 @@ void GameServer::handleNetworkEvent(Player player, const network::NwPutStoneEven
 	m_game.pushEvent(PutStoneEvent{player, move});
 }
 
-void GameServer::handleNetworkEvent(Player player, const network::NwPassEvent&) {
+void GameServer::handleNetworkEvent(Player player, const gameNet::NwPassEvent&) {
 	auto logger = Logger();
 
 	if (!m_game.isActive()) {
@@ -233,7 +233,7 @@ void GameServer::handleNetworkEvent(Player player, const network::NwPassEvent&) 
 	logger.Log(Logging::LogLevel::Warning, std::format("[GameServer] Player {} passed.", static_cast<int>(player)));
 }
 
-void GameServer::handleNetworkEvent(Player player, const network::NwResignEvent&) {
+void GameServer::handleNetworkEvent(Player player, const gameNet::NwResignEvent&) {
 	auto logger = Logger();
 
 	if (!m_game.isActive()) {
@@ -245,7 +245,7 @@ void GameServer::handleNetworkEvent(Player player, const network::NwResignEvent&
 	logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Player {} resigned.", static_cast<int>(player)));
 }
 
-void GameServer::handleNetworkEvent(Player player, const network::NwChatEvent& event) {
+void GameServer::handleNetworkEvent(Player player, const gameNet::NwChatEvent& event) {
 	// Forward message to opponent and echo to sender for simple client feedback.
 	const auto opponentSeat = opponent(player) == Player::Black ? Seat::Black : Seat::White;
 	const auto opponentId   = m_sessionManager.getConnectionIdBySeat(opponentSeat);

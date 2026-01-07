@@ -18,9 +18,10 @@ All open source so you can tinker around as you like.
 ### Internal Components
 Name        | Description 
 ------------|------------
-Core        | Library for game rules, basic types, board state validation, etc.
-Networking  | Library for networking related functionality. Sending/Receiving game information and synchronizing multiplayer games.
-GameTerm    | Executable defining the terminal renderer. Inherits and uses the Game library.
+libCore     | Library for game rules, basic types, board state validation, etc.
+libNetwork  | Library for network layer networking. Sending/Receiving messages.
+libGoNet    | Library for application layer networking. Translating game events to/from messages. Uses libNetwork.
+libCamera   | Library for physical board detection using OpenCV.
 GameGUI     | Executable defining the gui renderer with SDL2. Inherits and uses the Game library.
 
 Including a [ComponentName].GTest project for each component.

@@ -1,6 +1,7 @@
 #include "network/server.hpp"
 #include "network/client.hpp"
-#include "network/protocol.hpp"
+
+#include "gameNet/protocol.hpp"
 
 #include <gtest/gtest.h>
 #include <chrono>
@@ -21,11 +22,11 @@ TEST(Networking, Server) {
 	
 	std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-	EXPECT_TRUE(client1.send(network::NwPutStoneEvent{1u, 2u}));
-	EXPECT_TRUE(client2.send(network::NwChatEvent{"Heyo this is my chat message"}));
+	EXPECT_TRUE(client1.send(gameNet::toMessage(gameNet::NwPutStoneEvent{1u, 2u})));
+	EXPECT_TRUE(client2.send(gameNet::toMessage(gameNet::NwChatEvent{"Heyo this is my chat message"})));
 
-	EXPECT_TRUE(client1.send(network::NwPutStoneEvent{1u, 2u}));
-	EXPECT_TRUE(client1.send(network::NwPassEvent{}));
+	EXPECT_TRUE(client1.send(gameNet::toMessage(gameNet::NwPutStoneEvent{1u, 2u})));
+	EXPECT_TRUE(client1.send(gameNet::toMessage(gameNet::NwPassEvent{})));
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(200));
 

@@ -19,7 +19,7 @@ add_executable(${targetName}
 )
 
 target_link_libraries(${targetName} PRIVATE
-    go::core go::network Logger::Logger
+    go::core go::network go::gameNet Logger::Logger
 )
 
 # Setup project settings
