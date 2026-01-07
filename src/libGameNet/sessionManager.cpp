@@ -55,7 +55,7 @@ network::ConnectionId SessionManager::getConnectionIdBySeat(Seat seat) const {
 	return 0;
 }
 
-Seat SessionManager::getSeat(SessionId sessionId) {
+Seat SessionManager::getSeat(SessionId sessionId) const {
 	const auto it = m_sessions.find(sessionId);
 	if (it == m_sessions.end()) {
 		return Seat::None;
@@ -79,20 +79,10 @@ void SessionManager::setDisconnected(SessionId sessionId) {
 	it->second.isActive = false;
 }
 
-bool SessionManager::gameReady() const {
-	bool hasBlack = false;
-	bool hasWhite = false;
+void SessionManager::forEachSession(const std::function<void(const SessionContext&)>& visitor) const {
 	for (const auto& [_, context]: m_sessions) {
-		if (!context.isActive) {
-			continue;
-		}
-		if (context.seat == Seat::Black) {
-			hasBlack = true;
-		} else if (context.seat == Seat::White) {
-			hasWhite = true;
-		}
+		visitor(context);
 	}
-	return hasBlack && hasWhite;
 }
 
 SessionId SessionManager::generateSessionId() const {

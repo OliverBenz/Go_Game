@@ -6,11 +6,14 @@ set(headers
     ${CMAKE_CURRENT_LIST_DIR}/include/gameNet/nwEvents.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/gameNet/types.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/gameNet/sessionManager.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/gameNet/server.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/serverEvents.hpp
 )
 
 set(sources
     ${CMAKE_CURRENT_LIST_DIR}/nwEvents.cpp
     ${CMAKE_CURRENT_LIST_DIR}/sessionManager.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/server.cpp
 )
 
 

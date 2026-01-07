@@ -2,7 +2,7 @@
 
 #include "network/protocol.hpp"
 
-namespace go::server {
+namespace go::gameNet {
 
 // Events flowing from network threads into the server thread.
 // Keep these small PODs so network callbacks remain cheap.
@@ -14,4 +14,4 @@ struct ServerEvent {
 	network::Message payload{};           //!< Network message. Protocol examples: "PUT:3,4", "CHAT:hello".
 };
 
-} // namespace go::server
+} // namespace go::gameNet
