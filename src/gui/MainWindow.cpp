@@ -119,7 +119,7 @@ void MainWindow::setGameStateText() {
 }
 
 void MainWindow::onPassClicked() {
-	m_game.pushEvent(PassEvent{});
+	m_game.pushEvent(PassEvent{m_game.currentPlayer()});
 }
 
 void MainWindow::onResignClicked() {
