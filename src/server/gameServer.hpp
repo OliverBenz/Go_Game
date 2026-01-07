@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/game.hpp"
-#include "network/protocol.hpp"
+#include "gameNet/protocol.hpp"
 #include "network/server.hpp"
 
 #include "serverEvents.hpp"
@@ -49,10 +49,10 @@ private:
 
 private:
 	// Processing of the network events that are sent in the server event message payload.
-	void handleNetworkEvent(Player player, const network::NwPutStoneEvent& event);
-	void handleNetworkEvent(Player player, const network::NwPassEvent& event);
-	void handleNetworkEvent(Player player, const network::NwResignEvent& event);
-	void handleNetworkEvent(Player player, const network::NwChatEvent& event);
+	void handleNetworkEvent(Player player, const gameNet::NwPutStoneEvent& event);
+	void handleNetworkEvent(Player player, const gameNet::NwPassEvent& event);
+	void handleNetworkEvent(Player player, const gameNet::NwResignEvent& event);
+	void handleNetworkEvent(Player player, const gameNet::NwChatEvent& event);
 
 private:
 	std::atomic<bool> m_isRunning{false};

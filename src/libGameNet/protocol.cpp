@@ -1,9 +1,9 @@
-#include "network/protocol.hpp"
+#include "gameNet/protocol.hpp"
 
 #include <format>
 #include <string_view>
 
-namespace go::network {
+namespace go::gameNet {
 
 static constexpr std::string_view MSG_PUT    = "PUT:";
 static constexpr std::string_view MSG_CHAT   = "CHAT:";
@@ -62,4 +62,4 @@ std::optional<NwEvent> fromMessage(const std::string& message) {
 	return {};
 }
 
-} // namespace go::network
+} // namespace go::gameNet

@@ -43,30 +43,26 @@ bool TcpClient::isConnected() const {
 	return m_isConnected;
 }
 
-bool TcpClient::send(NwEvent event) {
-	return send(toMessage(event));
-}
-
-bool TcpClient::send(std::string_view payload) {
+bool TcpClient::send(const Message& message) {
 	if (!m_isConnected) {
 		return false;
 	}
 
-	if (payload.size() > MAX_PAYLOAD_BYTES) {
+	if (message.size() > MAX_PAYLOAD_BYTES) {
 		return false;
 	}
 
 	BasicMessageHeader header{};
-	header.payload_size = to_network_u32(static_cast<std::uint32_t>(payload.size()));
+	header.payload_size = to_network_u32(static_cast<std::uint32_t>(message.size()));
 
-	std::array<asio::const_buffer, 2> buffers = {asio::buffer(&header, sizeof(header)), asio::buffer(payload.data(), payload.size())};
+	std::array<asio::const_buffer, 2> buffers = {asio::buffer(&header, sizeof(header)), asio::buffer(message.data(), message.size())};
 
 	// For fixed-size packets, emit exactly FIXED_PACKET_PAYLOAD_BYTES here and drop the header.
 	asio::write(m_socket, buffers);
 	return true;
 }
 
-std::string TcpClient::read() {
+Message TcpClient::read() {
 	const auto header       = read_header();
 	const auto payload_size = from_network_u32(header.payload_size);
 
@@ -80,25 +76,18 @@ std::string TcpClient::read() {
 	return payload;
 }
 
-std::string TcpClient::ping(std::string_view payload) {
-	if (send(payload)) {
-		return read();
-	}
-	return "";
-}
-
 BasicMessageHeader TcpClient::read_header() {
 	BasicMessageHeader header{};
 	asio::read(m_socket, asio::buffer(&header, sizeof(header)));
 	return header;
 }
 
-std::string TcpClient::read_payload(std::uint32_t expected_bytes) {
+Message TcpClient::read_payload(std::uint32_t expected_bytes) {
 	if (expected_bytes == 0) {
 		return {};
 	}
 
-	std::string payload(expected_bytes, '\0');
+	Message payload(expected_bytes, '\0');
 	asio::read(m_socket, asio::buffer(payload.data(), payload.size()));
 	return payload;
 }

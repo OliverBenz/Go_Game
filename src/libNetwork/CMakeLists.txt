@@ -10,7 +10,6 @@ set(headers
 )
 
 set(sources
-    ${CMAKE_CURRENT_LIST_DIR}/protocol.cpp
     ${CMAKE_CURRENT_LIST_DIR}/server.cpp
     ${CMAKE_CURRENT_LIST_DIR}/client.cpp
     ${CMAKE_CURRENT_LIST_DIR}/connection.cpp
