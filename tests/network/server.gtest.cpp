@@ -1,7 +1,8 @@
 #include "network/server.hpp"
 #include "network/client.hpp"
 
-#include "gameNet/protocol.hpp"
+#include "gameNet/types.hpp"
+#include "gameNet/nwEvents.hpp"
 
 #include <gtest/gtest.h>
 #include <chrono>
