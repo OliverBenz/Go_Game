@@ -4,6 +4,7 @@
 #include "network/protocol.hpp"
 
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <unordered_map>
 
@@ -28,13 +29,12 @@ public:
 	network::ConnectionId getConnectionId(SessionId sessionId) const; //!< Get connectionId connected with a sessionId.
 	network::ConnectionId getConnectionIdBySeat(Seat seat) const;     //!< Get connectionId for an active seat.
 
-	Seat getSeat(SessionId sessionId);
+	Seat getSeat(SessionId sessionId) const;
 	void setSeat(SessionId sessionId, Seat seat); //!< Set the seat of a session.
 
 	void setDisconnected(SessionId sessionId); //!< Mark the given session as inactive.
 
-	// TODO: This does not relly belong to sessionManager but the data is nicely available
-	bool gameReady() const; //!< True if both Black and White seats are assigned and connected.
+	void forEachSession(const std::function<void(const SessionContext&)>& visitor) const;
 
 private:
 	SessionId generateSessionId() const; //!< Generate unique sessionId.

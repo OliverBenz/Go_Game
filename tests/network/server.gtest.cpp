@@ -1,4 +1,4 @@
-#include "network/server.hpp"
+#include "network/tcpServer.hpp"
 #include "network/client.hpp"
 
 #include "gameNet/types.hpp"

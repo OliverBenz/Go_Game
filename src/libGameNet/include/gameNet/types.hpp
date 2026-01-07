@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace go::gameNet {
 
 //! The role in the game.
@@ -9,5 +11,9 @@ enum class Seat : std::uint8_t {
 	White    = 1 << 2, //!< Plays for white.
 	Observer = 1 << 3  //!< Only gets updated on board change.
 };
+
+inline constexpr bool isPlayer(Seat seat) {
+	return seat == Seat::Black || seat == Seat::White;
+}
 
 } // namespace go::gameNet
