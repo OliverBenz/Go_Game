@@ -34,6 +34,7 @@ private:
 private: // Slots
 	void onPassClicked();
 	void onResignClicked();
+	void openConnectDialog();
 
 private:
 	Game& m_game;
