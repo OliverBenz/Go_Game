@@ -106,8 +106,8 @@ SessionId SessionManager::generateSessionId() const {
 			++candidate;
 		}
 	}
-	
-    nextSessionId = candidate + 1;
+
+	nextSessionId = candidate + 1;
 	if (nextSessionId == 0) {
 		nextSessionId = 1;
 	}

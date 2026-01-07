@@ -7,6 +7,7 @@ add_executable(${targetName}
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
     ${CMAKE_CURRENT_LIST_DIR}/boardRenderer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MainWindow.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ConnectDialog.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BoardWidget.cpp
     ${CMAKE_CURRENT_LIST_DIR}/Logging.cpp
 )

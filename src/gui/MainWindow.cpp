@@ -1,6 +1,9 @@
 #include "MainWindow.hpp"
 
+#include "ConnectDialog.hpp"
+
 #include <QHBoxLayout>
+#include <QMenuBar>
 #include <QTabWidget>
 #include <QVBoxLayout>
 #include <format>
@@ -47,6 +50,13 @@ void MainWindow::closeEvent(QCloseEvent* event) {
 }
 
 void MainWindow::buildLayout() {
+	// Menu Bar
+	auto* menu          = menuBar()->addMenu(tr("&Menu"));
+	auto* connectAction = new QAction("&Connect to Server", this);
+	menu->addAction(connectAction);
+	connect(connectAction, &QAction::triggered, this, &MainWindow::openConnectDialog);
+
+	// Layout
 	auto* central = new QWidget(this);
 
 	// Layout Window top to bottom
@@ -124,6 +134,14 @@ void MainWindow::onPassClicked() {
 
 void MainWindow::onResignClicked() {
 	m_game.pushEvent(ResignEvent{});
+}
+
+void MainWindow::openConnectDialog() {
+	ConnectDialog dialog(this);
+
+	if (dialog.exec() == QDialog::Accepted) {
+		const auto ip = dialog.ipAddress().toStdString();
+	}
 }
 
 } // namespace go::ui
