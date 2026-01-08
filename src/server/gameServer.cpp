@@ -51,11 +51,13 @@ void GameServer::onClientConnected(SessionId sessionId, Seat seat) {
 	}
 }
 
-void GameServer::onClientDisconnected(SessionId) {
+void GameServer::onClientDisconnected(SessionId sessionId) {
 	// Not handled for now. No timing in game.
+	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Client '{}' disconnected.", sessionId));
 }
 
 void GameServer::onNetworkEvent(SessionId sessionId, const NwEvent& event) {
+	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Received event from client '{}'.", sessionId));
 	std::visit(
 	        [&](const auto& e) {
 		        const auto seat = m_server.getSeat(sessionId);
@@ -68,42 +70,36 @@ void GameServer::onNetworkEvent(SessionId sessionId, const NwEvent& event) {
 }
 
 void GameServer::handleNetworkEvent(Player player, const gameNet::NwPutStoneEvent& event) {
-	auto logger = Logger();
-
 	if (!m_game.isActive()) {
-		logger.Log(Logging::LogLevel::Warning, "[GameServer] Rejecting PutStone: game is not active.");
+		Logger().Log(Logging::LogLevel::Warning, "[GameServer] Rejecting PutStone: game is not active.");
 		return;
 	}
 
 	// Push into the core game loop; legality (ko, captures, etc.) is still enforced there.
 	const auto move = Coord{event.x, event.y};
-	logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Accepting PutStone from player {} at ({}, {}).", static_cast<int>(player), move.x, move.y));
+	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Accepting PutStone from player {} at ({}, {}).", static_cast<int>(player), move.x, move.y));
 
 	m_game.pushEvent(PutStoneEvent{player, move});
 }
 
 void GameServer::handleNetworkEvent(Player player, const gameNet::NwPassEvent&) {
-	auto logger = Logger();
-
 	if (!m_game.isActive()) {
-		logger.Log(Logging::LogLevel::Warning, "[GameServer] Rejecting Pass: game is not active.");
+		Logger().Log(Logging::LogLevel::Warning, "[GameServer] Rejecting Pass: game is not active.");
 		return;
 	}
 
 	m_game.pushEvent(PassEvent{player});
-	logger.Log(Logging::LogLevel::Warning, std::format("[GameServer] Player {} passed.", static_cast<int>(player)));
+	Logger().Log(Logging::LogLevel::Warning, std::format("[GameServer] Player {} passed.", static_cast<int>(player)));
 }
 
 void GameServer::handleNetworkEvent(Player player, const gameNet::NwResignEvent&) {
-	auto logger = Logger();
-
 	if (!m_game.isActive()) {
-		logger.Log(Logging::LogLevel::Warning, "[GameServer] Rejecting Resign: game already inactive.");
+		Logger().Log(Logging::LogLevel::Warning, "[GameServer] Rejecting Resign: game already inactive.");
 		return;
 	}
 
 	m_game.pushEvent(ResignEvent{});
-	logger.Log(Logging::LogLevel::Info, std::format("[GameServer] Player {} resigned.", static_cast<int>(player)));
+	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Player {} resigned.", static_cast<int>(player)));
 }
 
 void GameServer::handleNetworkEvent(Player, const gameNet::NwChatEvent& event) {
