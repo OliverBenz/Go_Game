@@ -42,6 +42,13 @@ void Server::stop() {
 	}
 }
 
+bool Server::registerHandler(IServerHandler* handler) {
+    if (m_handler) {
+        return false;
+    }
+    m_handler = handler;
+    return true;
+}
 
 bool Server::send(SessionId sessionId, const NwEvent& event) {
 	const auto connectionId = m_sessionManager.getConnectionId(sessionId);

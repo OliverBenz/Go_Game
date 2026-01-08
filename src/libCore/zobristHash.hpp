@@ -16,11 +16,8 @@ class ZobristHash : public IZobristHash {
 public:
 	ZobristHash();
 
-	//! Update on placing a stone.
-	uint64_t stone(Coord c, Player color) override;
-
-	// Update for player-to-move swap (needed for situational superko).
-	uint64_t togglePlayer() override;
+	uint64_t stone(Coord c, Player color) override; //!< Update on placing a stone.
+	uint64_t togglePlayer() override;               //!< Update for player-to-move swap (needed for situational superko).
 
 private:
 	void initRandomTable();
