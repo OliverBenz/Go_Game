@@ -18,8 +18,7 @@ BoardRenderer::BoardRenderer(const unsigned nodes) : m_nodes(nodes) {
 		reader.setAutoTransform(true);
 		target = reader.read();
 		if (target.isNull()) {
-			auto logger = Logger();
-			logger.Log(Logging::LogLevel::Error, std::format("Failed to load '{}': {}\n", path, reader.errorString().toStdString()));
+			Logger().Log(Logging::LogLevel::Error, std::format("Failed to load '{}': {}\n", path, reader.errorString().toStdString()));
 
 			this->m_ready = false;
 		}

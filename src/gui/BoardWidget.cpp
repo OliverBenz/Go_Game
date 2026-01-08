@@ -46,8 +46,7 @@ void BoardWidget::resizeEvent(QResizeEvent* event) {
 
 void BoardWidget::mouseReleaseEvent(QMouseEvent* event) {
 #ifndef NDEBUG
-	auto logger = Logger();
-	logger.Log(Logging::LogLevel::Info, std::format("Mouse click at: ({}, {})", event->pos().x(), event->pos().y()));
+	Logger().Log(Logging::LogLevel::Info, std::format("Mouse click at: ({}, {})", event->pos().x(), event->pos().y()));
 #endif
 
 	if (event->button() == Qt::LeftButton) {
@@ -61,8 +60,7 @@ void BoardWidget::mouseReleaseEvent(QMouseEvent* event) {
 
 void BoardWidget::keyReleaseEvent(QKeyEvent* event) {
 #ifndef NDEBUG
-	auto logger = Logger();
-	logger.Log(Logging::LogLevel::Info, std::format("Keyboard click: {}", event->key()));
+	Logger().Log(Logging::LogLevel::Info, std::format("Keyboard click: {}", event->key()));
 #endif
 
 	switch (event->key()) {
