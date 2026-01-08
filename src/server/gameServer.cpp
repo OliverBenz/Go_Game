@@ -20,6 +20,7 @@ GameServer::~GameServer() {
 }
 
 void GameServer::start() {
+	m_server.registerHandler(this);
 	m_server.start();
 }
 
@@ -41,6 +42,9 @@ void GameServer::onClientConnected(SessionId sessionId, Seat seat) {
 		return; // TODO: Handle reconnect.
 	}
 	m_players.emplace(player, sessionId);
+
+	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Client '{}' connected.", sessionId));
+
 	if (m_players.size() == 2) // TODO: Better check
 	{
 		m_gameThread = std::thread([&] { m_game.run(); });

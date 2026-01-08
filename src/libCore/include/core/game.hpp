@@ -19,20 +19,12 @@ public:
 	//! Setup a game of certain board size without starting the game loop.
 	Game(std::size_t boardSize);
 
-	//! Run the main game loop/start handling the event loop.
-	void run();
+	void run();                      //!< Run the main game loop/start handling the event loop.
+	void pushEvent(GameEvent event); //!< Push an event to the event queue.
 
-	//! Push an event to the event queue.
-	void pushEvent(GameEvent event);
-
-	//! Get board data for rendering.
-	const Board& board() const;
-
-	//! Returns the currently active player.
-	Player currentPlayer() const;
-
-	//! Return if the game is active or not.
-	bool isActive() const;
+	const Board& board() const;   //!< Get board data for rendering.
+	Player currentPlayer() const; //!< Returns the currently active player.
+	bool isActive() const;        //!< Return if the game is active or not.
 
 public:
 	void subscribeEvents(IGameListener* listener, uint64_t signalMask);

@@ -24,11 +24,13 @@ public:
 
 	void start();
 	void stop();
+    bool registerHandler(IServerHandler* handler);
 
 	bool send(SessionId sessionId, const NwEvent& event); //!< Send event to client with given sessionId.
 	bool broadcast(const NwEvent& event);                 //!< Send event to all connected clients.
 
 	Seat getSeat(SessionId sessionId) const; //!< Get the seat connection with a sessionId.
+
 private:
 	void serverLoop();                           //!< Server thread: drain queue and act.
 	void processEvent(const ServerEvent& event); //!< Server loop calls this. Reads event type and distributes.
