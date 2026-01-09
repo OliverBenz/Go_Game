@@ -146,7 +146,7 @@ void Server::processClientMessage(const ServerEvent& event) {
 	}
 
 	const auto seat = m_sessionManager.getSeat(sessionId);
-	if (isPlayer(seat)) {
+	if (!isPlayer(seat)) {
 		return; // Non players don't get to do stuff.
 	}
 

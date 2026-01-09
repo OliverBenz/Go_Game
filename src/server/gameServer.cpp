@@ -61,7 +61,11 @@ void GameServer::onNetworkEvent(SessionId sessionId, const NwEvent& event) {
 	std::visit(
 	        [&](const auto& e) {
 		        const auto seat = m_server.getSeat(sessionId);
-		        assert(seat == Seat::Black || seat == Seat::White); // Others dont matter to app so dont pass.
+		        if (!gameNet::isPlayer(seat)) {
+			        Logger().Log(Logging::LogLevel::Warning,
+			                     std::format("[GameServer] Ignoring event from non-player seat for session '{}'.", sessionId));
+			        return;
+		        }
 
 		        const auto player = seat == Seat::Black ? Player::Black : Player::White;
 		        handleNetworkEvent(player, e);
@@ -89,7 +93,7 @@ void GameServer::handleNetworkEvent(Player player, const gameNet::NwPassEvent&) 
 	}
 
 	m_game.pushEvent(PassEvent{player});
-	Logger().Log(Logging::LogLevel::Warning, std::format("[GameServer] Player {} passed.", static_cast<int>(player)));
+	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Player {} passed.", static_cast<int>(player)));
 }
 
 void GameServer::handleNetworkEvent(Player player, const gameNet::NwResignEvent&) {
