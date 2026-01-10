@@ -2,7 +2,6 @@
 
 #include "gameNet/nwEvents.hpp"
 #include "gameNet/sessionManager.hpp"
-#include "gameNet/types.hpp"
 #include "network/client.hpp"
 
 #include <atomic>
@@ -12,6 +11,7 @@
 
 namespace go::gameNet {
 
+// Callback interface invoked on the client's read thread.
 class IClientHandler {
 public:
 	virtual ~IClientHandler()                           = default;
@@ -36,7 +36,7 @@ public:
 	SessionId sessionId() const;
 
 private:
-	void startReadLoop();
+	void startReadLoop(); //!< Starts background read thread for blocking reads.
 	void stopReadLoop();
 	void readLoop();
 	void handleIncoming(const network::Message& message);

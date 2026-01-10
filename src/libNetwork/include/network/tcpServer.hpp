@@ -5,22 +5,18 @@
 
 #include <asio.hpp>
 
-#include <array>
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <memory>
 #include <mutex>
 #include <optional>
-#include <string>
-#include <string_view>
 #include <thread>
 
 namespace go {
 namespace network {
 
-//! Connection Manager. Accepts and manages client connections.
+//! Connection manager that runs an async accept loop on a dedicated IO thread.
 class TcpServer {
 public:
 	struct Callbacks {

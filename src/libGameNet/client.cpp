@@ -1,6 +1,5 @@
 #include "gameNet/client.hpp"
 
-#include <chrono>
 #include <cstring>
 #include <sstream>
 
@@ -74,10 +73,6 @@ void Client::readLoop() {
 	while (m_running) {
 		if (!m_client.isConnected()) {
 			break;
-		}
-		if (m_client.available() == 0) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(5));
-			continue;
 		}
 
 		try {

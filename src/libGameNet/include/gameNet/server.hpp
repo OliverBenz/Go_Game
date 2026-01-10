@@ -11,6 +11,7 @@ namespace go::gameNet {
 
 struct ServerEvent;
 
+// Callback interface invoked on the server's processing thread.
 class IServerHandler {
 public:
 	virtual ~IServerHandler()                                              = default;

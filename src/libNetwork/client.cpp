@@ -73,11 +73,6 @@ Message TcpClient::read() {
 	return payload;
 }
 
-std::size_t TcpClient::available() const {
-	asio::error_code ec;
-	return m_socket.available(ec);
-}
-
 BasicMessageHeader TcpClient::read_header() {
 	BasicMessageHeader header{};
 	asio::read(m_socket, asio::buffer(&header, sizeof(header)));
