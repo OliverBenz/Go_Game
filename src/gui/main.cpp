@@ -1,4 +1,4 @@
-#include "MainWindow.hpp"
+#include "GameWindow.hpp"
 #include "core/game.hpp"
 
 #include <QApplication>
@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
 	std::thread gameThread([&] { game.run(); });
 
 	// Setup and show UI
-	go::ui::MainWindow window(game);
+	go::ui::GameWindow window(game);
 	window.resize(1200, 900);
 	window.show();
 

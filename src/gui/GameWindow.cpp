@@ -1,4 +1,4 @@
-#include "MainWindow.hpp"
+#include "GameWindow.hpp"
 
 #include "ConnectDialog.hpp"
 
@@ -10,14 +10,14 @@
 
 namespace go::ui {
 
-MainWindow::MainWindow(Game& game, QWidget* parent) : QMainWindow(parent), m_game(game) {
+GameWindow::GameWindow(Game& game, QWidget* parent) : QMainWindow(parent), m_game(game) {
 	// Setup Window
 	setWindowTitle("Go Game");
 	buildLayout();
 
 	// Connect slots
-	connect(m_passButton, &QPushButton::clicked, this, &MainWindow::onPassClicked);
-	connect(m_resignButton, &QPushButton::clicked, this, &MainWindow::onResignClicked);
+	connect(m_passButton, &QPushButton::clicked, this, &GameWindow::onPassClicked);
+	connect(m_resignButton, &QPushButton::clicked, this, &GameWindow::onResignClicked);
 
 	// Setup Game Stuff
 	setCurrentPlayerText();
@@ -25,11 +25,11 @@ MainWindow::MainWindow(Game& game, QWidget* parent) : QMainWindow(parent), m_gam
 	m_game.subscribeEvents(this, GS_PlayerChange | GS_StateChange);
 }
 
-MainWindow::~MainWindow() {
+GameWindow::~GameWindow() {
 	m_game.unsubscribeEvents(this);
 }
 
-void MainWindow::onGameEvent(const GameSignal signal) {
+void GameWindow::onGameEvent(const GameSignal signal) {
 	// TODO: This is called by core game thread
 	//  Game thread should not update stuff on the UI but push notifications and let the UI handle it.
 	switch (signal) {
@@ -44,17 +44,17 @@ void MainWindow::onGameEvent(const GameSignal signal) {
 	}
 }
 
-void MainWindow::closeEvent(QCloseEvent* event) {
+void GameWindow::closeEvent(QCloseEvent* event) {
 	m_game.pushEvent(ShutdownEvent{});
 	QMainWindow::closeEvent(event);
 }
 
-void MainWindow::buildLayout() {
+void GameWindow::buildLayout() {
 	// Menu Bar
 	auto* menu          = menuBar()->addMenu(tr("&Menu"));
 	auto* connectAction = new QAction("&Connect to Server", this);
 	menu->addAction(connectAction);
-	connect(connectAction, &QAction::triggered, this, &MainWindow::openConnectDialog);
+	connect(connectAction, &QAction::triggered, this, &GameWindow::openConnectDialog);
 
 	// Layout
 	auto* central = new QWidget(this);
@@ -118,25 +118,25 @@ void MainWindow::buildLayout() {
 	setCentralWidget(central);
 }
 
-void MainWindow::setCurrentPlayerText() {
+void GameWindow::setCurrentPlayerText() {
 	const auto text = std::format("Current Player: {}", m_game.currentPlayer() == Player::Black ? "Black" : "White");
 	m_currPlayerLabel->setText(QString::fromStdString(text));
 }
 
-void MainWindow::setGameStateText() {
+void GameWindow::setGameStateText() {
 	const auto text = std::format("Game: {}", m_game.isActive() ? "Active" : "Finished");
 	m_statusLabel->setText(QString::fromStdString(text));
 }
 
-void MainWindow::onPassClicked() {
+void GameWindow::onPassClicked() {
 	m_game.pushEvent(PassEvent{m_game.currentPlayer()});
 }
 
-void MainWindow::onResignClicked() {
+void GameWindow::onResignClicked() {
 	m_game.pushEvent(ResignEvent{});
 }
 
-void MainWindow::openConnectDialog() {
+void GameWindow::openConnectDialog() {
 	ConnectDialog dialog(this);
 
 	if (dialog.exec() == QDialog::Accepted) {
