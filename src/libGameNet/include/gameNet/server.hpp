@@ -5,6 +5,8 @@
 #include "gameNet/sessionManager.hpp"
 #include "network/tcpServer.hpp"
 
+#include <thread>
+
 namespace go::gameNet {
 
 struct ServerEvent;
@@ -24,7 +26,7 @@ public:
 
 	void start();
 	void stop();
-    bool registerHandler(IServerHandler* handler);
+	bool registerHandler(IServerHandler* handler);
 
 	bool send(SessionId sessionId, const NwEvent& event); //!< Send event to client with given sessionId.
 	bool broadcast(const NwEvent& event);                 //!< Send event to all connected clients.
@@ -52,6 +54,7 @@ private:
 
 private:
 	std::atomic<bool> m_isRunning{false};
+	std::thread m_serverThread;
 
 	SessionManager m_sessionManager;
 	network::TcpServer m_network;
