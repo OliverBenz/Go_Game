@@ -27,12 +27,10 @@ void Server::start() {
 }
 
 void Server::stop() {
-	if (!m_isRunning.exchange(false)) {
-		return;
-	}
-
 	// Wake serverLoop and stop network.
-	m_eventQueue.Push(ServerEvent{.type = ServerEventType::Shutdown});
+	if (m_isRunning.exchange(false)) {
+		m_eventQueue.Push(ServerEvent{.type = ServerEventType::Shutdown});
+	}
 	m_network.stop();
 
 	try {
