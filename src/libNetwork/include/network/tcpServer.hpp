@@ -12,6 +12,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -38,14 +39,15 @@ public:
 	void reject(ConnectionId connectionId);            //!< Reject the client with given connectionId.
 
 private:
-	void acceptLoop();                                                              //!< Wait and create two client connections.
+	void doAccept();                                                                //!< Start async accept loop.
 	bool createConnection(asio::ip::tcp::socket socket, ConnectionId connectionId); //!< Create and add new connection to map.
 
 private:
 	asio::io_context m_ioContext;
 	asio::ip::tcp::acceptor m_acceptor;
+	std::optional<asio::executor_work_guard<asio::io_context::executor_type>> m_workGuard;
 
-	std::thread m_acceptThread;         //!< Waits for two client connections.
+	std::thread m_ioThread;             //!< IO context thread.
 	std::atomic<bool> m_running{false}; //!< TCP Server running.
 
 	Callbacks m_callbacks; //!< Callback functions to signal events.

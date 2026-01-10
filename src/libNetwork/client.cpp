@@ -30,11 +30,8 @@ void TcpClient::connect(std::string host, std::uint16_t port) {
 }
 
 void TcpClient::disconnect() {
-	if (!m_isConnected) {
-		return;
-	}
-
 	asio::error_code ec;
+	m_socket.cancel(ec);
 	m_socket.shutdown(asio::socket_base::shutdown_both, ec);
 	m_socket.close(ec);
 	m_isConnected = false;
@@ -74,6 +71,11 @@ Message TcpClient::read() {
 	auto payload = read_payload(payload_size);
 
 	return payload;
+}
+
+std::size_t TcpClient::available() const {
+	asio::error_code ec;
+	return m_socket.available(ec);
 }
 
 BasicMessageHeader TcpClient::read_header() {

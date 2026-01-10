@@ -4,7 +4,6 @@
 #include <asio/write.hpp>
 
 #include <array>
-#include <chrono>
 #include <memory>
 #include <string>
 #include <utility>
@@ -15,36 +14,27 @@ Connection::Connection(asio::ip::tcp::socket socket, ConnectionId connectionId, 
     : m_socket(std::move(socket)), m_strand(m_socket.get_executor()), m_connectionId(connectionId), m_callbacks(std::move(callbacks)) {
 }
 
+Connection::~Connection() {
+	stop();
+}
+
 void Connection::start() {
 	if (m_running.exchange(true)) {
 		return;
 	}
 
-	m_ioThread = std::thread([this] {
-		if (m_callbacks.onConnect) {
-			m_callbacks.onConnect(*this);
-		}
+	if (m_callbacks.onConnect) {
+		m_callbacks.onConnect(*this);
+	}
 
-		startRead();
-
-		auto& ctx = static_cast<asio::io_context&>(m_socket.get_executor().context());
-		ctx.run();
-	});
+	startRead();
 }
 
 void Connection::stop() {
-	if (!m_running.exchange(false)) {
-		return;
-	}
-
-	asio::post(m_strand, [this] {
+	if (m_running.exchange(false)) {
 		asio::error_code ec;
 		m_socket.shutdown(asio::socket_base::shutdown_both, ec);
 		m_socket.close(ec);
-	});
-
-	if (m_ioThread.joinable() && m_ioThread.get_id() != std::this_thread::get_id()) {
-		m_ioThread.join();
 	}
 }
 

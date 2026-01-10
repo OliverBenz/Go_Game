@@ -1,5 +1,6 @@
 #include "gameNet/client.hpp"
 
+#include <chrono>
 #include <cstring>
 #include <sstream>
 
@@ -33,9 +34,8 @@ void Client::connect(const std::string& host, std::uint16_t port) {
 }
 
 void Client::disconnect() {
-	stopReadLoop();
 	m_client.disconnect();
-	m_sessionId = 0;
+	stopReadLoop();
 }
 
 bool Client::send(const NwEvent& event) {
@@ -63,13 +63,23 @@ void Client::stopReadLoop() {
 		return;
 	}
 
-	if (m_readThread.joinable()) {
+	if (m_readThread.joinable() && m_readThread.get_id() != std::this_thread::get_id()) {
 		m_readThread.join();
+	} else if (m_readThread.joinable()) {
+		m_readThread.detach();
 	}
 }
 
 void Client::readLoop() {
-	while (m_running && m_client.isConnected()) {
+	while (m_running) {
+		if (!m_client.isConnected()) {
+			break;
+		}
+		if (m_client.available() == 0) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(5));
+			continue;
+		}
+
 		try {
 			const auto message = m_client.read();
 			handleIncoming(message);

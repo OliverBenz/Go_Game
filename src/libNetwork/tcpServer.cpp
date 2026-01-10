@@ -16,7 +16,10 @@ void TcpServer::start() {
 		return;
 	}
 
-	m_acceptThread = std::thread([this]() { acceptLoop(); });
+	m_ioContext.restart();
+	m_workGuard.emplace(asio::make_work_guard(m_ioContext));
+	doAccept();
+	m_ioThread = std::thread([this]() { m_ioContext.run(); });
 }
 
 void TcpServer::connect(Callbacks callbacks) {
@@ -31,19 +34,24 @@ void TcpServer::stop() {
 	asio::error_code ec;
 	m_acceptor.cancel(ec);
 	m_acceptor.close(ec);
+
+	if (m_workGuard) {
+		m_workGuard->reset();
+		m_workGuard.reset();
+	}
 	m_ioContext.stop();
 
-	// Reset connections. (Stop and delete)
+	std::unordered_map<ConnectionId, Connection> connections;
 	{
 		std::lock_guard<std::mutex> lock(m_connectionsMutex);
-		for (auto& [id, conn]: m_connections) {
-			conn.stop();
-		}
-		m_connections.clear();
+		connections.swap(m_connections);
+	}
+	for (auto& [id, conn]: connections) {
+		conn.stop();
 	}
 
-	if (m_acceptThread.joinable()) {
-		m_acceptThread.join();
+	if (m_ioThread.joinable()) {
+		m_ioThread.join();
 	}
 }
 
@@ -67,34 +75,24 @@ void TcpServer::reject(ConnectionId connectionId) {
 	}
 }
 
-void TcpServer::acceptLoop() {
-	while (m_running) {
-		asio::ip::tcp::socket socket(m_ioContext);
-		asio::error_code ec;
-		m_acceptor.accept(socket, ec);
-
+void TcpServer::doAccept() {
+	m_acceptor.async_accept([this](asio::error_code ec, asio::ip::tcp::socket socket) {
 		if (!m_running) {
-			break;
+			return;
 		}
-
-		if (ec) {
-			if (ec == asio::error::operation_aborted) {
-				break;
-			}
-			continue;
-		}
-
-		// Create and start a new connection
-		{
+		if (!ec) {
 			std::lock_guard<std::mutex> lock(m_connectionsMutex);
-
 			const auto connectionId = CONN_ID++;
 			if (createConnection(std::move(socket), connectionId)) {
 				assert(m_connections.contains(connectionId));
 				m_connections.at(connectionId).start();
 			}
 		}
-	}
+
+		if (m_running) {
+			doAccept();
+		}
+	});
 }
 
 bool TcpServer::createConnection(asio::ip::tcp::socket socket, ConnectionId connectionId) {
