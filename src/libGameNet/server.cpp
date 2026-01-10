@@ -23,7 +23,7 @@ void Server::start() {
 	}
 
 	m_network.start();
-	serverLoop();
+	m_serverThread = std::thread([this] { serverLoop(); });
 }
 
 void Server::stop() {
@@ -40,14 +40,18 @@ void Server::stop() {
 	} catch (...) {
 		// Release never throws, but keep intent explicit.
 	}
+
+	if (m_serverThread.joinable()) {
+		m_serverThread.join();
+	}
 }
 
 bool Server::registerHandler(IServerHandler* handler) {
-    if (m_handler) {
-        return false;
-    }
-    m_handler = handler;
-    return true;
+	if (m_handler) {
+		return false;
+	}
+	m_handler = handler;
+	return true;
 }
 
 bool Server::send(SessionId sessionId, const NwEvent& event) {

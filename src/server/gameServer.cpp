@@ -62,8 +62,7 @@ void GameServer::onNetworkEvent(SessionId sessionId, const NwEvent& event) {
 	        [&](const auto& e) {
 		        const auto seat = m_server.getSeat(sessionId);
 		        if (!gameNet::isPlayer(seat)) {
-			        Logger().Log(Logging::LogLevel::Warning,
-			                     std::format("[GameServer] Ignoring event from non-player seat for session '{}'.", sessionId));
+			        Logger().Log(Logging::LogLevel::Warning, std::format("[GameServer] Ignoring event from non-player seat for session '{}'.", sessionId));
 			        return;
 		        }
 
