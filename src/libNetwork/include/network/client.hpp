@@ -22,7 +22,6 @@ public:
 
 	bool send(const Message& message);
 	Message read();
-	std::size_t available() const;
 
 	bool isConnected() const;
 

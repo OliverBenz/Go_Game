@@ -113,14 +113,12 @@ bool TcpServer::createConnection(asio::ip::tcp::socket socket, ConnectionId conn
 	};
 	callbacks.onDisconnect = [this](Connection& connection) {
 		const auto index = connection.connectionId();
-		asio::post(m_ioContext, [this, index] {
+		{
 			std::lock_guard<std::mutex> lock(m_connectionsMutex);
-
 			if (m_connections.contains(index)) {
-				m_connections.at(index).stop();
 				m_connections.erase(index);
 			}
-		});
+		}
 		if (m_callbacks.onDisconnect) {
 			m_callbacks.onDisconnect(index);
 		}

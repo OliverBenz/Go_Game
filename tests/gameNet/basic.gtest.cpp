@@ -26,6 +26,7 @@ public:
 	}
 	void onNetworkEvent(gameNet::SessionId sessionId, const gameNet::NwEvent& event) override {
 		std::cout << std::format("[Server] {} sent event.\n", sessionId);
+		m_network.broadcast(event);
 	}
 
 private:
@@ -39,6 +40,9 @@ public:
 		m_network.connect("127.0.0.1");
 	}
 	~MockClient() {
+		disconnect();
+	}
+	void disconnect() {
 		m_network.disconnect();
 	}
 
@@ -63,16 +67,16 @@ public:
 
 private:
 	void handleNetworkEvent(const gameNet::NwPutStoneEvent& event) {
-		std::cout << std::format("Client {} received Event PutStone at ({}, {})", m_network.sessionId(), event.x, event.y);
+		std::cout << std::format("Client {} received Event PutStone at ({}, {})\n", m_network.sessionId(), event.x, event.y);
 	}
-	void handleNetworkEvent(const gameNet::NwPassEvent& event) {
-		std::cout << std::format("Client {} received Event Pass.", m_network.sessionId());
+	void handleNetworkEvent(const gameNet::NwPassEvent&) {
+		std::cout << std::format("Client {} received Event Pass.\n", m_network.sessionId());
 	}
-	void handleNetworkEvent(const gameNet::NwResignEvent& event) {
-		std::cout << std::format("Client {} received Event Resign", m_network.sessionId());
+	void handleNetworkEvent(const gameNet::NwResignEvent&) {
+		std::cout << std::format("Client {} received Event Resign\n", m_network.sessionId());
 	}
 	void handleNetworkEvent(const gameNet::NwChatEvent& event) {
-		std::cout << std::format("Client {} received message: {}", m_network.sessionId(), event.message);
+		std::cout << std::format("Client {} received message: {}\n", m_network.sessionId(), event.message);
 	}
 
 private:
@@ -85,11 +89,14 @@ TEST(GameNet, Connection) {
 	auto client1 = MockClient();
 	auto client2 = MockClient();
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	std::this_thread::sleep_for(std::chrono::milliseconds(50));
 	client1.chat("Helloooooo");
 	client2.tryPlace(0u, 0u);
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+	client1.disconnect();
+	client2.disconnect();
 }
 
 } // namespace go::gtest
