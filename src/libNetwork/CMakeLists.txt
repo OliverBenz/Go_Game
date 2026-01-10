@@ -5,13 +5,13 @@ set(targetName libNetwork)
 set(headers
     ${CMAKE_CURRENT_LIST_DIR}/include/network/protocol.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/network/tcpServer.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/include/network/client.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/network/tcpClient.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/network/connection.hpp
 )
 
 set(sources
     ${CMAKE_CURRENT_LIST_DIR}/tcpServer.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/client.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/tcpClient.cpp
     ${CMAKE_CURRENT_LIST_DIR}/connection.cpp
 )
 
