@@ -12,7 +12,7 @@ namespace go::gtest {
 class MockServer : public gameNet::IServerHandler {
 public:
 	MockServer() {
-		m_network.registerHandler(this);
+		EXPECT_TRUE(m_network.registerHandler(this));
 		m_network.start();
 	}
 	~MockServer() {
@@ -36,7 +36,7 @@ private:
 class MockClient : public gameNet::IClientHandler {
 public:
 	MockClient() {
-		m_network.registerHandler(this);
+		EXPECT_TRUE(m_network.registerHandler(this));
 		m_network.connect("127.0.0.1");
 	}
 	~MockClient() {

@@ -2,7 +2,7 @@
 
 #include "gameNet/nwEvents.hpp"
 #include "gameNet/sessionManager.hpp"
-#include "network/client.hpp"
+#include "network/tcpClient.hpp"
 
 #include <atomic>
 #include <cstdint>
@@ -43,7 +43,7 @@ private:
 
 private:
 	network::TcpClient m_client;
-	std::atomic<bool> m_running{false};
+	std::atomic<bool> m_running{false}; //!< Read thread running.
 	std::thread m_readThread;
 
 	IClientHandler* m_handler{nullptr};

@@ -1,4 +1,4 @@
-#include "network/client.hpp"
+#include "network/tcpClient.hpp"
 #include "network/tcpServer.hpp"
 
 #include "gameNet/nwEvents.hpp"
