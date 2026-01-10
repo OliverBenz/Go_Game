@@ -11,12 +11,12 @@
 
 namespace go::ui {
 
-class MainWindow : public QMainWindow, public IGameListener {
+class GameWindow : public QMainWindow, public IGameListener {
 	Q_OBJECT
 
 public:
-	explicit MainWindow(Game& game, QWidget* parent = nullptr);
-	~MainWindow() override;
+	explicit GameWindow(Game& game, QWidget* parent = nullptr);
+	~GameWindow() override;
 
 	//! Called by the game thread. Ensure not blocking.
 	void onGameEvent(GameSignal signal) override;
