@@ -1,11 +1,11 @@
-#include "network/tcpServer.hpp"
 #include "network/client.hpp"
+#include "network/tcpServer.hpp"
 
-#include "gameNet/types.hpp"
 #include "gameNet/nwEvents.hpp"
+#include "gameNet/types.hpp"
 
-#include <gtest/gtest.h>
 #include <chrono>
+#include <gtest/gtest.h>
 #include <thread>
 
 namespace go::gtest {
@@ -20,7 +20,7 @@ TEST(Networking, Server) {
 
 	client1.connect("127.0.0.1");
 	client2.connect("127.0.0.1");
-	
+
 	std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
 	EXPECT_TRUE(client1.send(gameNet::toMessage(gameNet::NwPutStoneEvent{1u, 2u})));
@@ -33,14 +33,12 @@ TEST(Networking, Server) {
 
 	const auto c1Session = client1.read();
 	const auto c2Session = client2.read();
-	
+
 	std::cerr << "Client 1 received:\n\t" << c1Session << "\n";
 	std::cerr << "Client 2 received:\n\t" << c2Session << "\n";
 
 	client1.disconnect();
 	client2.disconnect();
-
-	
 }
 
 } // namespace go::gtest
