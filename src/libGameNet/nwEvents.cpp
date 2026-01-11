@@ -7,6 +7,32 @@ namespace go::gameNet {
 
 using nlohmann::json;
 
+constexpr bool isValid(ServerAction a) noexcept {
+	switch (a) {
+	case ServerAction::Place:
+	case ServerAction::Pass:
+	case ServerAction::Resign:
+		return true;
+	case ServerAction::Count:
+		return false;
+	}
+	static_assert(static_cast<int>(ServerAction::Count) == 3, "Update isValid(ServerAction) when adding enum values");
+	return false;
+}
+constexpr bool isValid(GameStatus a) noexcept {
+	switch (a) {
+	case GameStatus::Active:
+	case GameStatus::BlackWin:
+	case GameStatus::WhiteWin:
+	case GameStatus::Draw:
+		return true;
+	case GameStatus::Count:
+		return false;
+	}
+	static_assert(static_cast<int>(GameStatus::Count) == 4, "Update isValid(GameStatus) when adding enum values");
+	return false;
+}
+
 static std::string toMessage(const ClientPutStone& e) {
 	json j;
 	j["type"] = "put";
@@ -140,10 +166,7 @@ static std::optional<ServerEvent> fromServerDeltaMessage(const json& j) {
 
 	const auto actionValue = j["action"].get<unsigned>();
 	const auto statusValue = j["status"].get<unsigned>();
-	if (actionValue > static_cast<unsigned>(ServerAction::Resign)) {
-		return {};
-	}
-	if (statusValue > static_cast<unsigned>(GameStatus::Draw)) {
+	if (!isValid(static_cast<ServerAction>(actionValue)) || !isValid(static_cast<GameStatus>(statusValue))) {
 		return {};
 	}
 
@@ -180,8 +203,6 @@ static std::optional<ServerEvent> fromServerDeltaMessage(const json& j) {
 		if (j.contains("x") || j.contains("y") || j.contains("captures")) {
 			return {};
 		}
-		delta.x = std::nullopt;
-		delta.y = std::nullopt;
 	}
 
 	return delta;

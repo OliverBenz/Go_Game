@@ -24,16 +24,18 @@ struct ClientChat {
 struct ServerSessionAssign {
 	SessionId sessionId;
 };
-enum class ServerAction {
+enum class ServerAction : std::uint8_t {
 	Place,
 	Pass,
 	Resign,
+	Count //!< Used in serialisation to check when enum changes.
 };
-enum class GameStatus {
+enum class GameStatus : std::uint8_t {
 	Active,
 	BlackWin,
 	WhiteWin,
 	Draw,
+	Count //!< Used in serialisation to check when enum changes.
 };
 struct CaptureCoord {
 	unsigned x;

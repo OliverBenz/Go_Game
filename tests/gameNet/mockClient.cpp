@@ -45,6 +45,9 @@ void MockClient::onGameUpdate(const gameNet::ServerDelta& event) {
 	case gameNet::ServerAction::Resign:
 		std::cout << std::format("[Client] Received resign from '{}'\n", seat);
 		break;
+	case gameNet::ServerAction::Count:
+		assert(false && "ServerAction::Count is not a valid action");
+		break;
 	}
 }
 
