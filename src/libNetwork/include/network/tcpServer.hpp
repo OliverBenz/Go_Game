@@ -21,6 +21,11 @@ public:
 	TcpServer(std::uint16_t port = DEFAULT_PORT);
 	~TcpServer();
 
+	TcpServer(const TcpServer&)            = delete;
+	TcpServer& operator=(const TcpServer&) = delete;
+	TcpServer(TcpServer&&)                 = delete;
+	TcpServer& operator=(TcpServer&&)      = delete;
+
 	void connect(Callbacks callbacks); //!< Connect callback functions to get event signalling. Call before start.
 	void start();                      //!< Start accepting clients.
 	void stop();                       //!< Disconnect clients and stop the server.

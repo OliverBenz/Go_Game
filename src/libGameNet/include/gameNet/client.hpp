@@ -23,6 +23,11 @@ public:
 	Client();
 	~Client();
 
+	Client(const Client&)            = delete;
+	Client& operator=(const Client&) = delete;
+	Client(Client&&)                 = delete;
+	Client& operator=(Client&&)      = delete;
+
 	bool registerHandler(IClientHandler* handler);
 
 	void connect(const std::string& host);
