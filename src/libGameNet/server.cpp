@@ -1,10 +1,59 @@
 #include "gameNet/server.hpp"
 
+#include "SafeQueue.hpp"
+#include "network/tcpServer.hpp"
 #include "serverEvents.hpp"
+#include "sessionManager.hpp"
+
+#include <atomic>
+#include <thread>
 
 namespace go::gameNet {
 
-Server::Server(std::uint16_t port) : m_network{port} {
+class Server::Implementation {
+public:
+	explicit Implementation(std::uint16_t port);
+
+	void start();
+	void stop();
+	bool registerHandler(IServerHandler* handler);
+
+	bool send(SessionId sessionId, const NwEvent& event); //!< Send event to client with given sessionId.
+	bool broadcast(const NwEvent& event);                 //!< Send event to all connected clients.
+
+	Seat getSeat(SessionId sessionId) const; //!< Get the seat connection with a sessionId.
+
+private:
+	void serverLoop();                           //!< Server thread: drain queue and act.
+	void processEvent(const ServerEvent& event); //!< Server loop calls this. Reads event type and distributes.
+
+	Seat freeSeat() const;
+
+private:
+	// Network callbacks (run on libNetwork threads) just enqueue events.
+	void onClientConnected(network::ConnectionId connectionId);
+	void onClientMessage(network::ConnectionId connectionId, const network::Message& payload);
+	void onClientDisconnected(network::ConnectionId connectionId);
+
+private:
+	// Processing of server events.
+	void processClientMessage(const ServerEvent& event);    //!< Translate payload to network event and handle.
+	void processClientConnect(const ServerEvent& event);    //!< Creates session key.
+	void processClientDisconnect(const ServerEvent& event); //!< Destroys session key.
+	void processShutdown(const ServerEvent& event);         //!< Shutdown server.
+
+private:
+	std::atomic<bool> m_isRunning{false};
+	std::thread m_serverThread;
+
+	SessionManager m_sessionManager;
+	network::TcpServer m_network;
+
+	IServerHandler* m_handler{nullptr};  //!< The class that will handle server events.
+	SafeQueue<ServerEvent> m_eventQueue; //!< Event queue between network threads and server thread.
+};
+
+Server::Implementation::Implementation(std::uint16_t port) : m_network{port} {
 	// Wire up network callbacks but keep them thin: they only enqueue events.
 	network::TcpServer::Callbacks callbacks;
 	callbacks.onConnect    = [this](network::ConnectionId connectionId) { return onClientConnected(connectionId); };
@@ -13,11 +62,7 @@ Server::Server(std::uint16_t port) : m_network{port} {
 	m_network.connect(callbacks);
 }
 
-Server::~Server() {
-	stop();
-}
-
-void Server::start() {
+void Server::Implementation::start() {
 	if (m_isRunning.exchange(true)) {
 		return;
 	}
@@ -26,7 +71,7 @@ void Server::start() {
 	m_serverThread = std::thread([this] { serverLoop(); });
 }
 
-void Server::stop() {
+void Server::Implementation::stop() {
 	// Wake serverLoop and stop network.
 	if (m_isRunning.exchange(false)) {
 		m_eventQueue.Push(ServerEvent{.type = ServerEventType::Shutdown});
@@ -44,7 +89,7 @@ void Server::stop() {
 	}
 }
 
-bool Server::registerHandler(IServerHandler* handler) {
+bool Server::Implementation::registerHandler(IServerHandler* handler) {
 	if (m_handler) {
 		return false;
 	}
@@ -52,7 +97,7 @@ bool Server::registerHandler(IServerHandler* handler) {
 	return true;
 }
 
-bool Server::send(SessionId sessionId, const NwEvent& event) {
+bool Server::Implementation::send(SessionId sessionId, const NwEvent& event) {
 	const auto connectionId = m_sessionManager.getConnectionId(sessionId);
 	if (!connectionId) {
 		return false;
@@ -60,7 +105,7 @@ bool Server::send(SessionId sessionId, const NwEvent& event) {
 	return m_network.send(connectionId, toMessage(event));
 }
 
-bool Server::broadcast(const NwEvent& event) {
+bool Server::Implementation::broadcast(const NwEvent& event) {
 	const auto message = toMessage(event);
 	bool anySent       = false;
 
@@ -75,15 +120,16 @@ bool Server::broadcast(const NwEvent& event) {
 
 	return anySent;
 }
-Seat Server::getSeat(SessionId sessionId) const {
+
+Seat Server::Implementation::getSeat(SessionId sessionId) const {
 	return m_sessionManager.getSeat(sessionId);
 }
 
-void Server::onClientConnected(network::ConnectionId connectionId) {
+void Server::Implementation::onClientConnected(network::ConnectionId connectionId) {
 	m_eventQueue.Push(ServerEvent{.type = ServerEventType::ClientConnected, .connectionId = connectionId});
 }
 
-void Server::onClientMessage(network::ConnectionId connectionId, const network::Message& payload) {
+void Server::Implementation::onClientMessage(network::ConnectionId connectionId, const network::Message& payload) {
 	m_eventQueue.Push(ServerEvent{
 	        .type         = ServerEventType::ClientMessage,
 	        .connectionId = connectionId,
@@ -91,12 +137,11 @@ void Server::onClientMessage(network::ConnectionId connectionId, const network::
 	});
 }
 
-void Server::onClientDisconnected(network::ConnectionId connectionId) {
+void Server::Implementation::onClientDisconnected(network::ConnectionId connectionId) {
 	m_eventQueue.Push(ServerEvent{.type = ServerEventType::ClientDisconnected, .connectionId = connectionId});
 }
 
-
-void Server::serverLoop() {
+void Server::Implementation::serverLoop() {
 	while (m_isRunning) {
 		try {
 			const auto event = m_eventQueue.Pop();
@@ -109,8 +154,7 @@ void Server::serverLoop() {
 	}
 }
 
-
-void Server::processEvent(const ServerEvent& event) {
+void Server::Implementation::processEvent(const ServerEvent& event) {
 	switch (event.type) {
 	case ServerEventType::ClientConnected:
 		processClientConnect(event);
@@ -127,7 +171,7 @@ void Server::processEvent(const ServerEvent& event) {
 	}
 }
 
-void Server::processClientConnect(const ServerEvent& event) {
+void Server::Implementation::processClientConnect(const ServerEvent& event) {
 	// TODO: Possible to have this connectionId already registered?
 	const auto sessionId = m_sessionManager.add(event.connectionId);
 	const auto seat      = freeSeat();
@@ -141,7 +185,7 @@ void Server::processClientConnect(const ServerEvent& event) {
 	}
 }
 
-void Server::processClientMessage(const ServerEvent& event) {
+void Server::Implementation::processClientMessage(const ServerEvent& event) {
 	const auto sessionId = m_sessionManager.getSessionId(event.connectionId);
 	if (!sessionId) {
 		return;
@@ -163,7 +207,7 @@ void Server::processClientMessage(const ServerEvent& event) {
 	}
 }
 
-void Server::processClientDisconnect(const ServerEvent& event) {
+void Server::Implementation::processClientDisconnect(const ServerEvent& event) {
 	const auto sessionId = m_sessionManager.getSessionId(event.connectionId);
 	if (!sessionId) {
 		return; // Should never happen
@@ -178,11 +222,11 @@ void Server::processClientDisconnect(const ServerEvent& event) {
 	}
 }
 
-void Server::processShutdown(const ServerEvent&) {
+void Server::Implementation::processShutdown(const ServerEvent&) {
 	m_isRunning = false;
 }
 
-Seat Server::freeSeat() const {
+Seat Server::Implementation::freeSeat() const {
 	if (!m_sessionManager.getConnectionIdBySeat(Seat::Black)) {
 		return Seat::Black;
 	}
@@ -190,6 +234,41 @@ Seat Server::freeSeat() const {
 		return Seat::White;
 	}
 	return Seat::Observer;
+}
+
+
+Server::Server() : m_pimpl(std::make_unique<Implementation>(network::DEFAULT_PORT)) {
+}
+
+Server::Server(std::uint16_t port) : m_pimpl(std::make_unique<Implementation>(port)) {
+}
+
+Server::~Server() {
+	stop();
+}
+
+void Server::start() {
+	m_pimpl->start();
+}
+
+void Server::stop() {
+	m_pimpl->stop();
+}
+
+bool Server::registerHandler(IServerHandler* handler) {
+	return m_pimpl->registerHandler(handler);
+}
+
+bool Server::send(SessionId sessionId, const NwEvent& event) {
+	return m_pimpl->send(sessionId, event);
+}
+
+bool Server::broadcast(const NwEvent& event) {
+	return m_pimpl->broadcast(event);
+}
+
+Seat Server::getSeat(SessionId sessionId) const {
+	return m_pimpl->getSeat(sessionId);
 }
 
 } // namespace go::gameNet

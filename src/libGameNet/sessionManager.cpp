@@ -1,4 +1,4 @@
-#include "gameNet/sessionManager.hpp"
+#include "sessionManager.hpp"
 
 #include <cassert>
 
