@@ -20,26 +20,9 @@ struct ClientChat {
 	std::string message;
 };
 
-// Server Network Events
+// Server Events
 struct ServerSessionAssign {
 	SessionId sessionId;
-};
-enum class ServerAction : std::uint8_t {
-	Place,
-	Pass,
-	Resign,
-	Count //!< Used in serialisation to check when enum changes.
-};
-enum class GameStatus : std::uint8_t {
-	Active,
-	BlackWin,
-	WhiteWin,
-	Draw,
-	Count //!< Used in serialisation to check when enum changes.
-};
-struct CaptureCoord {
-	unsigned x;
-	unsigned y;
 };
 struct ServerDelta {
 	unsigned turn;
@@ -55,6 +38,7 @@ struct ServerChat {
 	Seat seat; //!< Only player values.
 	std::string message;
 };
+
 
 using ClientEvent = std::variant<ClientPutStone, ClientPass, ClientResign, ClientChat>;
 using ServerEvent = std::variant<ServerSessionAssign, ServerDelta, ServerChat>;
