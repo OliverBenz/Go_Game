@@ -55,7 +55,7 @@ TEST(GameNetMessages, ServerToMessage) {
 	                  .next     = gameNet::Seat::White,
 	                  .status   = gameNet::GameStatus::Active,
 	          }),
-	          "DELTA:turn=42,seat=2,action=PLACE,x=3,y=4,captures=1|2;5|6,next=4,status=ACTIVE");
+	          "DELTA:turn=42,seat=2,action=0,x=3,y=4,captures=1|2;5|6,next=4,status=0");
 	EXPECT_EQ(gameNet::toMessage(gameNet::ServerDelta{
 	                  .turn     = 43u,
 	                  .seat     = gameNet::Seat::White,
@@ -66,7 +66,7 @@ TEST(GameNetMessages, ServerToMessage) {
 	                  .next     = gameNet::Seat::Black,
 	                  .status   = gameNet::GameStatus::Active,
 	          }),
-	          "DELTA:turn=43,seat=4,action=PASS,x=,y=,captures=,next=2,status=ACTIVE");
+	          "DELTA:turn=43,seat=4,action=1,next=2,status=0");
 	EXPECT_EQ(gameNet::toMessage(gameNet::ServerDelta{
 	                  .turn     = 44u,
 	                  .seat     = gameNet::Seat::Black,
@@ -77,7 +77,7 @@ TEST(GameNetMessages, ServerToMessage) {
 	                  .next     = gameNet::Seat::White,
 	                  .status   = gameNet::GameStatus::WhiteWin,
 	          }),
-	          "DELTA:turn=44,seat=2,action=RESIGN,x=,y=,captures=,next=4,status=WHITE_WIN");
+	          "DELTA:turn=44,seat=2,action=2,next=4,status=2");
 	EXPECT_EQ(gameNet::toMessage(gameNet::ServerChat{gameNet::Seat::White, "hi"}), "NEW_CHAT:4,hi");
 }
 
@@ -87,7 +87,7 @@ TEST(GameNetMessages, ServerFromMessageValid) {
 	ASSERT_TRUE(std::holds_alternative<gameNet::ServerSessionAssign>(*session));
 	EXPECT_EQ(std::get<gameNet::ServerSessionAssign>(*session).sessionId, 42u);
 
-	const auto delta = gameNet::fromServerMessage("DELTA:turn=7,seat=2,action=PLACE,x=1,y=2,captures=3|4;5|6,next=4,status=ACTIVE");
+	const auto delta = gameNet::fromServerMessage("DELTA:turn=7,seat=2,action=0,x=1,y=2,captures=3|4;5|6,next=4,status=0");
 	ASSERT_TRUE(delta.has_value());
 	ASSERT_TRUE(std::holds_alternative<gameNet::ServerDelta>(*delta));
 	const auto deltaEvent = std::get<gameNet::ServerDelta>(*delta);
@@ -104,6 +104,15 @@ TEST(GameNetMessages, ServerFromMessageValid) {
 	EXPECT_EQ(deltaEvent.next, gameNet::Seat::White);
 	EXPECT_EQ(deltaEvent.status, gameNet::GameStatus::Active);
 
+	const auto passDelta = gameNet::fromServerMessage("DELTA:turn=8,seat=4,action=1,next=2,status=0");
+	ASSERT_TRUE(passDelta.has_value());
+	ASSERT_TRUE(std::holds_alternative<gameNet::ServerDelta>(*passDelta));
+	const auto passEvent = std::get<gameNet::ServerDelta>(*passDelta);
+	EXPECT_EQ(passEvent.action, gameNet::ServerAction::Pass);
+	EXPECT_FALSE(passEvent.x.has_value());
+	EXPECT_FALSE(passEvent.y.has_value());
+	EXPECT_TRUE(passEvent.captures.empty());
+
 	const auto chat = gameNet::fromServerMessage("NEW_CHAT:2,hello,world");
 	ASSERT_TRUE(chat.has_value());
 	ASSERT_TRUE(std::holds_alternative<gameNet::ServerChat>(*chat));
@@ -114,13 +123,53 @@ TEST(GameNetMessages, ServerFromMessageValid) {
 
 TEST(GameNetMessages, ServerFromMessageInvalid) {
 	EXPECT_FALSE(gameNet::fromServerMessage("SESSION_ID:").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage("DELTA:turn=1,seat=2,action=PLACE,x=,y=,captures=,next=4,status=ACTIVE").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage("DELTA:turn=1,seat=0,action=PASS,x=,y=,captures=,next=4,status=ACTIVE").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage("DELTA:turn=1,seat=2,action=PLACE,x=1,y=,captures=,next=4,status=ACTIVE").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage("DELTA:turn=1,seat=2,action=PLACE,x=1,y=2,captures=3|,next=4,status=ACTIVE").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage("DELTA:turn=1,seat=2,action=PLACE,x=1,y=2,captures=,next=0,status=ACTIVE").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage("DELTA:turn=1,seat=2,action=PASS,x=,y=,captures=,next=4,status=UNKNOWN").has_value());
+	EXPECT_FALSE(gameNet::fromServerMessage("DELTA:turn=1,seat=2,action=0,x=,y=,next=4,status=0").has_value());
+	EXPECT_FALSE(gameNet::fromServerMessage("DELTA:turn=1,seat=0,action=1,x=,y=,captures=,next=4,status=0").has_value());
+	EXPECT_FALSE(gameNet::fromServerMessage("DELTA:turn=1,seat=2,action=0,x=1,y=,captures=,next=4,status=0").has_value());
+	EXPECT_FALSE(gameNet::fromServerMessage("DELTA:turn=1,seat=2,action=0,x=1,y=2,captures=3|,next=4,status=0").has_value());
+	EXPECT_FALSE(gameNet::fromServerMessage("DELTA:turn=1,seat=2,action=0,x=1,y=2,captures=,next=0,status=0").has_value());
+	EXPECT_FALSE(gameNet::fromServerMessage("DELTA:turn=1,seat=2,action=1,x=,y=,captures=,next=4,status=99").has_value());
+	EXPECT_FALSE(gameNet::fromServerMessage("DELTA:turn=1,seat=2,action=1,x=1,next=4,status=0").has_value());
+	EXPECT_FALSE(gameNet::fromServerMessage("DELTA:turn=1,seat=2,action=1,captures=1|1,next=4,status=0").has_value());
+	EXPECT_FALSE(gameNet::fromServerMessage("DELTA:turn=1,seat=2,action=1,next=4,status=0,foo=1").has_value());
+	EXPECT_FALSE(gameNet::fromServerMessage("DELTA:turn=1,turn=2,seat=2,action=1,next=4,status=0").has_value());
+	EXPECT_FALSE(gameNet::fromServerMessage("DELTA:turn=1,,seat=2,action=1,next=4,status=0").has_value());
+	EXPECT_FALSE(gameNet::fromServerMessage("DELTA:turn=1,seat=2,action=0,x=1,y=1,captures=1|2;;3|4,next=4,status=0").has_value());
 	EXPECT_FALSE(gameNet::fromServerMessage("NEW_CHAT:0,hi").has_value());
 }
+
+TEST(GameNetMessages, ServerDeltaOmitsEmptyFields) {
+	const auto message = gameNet::toMessage(gameNet::ServerDelta{
+	        .turn     = 9u,
+	        .seat     = gameNet::Seat::Black,
+	        .action   = gameNet::ServerAction::Pass,
+	        .x        = std::nullopt,
+	        .y        = std::nullopt,
+	        .captures = {},
+	        .next     = gameNet::Seat::White,
+	        .status   = gameNet::GameStatus::Active,
+	});
+	EXPECT_EQ(message.find("x="), std::string::npos);
+	EXPECT_EQ(message.find("y="), std::string::npos);
+	EXPECT_EQ(message.find("captures="), std::string::npos);
+}
+
+#if GTEST_HAS_DEATH_TEST
+TEST(GameNetMessages, ServerDeltaMissingXYSerialization) {
+	const auto build = [] {
+		gameNet::toMessage(gameNet::ServerDelta{
+		        .turn     = 1u,
+		        .seat     = gameNet::Seat::Black,
+		        .action   = gameNet::ServerAction::Place,
+		        .x        = std::nullopt,
+		        .y        = std::nullopt,
+		        .captures = {},
+		        .next     = gameNet::Seat::White,
+		        .status   = gameNet::GameStatus::Active,
+		});
+	};
+	EXPECT_DEATH(build(), "ServerDelta::Place requires x and y");
+}
+#endif
 
 } // namespace go::gtest
