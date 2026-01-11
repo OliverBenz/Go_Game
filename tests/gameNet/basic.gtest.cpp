@@ -5,6 +5,7 @@
 #include <format>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <optional>
 #include <thread>
 
 namespace go::gtest {
@@ -31,23 +32,61 @@ public:
 private:
 	void handleNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientPutStone& event) {
 		const auto seat = m_network.getSeat(sessionId);
-		m_network.broadcast(gameNet::ServerBoardUpdate{.seat = seat, .x = event.x, .y = event.y});
+		m_network.broadcast(gameNet::ServerDelta{
+		        .turn     = ++m_turn,
+		        .seat     = seat,
+		        .action   = gameNet::ServerAction::Place,
+		        .x        = event.x,
+		        .y        = event.y,
+		        .captures = {},
+		        .next     = nextSeat(seat),
+		        .status   = gameNet::GameStatus::Active,
+		});
 	}
 	void handleNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientPass&) {
 		const auto seat = m_network.getSeat(sessionId);
-		m_network.broadcast(gameNet::ServerPass{.seat = seat});
+		m_network.broadcast(gameNet::ServerDelta{
+		        .turn     = ++m_turn,
+		        .seat     = seat,
+		        .action   = gameNet::ServerAction::Pass,
+		        .x        = std::nullopt,
+		        .y        = std::nullopt,
+		        .captures = {},
+		        .next     = nextSeat(seat),
+		        .status   = gameNet::GameStatus::Active,
+		});
 	}
 	void handleNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientResign&) {
 		const auto seat = m_network.getSeat(sessionId);
-		m_network.broadcast(gameNet::ServerResign{.seat = seat});
+		m_network.broadcast(gameNet::ServerDelta{
+		        .turn     = ++m_turn,
+		        .seat     = seat,
+		        .action   = gameNet::ServerAction::Resign,
+		        .x        = std::nullopt,
+		        .y        = std::nullopt,
+		        .captures = {},
+		        .next     = nextSeat(seat),
+		        .status   = seat == gameNet::Seat::Black ? gameNet::GameStatus::WhiteWin : gameNet::GameStatus::BlackWin,
+		});
 	}
 	void handleNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientChat& event) {
 		const auto seat = m_network.getSeat(sessionId);
 		m_network.broadcast(gameNet::ServerChat{.seat = seat, .message = event.message});
 	}
 
+	gameNet::Seat nextSeat(gameNet::Seat seat) const {
+		if (seat == gameNet::Seat::Black) {
+			return gameNet::Seat::White;
+		}
+		if (seat == gameNet::Seat::White) {
+			return gameNet::Seat::Black;
+		}
+		return gameNet::Seat::Observer;
+	}
+
 private:
 	gameNet::Server m_network;
+	unsigned m_turn{0u};
 };
 
 class MockClient : public gameNet::IClientHandler {
@@ -87,14 +126,19 @@ private:
 	void handleNetworkEvent(const gameNet::ServerSessionAssign& event) {
 		std::cout << std::format("[Client] Received sessionId: '{}'.\n", event.sessionId);
 	}
-	void handleNetworkEvent(const gameNet::ServerBoardUpdate& event) {
-		std::cout << std::format("[Client] Received board update from '{}' at ({}, {}).\n", toString(event.seat), event.x, event.y);
-	}
-	void handleNetworkEvent(const gameNet::ServerPass& event) {
-		std::cout << std::format("[Client] Received pass from '{}'.\n", toString(event.seat));
-	}
-	void handleNetworkEvent(const gameNet::ServerResign& event) {
-		std::cout << std::format("[Client] Received resign from '{}'\n", toString(event.seat));
+	void handleNetworkEvent(const gameNet::ServerDelta& event) {
+		const auto seat = toString(event.seat);
+		switch (event.action) {
+		case gameNet::ServerAction::Place:
+			std::cout << std::format("[Client] Received board update from '{}' at ({}, {}).\n", seat, event.x.value_or(0u), event.y.value_or(0u));
+			break;
+		case gameNet::ServerAction::Pass:
+			std::cout << std::format("[Client] Received pass from '{}'.\n", seat);
+			break;
+		case gameNet::ServerAction::Resign:
+			std::cout << std::format("[Client] Received resign from '{}'\n", seat);
+			break;
+		}
 	}
 	void handleNetworkEvent(const gameNet::ServerChat& event) {
 		std::cout << std::format("[Client] Received message from '{}':{}\n", toString(event.seat), event.message);

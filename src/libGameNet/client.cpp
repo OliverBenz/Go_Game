@@ -27,7 +27,11 @@ private:
 	void startReadLoop(); //!< Starts background read thread for blocking reads.
 	void stopReadLoop();
 	void readLoop();
-	void handleIncoming(const network::Message& message);
+
+private:
+	void handleNetworkEvent(const ServerSessionAssign& event);
+	void handleNetworkEvent(const ServerDelta& event);
+	void handleNetworkEvent(const ServerChat& event);
 
 private:
 	network::TcpClient m_client;
@@ -99,7 +103,11 @@ void Client::Implementation::readLoop() {
 
 		try {
 			const auto message = m_client.read();
-			handleIncoming(message);
+			const auto event   = fromServerMessage(message);
+			if (!event) {
+				continue;
+			}
+			std::visit([&](const auto& e) { handleNetworkEvent(e); }, *event);
 		} catch (...) { break; }
 	}
 
@@ -108,19 +116,22 @@ void Client::Implementation::readLoop() {
 	}
 }
 
-void Client::Implementation::handleIncoming(const network::Message& message) {
-	const auto event = fromServerMessage(message);
-	if (!event) {
-		return;
+void Client::Implementation::handleNetworkEvent(const ServerSessionAssign& event) {
+	if (m_sessionId != 0u) {
+		// TODO: Update to handle reconnect
 	}
+	m_sessionId = event.sessionId;
+}
 
-	if (std::holds_alternative<gameNet::ServerSessionAssign>(*event)) {
-		m_sessionId = std::get<ServerSessionAssign>(*event).sessionId;
-		return;
-	}
-
+void Client::Implementation::handleNetworkEvent(const ServerDelta& event) {
 	if (m_handler) {
-		m_handler->onNetworkEvent(*event);
+		m_handler->onGameUpdate(event);
+	}
+}
+
+void Client::Implementation::handleNetworkEvent(const ServerChat& event) {
+	if (m_handler) {
+		m_handler->onChatMessage(event);
 	}
 }
 
