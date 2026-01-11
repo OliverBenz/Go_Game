@@ -90,16 +90,14 @@ std::string toMessage(ServerEvent event) {
 std::optional<ServerEvent> fromServerMessage(const std::string& message) {
 	if (message.rfind(SERVER_SESSION, 0) == 0) {
 		try {
-			const auto payload = message.substr(SERVER_SESSION.size());
+			const auto payload   = message.substr(SERVER_SESSION.size());
 			const auto sessionId = static_cast<SessionId>(std::stoul(payload));
 			return ServerSessionAssign{.sessionId = sessionId};
-		} catch (const std::exception&) {
-			return {};
-		}
+		} catch (const std::exception&) { return {}; }
 	}
 
 	if (message.rfind(SERVER_BOARD, 0) == 0) {
-		const auto payload = message.substr(SERVER_BOARD.size());
+		const auto payload    = message.substr(SERVER_BOARD.size());
 		const auto firstComma = payload.find(',');
 		if (firstComma == std::string::npos) {
 			return {};
@@ -111,63 +109,55 @@ std::optional<ServerEvent> fromServerMessage(const std::string& message) {
 
 		try {
 			const auto seatValue = static_cast<unsigned>(std::stoul(payload.substr(0, firstComma)));
-			const auto x = static_cast<unsigned>(std::stoul(payload.substr(firstComma + 1, secondComma - firstComma - 1)));
-			const auto y = static_cast<unsigned>(std::stoul(payload.substr(secondComma + 1)));
-			const auto seat = static_cast<Seat>(seatValue);
+			const auto x         = static_cast<unsigned>(std::stoul(payload.substr(firstComma + 1, secondComma - firstComma - 1)));
+			const auto y         = static_cast<unsigned>(std::stoul(payload.substr(secondComma + 1)));
+			const auto seat      = static_cast<Seat>(seatValue);
 			if (!isPlayer(seat)) {
 				return {};
 			}
 			return ServerBoardUpdate{.seat = seat, .x = x, .y = y};
-		} catch (const std::exception&) {
-			return {};
-		}
+		} catch (const std::exception&) { return {}; }
 	}
 
 	if (message.rfind(SERVER_PASS, 0) == 0) {
 		try {
-			const auto payload = message.substr(SERVER_PASS.size());
+			const auto payload   = message.substr(SERVER_PASS.size());
 			const auto seatValue = static_cast<unsigned>(std::stoul(payload));
-			const auto seat = static_cast<Seat>(seatValue);
+			const auto seat      = static_cast<Seat>(seatValue);
 			if (!isPlayer(seat)) {
 				return {};
 			}
 			return ServerPass{.seat = seat};
-		} catch (const std::exception&) {
-			return {};
-		}
+		} catch (const std::exception&) { return {}; }
 	}
 
 	if (message.rfind(SERVER_RESIGN, 0) == 0) {
 		try {
-			const auto payload = message.substr(SERVER_RESIGN.size());
+			const auto payload   = message.substr(SERVER_RESIGN.size());
 			const auto seatValue = static_cast<unsigned>(std::stoul(payload));
-			const auto seat = static_cast<Seat>(seatValue);
+			const auto seat      = static_cast<Seat>(seatValue);
 			if (!isPlayer(seat)) {
 				return {};
 			}
 			return ServerResign{.seat = seat};
-		} catch (const std::exception&) {
-			return {};
-		}
+		} catch (const std::exception&) { return {}; }
 	}
 
 	if (message.rfind(SERVER_CHAT, 0) == 0) {
-		const auto payload = message.substr(SERVER_CHAT.size());
+		const auto payload  = message.substr(SERVER_CHAT.size());
 		const auto commaPos = payload.find(',');
 		if (commaPos == std::string::npos) {
 			return {};
 		}
 		try {
 			const auto seatValue = static_cast<unsigned>(std::stoul(payload.substr(0, commaPos)));
-			const auto seat = static_cast<Seat>(seatValue);
+			const auto seat      = static_cast<Seat>(seatValue);
 			if (!isPlayer(seat)) {
 				return {};
 			}
 			const auto chat = payload.substr(commaPos + 1);
 			return ServerChat{.seat = seat, .message = chat};
-		} catch (const std::exception&) {
-			return {};
-		}
+		} catch (const std::exception&) { return {}; }
 	}
 
 	return {};
