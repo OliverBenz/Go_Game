@@ -172,7 +172,7 @@ void Server::Implementation::processEvent(const ServerEvent& event) {
 }
 
 void Server::Implementation::processClientConnect(const ServerEvent& event) {
-	// TODO: Possible to have this connectionId already registered?
+	// TODO: Possible to have this connectionId already registered? Yes, reconnect! Not thandled yet
 	const auto sessionId = m_sessionManager.add(event.connectionId);
 	const auto seat      = freeSeat();
 

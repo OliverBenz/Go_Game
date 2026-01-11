@@ -1,27 +1,51 @@
 #pragma once
 
+#include "gameNet/types.hpp"
+
 #include <optional>
 #include <string>
 #include <variant>
 
 namespace go::gameNet {
 
-// Network events
-struct NwPutStoneEvent {
+// Client Network Events
+struct ClientPutStone {
 	unsigned x;
 	unsigned y;
 };
-struct NwPassEvent {};
-struct NwResignEvent {};
-struct NwChatEvent {
+struct ClientPass {};
+struct ClientResign {};
+struct ClientChat {
 	std::string message;
 };
 
-using NwEvent = std::variant<NwPutStoneEvent, NwPassEvent, NwResignEvent, NwChatEvent>;
+// Server Network Events
+struct ServerSessionAssign {
+	SessionId sessionId;
+};
+struct ServerBoardUpdate {
+	Seat seat; //!< Only player values.
+	unsigned x;
+	unsigned y;
+};
+struct ServerPass {
+	Seat seat; //!< Only player values.
+};
+struct ServerResign {
+	Seat seat; //!< Only player values.
+};
+struct ServerChat {
+	Seat seat; //!< Only player values.
+	std::string message;
+};
 
-//! Network event to message string.
-std::string toMessage(NwEvent event);
-//! Message string to network event.
-std::optional<NwEvent> fromMessage(const std::string& message);
+using ClientEvent = std::variant<ClientPutStone, ClientPass, ClientResign, ClientChat>;
+using ServerEvent = std::variant<ServerSessionAssign, ServerBoardUpdate, ServerChat, ServerPass, ServerResign>;
+
+std::string toMessage(ClientEvent event); //!< Client network event to message string.
+std::string toMessage(ServerEvent event); //!< Server network event to message string.
+
+std::optional<ClientEvent> fromClientMessage(const std::string& message); //!< Message string to client network event.
+std::optional<ServerEvent> fromServerMessage(const std::string& message); //!< Message string to server network event.
 
 } // namespace go::gameNet
