@@ -24,8 +24,8 @@ public:
 	Seat getSeat(SessionId sessionId) const; //!< Get the seat connection with a sessionId.
 
 private:
-	void serverLoop();                           //!< Server thread: drain queue and act.
-	void processEvent(const ServerEvent& event); //!< Server loop calls this. Reads event type and distributes.
+	void serverLoop();                                //!< Server thread: drain queue and act.
+	void processEvent(const ServerQueueEvent& event); //!< Server loop calls this. Reads event type and distributes.
 
 	Seat freeSeat() const;
 
@@ -37,10 +37,10 @@ private:
 
 private:
 	// Processing of server events.
-	void processClientMessage(const ServerEvent& event);    //!< Translate payload to network event and handle.
-	void processClientConnect(const ServerEvent& event);    //!< Creates session key.
-	void processClientDisconnect(const ServerEvent& event); //!< Destroys session key.
-	void processShutdown(const ServerEvent& event);         //!< Shutdown server.
+	void processClientMessage(const ServerQueueEvent& event);    //!< Translate payload to network event and handle.
+	void processClientConnect(const ServerQueueEvent& event);    //!< Creates session key.
+	void processClientDisconnect(const ServerQueueEvent& event); //!< Destroys session key.
+	void processShutdown(const ServerQueueEvent& event);         //!< Shutdown server.
 
 private:
 	std::atomic<bool> m_isRunning{false};
@@ -49,8 +49,8 @@ private:
 	SessionManager m_sessionManager;
 	network::TcpServer m_network;
 
-	IServerHandler* m_handler{nullptr};  //!< The class that will handle server events.
-	SafeQueue<ServerEvent> m_eventQueue; //!< Event queue between network threads and server thread.
+	IServerHandler* m_handler{nullptr};       //!< The class that will handle server events.
+	SafeQueue<ServerQueueEvent> m_eventQueue; //!< Event queue between network threads and server thread.
 };
 
 Server::Implementation::Implementation(std::uint16_t port) : m_network{port} {
@@ -74,7 +74,7 @@ void Server::Implementation::start() {
 void Server::Implementation::stop() {
 	// Wake serverLoop and stop network.
 	if (m_isRunning.exchange(false)) {
-		m_eventQueue.Push(ServerEvent{.type = ServerEventType::Shutdown});
+		m_eventQueue.Push(ServerQueueEvent{.type = ServerQueueEventType::Shutdown});
 	}
 	m_network.stop();
 
@@ -126,19 +126,19 @@ Seat Server::Implementation::getSeat(SessionId sessionId) const {
 }
 
 void Server::Implementation::onClientConnected(network::ConnectionId connectionId) {
-	m_eventQueue.Push(ServerEvent{.type = ServerEventType::ClientConnected, .connectionId = connectionId});
+	m_eventQueue.Push(ServerQueueEvent{.type = ServerQueueEventType::ClientConnected, .connectionId = connectionId});
 }
 
 void Server::Implementation::onClientMessage(network::ConnectionId connectionId, const network::Message& payload) {
-	m_eventQueue.Push(ServerEvent{
-	        .type         = ServerEventType::ClientMessage,
+	m_eventQueue.Push(ServerQueueEvent{
+	        .type         = ServerQueueEventType::ClientMessage,
 	        .connectionId = connectionId,
 	        .payload      = payload,
 	});
 }
 
 void Server::Implementation::onClientDisconnected(network::ConnectionId connectionId) {
-	m_eventQueue.Push(ServerEvent{.type = ServerEventType::ClientDisconnected, .connectionId = connectionId});
+	m_eventQueue.Push(ServerQueueEvent{.type = ServerQueueEventType::ClientDisconnected, .connectionId = connectionId});
 }
 
 void Server::Implementation::serverLoop() {
@@ -154,24 +154,24 @@ void Server::Implementation::serverLoop() {
 	}
 }
 
-void Server::Implementation::processEvent(const ServerEvent& event) {
+void Server::Implementation::processEvent(const ServerQueueEvent& event) {
 	switch (event.type) {
-	case ServerEventType::ClientConnected:
+	case ServerQueueEventType::ClientConnected:
 		processClientConnect(event);
 		break;
-	case ServerEventType::ClientDisconnected:
+	case ServerQueueEventType::ClientDisconnected:
 		processClientDisconnect(event);
 		break;
-	case ServerEventType::ClientMessage:
+	case ServerQueueEventType::ClientMessage:
 		processClientMessage(event);
 		break;
-	case ServerEventType::Shutdown:
+	case ServerQueueEventType::Shutdown:
 		processShutdown(event);
 		break;
 	}
 }
 
-void Server::Implementation::processClientConnect(const ServerEvent& event) {
+void Server::Implementation::processClientConnect(const ServerQueueEvent& event) {
 	// TODO: Possible to have this connectionId already registered? Yes, reconnect! Not thandled yet
 	const auto sessionId = m_sessionManager.add(event.connectionId);
 	const auto seat      = freeSeat();
@@ -185,7 +185,7 @@ void Server::Implementation::processClientConnect(const ServerEvent& event) {
 	}
 }
 
-void Server::Implementation::processClientMessage(const ServerEvent& event) {
+void Server::Implementation::processClientMessage(const ServerQueueEvent& event) {
 	const auto sessionId = m_sessionManager.getSessionId(event.connectionId);
 	if (!sessionId) {
 		return;
@@ -207,7 +207,7 @@ void Server::Implementation::processClientMessage(const ServerEvent& event) {
 	}
 }
 
-void Server::Implementation::processClientDisconnect(const ServerEvent& event) {
+void Server::Implementation::processClientDisconnect(const ServerQueueEvent& event) {
 	const auto sessionId = m_sessionManager.getSessionId(event.connectionId);
 	if (!sessionId) {
 		return; // Should never happen
@@ -222,7 +222,7 @@ void Server::Implementation::processClientDisconnect(const ServerEvent& event) {
 	}
 }
 
-void Server::Implementation::processShutdown(const ServerEvent&) {
+void Server::Implementation::processShutdown(const ServerQueueEvent&) {
 	m_isRunning = false;
 }
 
