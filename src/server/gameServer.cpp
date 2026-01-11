@@ -12,7 +12,7 @@
 
 namespace go::server {
 
-GameServer::GameServer(std::uint16_t port) : m_server{port} {
+GameServer::GameServer() {
 }
 GameServer::~GameServer() {
 	stop();
