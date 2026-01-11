@@ -23,6 +23,9 @@ struct ClientChat {
 struct ServerSessionAssign {
 	SessionId sessionId;
 };
+// TODO: Could do a single 'ServerGameUpdate' that contains the delta from the last applied move (including move number for validation).
+//       Might be better for a authoritative server.
+
 struct ServerBoardUpdate {
 	Seat seat; //!< Only player values.
 	unsigned x;

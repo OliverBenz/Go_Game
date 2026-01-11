@@ -114,6 +114,11 @@ void Client::Implementation::handleIncoming(const network::Message& message) {
 		return;
 	}
 
+	if (std::holds_alternative<gameNet::ServerSessionAssign>(*event)) {
+		m_sessionId = std::get<ServerSessionAssign>(*event).sessionId;
+		return;
+	}
+
 	if (m_handler) {
 		m_handler->onNetworkEvent(*event);
 	}
