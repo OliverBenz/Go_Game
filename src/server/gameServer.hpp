@@ -26,14 +26,14 @@ public:
 
 	void onClientConnected(SessionId sessionId, Seat seat) override;
 	void onClientDisconnected(SessionId sessionId) override;
-	void onNetworkEvent(SessionId sessionId, const NwEvent& event) override;
+	void onNetworkEvent(SessionId sessionId, const ClientEvent& event) override;
 
 private:
 	// Processing of the network events that are sent in the server event message payload.
-	void handleNetworkEvent(Player player, const gameNet::NwPutStoneEvent& event);
-	void handleNetworkEvent(Player player, const gameNet::NwPassEvent& event);
-	void handleNetworkEvent(Player player, const gameNet::NwResignEvent& event);
-	void handleNetworkEvent(Player player, const gameNet::NwChatEvent& event);
+	void handleNetworkEvent(Player player, const gameNet::ClientPutStone& event);
+	void handleNetworkEvent(Player player, const gameNet::ClientPass& event);
+	void handleNetworkEvent(Player player, const gameNet::ClientResign& event);
+	void handleNetworkEvent(Player player, const gameNet::ClientChat& event);
 
 private:
 	Game m_game{9u};

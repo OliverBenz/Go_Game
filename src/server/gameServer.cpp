@@ -55,7 +55,7 @@ void GameServer::onClientDisconnected(SessionId sessionId) {
 	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Client '{}' disconnected.", sessionId));
 }
 
-void GameServer::onNetworkEvent(SessionId sessionId, const NwEvent& event) {
+void GameServer::onNetworkEvent(SessionId sessionId, const ClientEvent& event) {
 	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Received event from client '{}'.", sessionId));
 	std::visit(
 	        [&](const auto& e) {
@@ -71,7 +71,7 @@ void GameServer::onNetworkEvent(SessionId sessionId, const NwEvent& event) {
 	        event);
 }
 
-void GameServer::handleNetworkEvent(Player player, const gameNet::NwPutStoneEvent& event) {
+void GameServer::handleNetworkEvent(Player player, const gameNet::ClientPutStone& event) {
 	if (!m_game.isActive()) {
 		Logger().Log(Logging::LogLevel::Warning, "[GameServer] Rejecting PutStone: game is not active.");
 		return;
@@ -84,7 +84,7 @@ void GameServer::handleNetworkEvent(Player player, const gameNet::NwPutStoneEven
 	m_game.pushEvent(PutStoneEvent{player, move});
 }
 
-void GameServer::handleNetworkEvent(Player player, const gameNet::NwPassEvent&) {
+void GameServer::handleNetworkEvent(Player player, const gameNet::ClientPass&) {
 	if (!m_game.isActive()) {
 		Logger().Log(Logging::LogLevel::Warning, "[GameServer] Rejecting Pass: game is not active.");
 		return;
@@ -94,7 +94,7 @@ void GameServer::handleNetworkEvent(Player player, const gameNet::NwPassEvent&) 
 	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Player {} passed.", static_cast<int>(player)));
 }
 
-void GameServer::handleNetworkEvent(Player player, const gameNet::NwResignEvent&) {
+void GameServer::handleNetworkEvent(Player player, const gameNet::ClientResign&) {
 	if (!m_game.isActive()) {
 		Logger().Log(Logging::LogLevel::Warning, "[GameServer] Rejecting Resign: game already inactive.");
 		return;
@@ -104,8 +104,8 @@ void GameServer::handleNetworkEvent(Player player, const gameNet::NwResignEvent&
 	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Player {} resigned.", static_cast<int>(player)));
 }
 
-void GameServer::handleNetworkEvent(Player, const gameNet::NwChatEvent& event) {
-	m_server.broadcast(event);
+void GameServer::handleNetworkEvent(Player player, const gameNet::ClientChat& event) {
+	m_server.broadcast(ServerChat{.seat = (player == Player::Black ? Seat::Black : Seat::White), .message = event.message});
 }
 
 } // namespace go::server
