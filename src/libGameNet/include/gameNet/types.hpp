@@ -6,6 +6,26 @@ namespace go::gameNet {
 
 using SessionId = std::uint32_t;
 
+enum class ServerAction : std::uint8_t {
+	Place,
+	Pass,
+	Resign,
+	Count //!< Used in serialisation to check when enum changes.
+};
+
+enum class GameStatus : std::uint8_t {
+	Active,
+	BlackWin,
+	WhiteWin,
+	Draw,
+	Count //!< Used in serialisation to check when enum changes.
+};
+
+struct CaptureCoord {
+	unsigned x;
+	unsigned y;
+};
+
 //! The role in the game.
 enum class Seat : std::uint8_t {
 	None     = 0,      //!< Just connected.
