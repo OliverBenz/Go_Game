@@ -1,6 +1,7 @@
 #include "network/tcpClient.hpp"
 #include "network/protocol.hpp"
 
+#include <asio.hpp>
 #include <asio/connect.hpp>
 #include <asio/read.hpp>
 #include <asio/write.hpp>
@@ -12,14 +13,33 @@
 namespace go {
 namespace network {
 
-TcpClient::TcpClient() : m_resolver(m_ioContext), m_socket(m_ioContext) {
+class TcpClient::Implementation {
+public:
+	Implementation();
+
+public:
+	void connect(std::string host, std::uint16_t port);
+	void disconnect();
+	bool isConnected() const;
+
+	bool send(const Message& message);
+	Message read();
+
+private:
+	BasicMessageHeader read_header();
+	Message read_payload(std::uint32_t expected_bytes);
+
+	asio::io_context m_ioContext{};
+	asio::ip::tcp::resolver m_resolver;
+	asio::ip::tcp::socket m_socket;
+
+	bool m_isConnected{false};
+};
+
+TcpClient::Implementation::Implementation() : m_resolver(m_ioContext), m_socket(m_ioContext) {
 }
 
-TcpClient::~TcpClient() {
-	disconnect();
-}
-
-void TcpClient::connect(std::string host, std::uint16_t port) {
+void TcpClient::Implementation::connect(std::string host, std::uint16_t port) {
 	if (m_isConnected) {
 		return;
 	}
@@ -29,18 +49,19 @@ void TcpClient::connect(std::string host, std::uint16_t port) {
 	m_isConnected = true;
 }
 
-void TcpClient::disconnect() {
+void TcpClient::Implementation::disconnect() {
 	asio::error_code ec;
 	m_socket.cancel(ec);
 	m_socket.shutdown(asio::socket_base::shutdown_both, ec);
 	m_socket.close(ec);
 	m_isConnected = false;
 }
-bool TcpClient::isConnected() const {
+
+bool TcpClient::Implementation::isConnected() const {
 	return m_isConnected;
 }
 
-bool TcpClient::send(const Message& message) {
+bool TcpClient::Implementation::send(const Message& message) {
 	if (!m_isConnected) {
 		return false;
 	}
@@ -59,7 +80,7 @@ bool TcpClient::send(const Message& message) {
 	return true;
 }
 
-Message TcpClient::read() {
+Message TcpClient::Implementation::read() {
 	const auto header       = read_header();
 	const auto payload_size = from_network_u32(header.payload_size);
 
@@ -73,13 +94,13 @@ Message TcpClient::read() {
 	return payload;
 }
 
-BasicMessageHeader TcpClient::read_header() {
+BasicMessageHeader TcpClient::Implementation::read_header() {
 	BasicMessageHeader header{};
 	asio::read(m_socket, asio::buffer(&header, sizeof(header)));
 	return header;
 }
 
-Message TcpClient::read_payload(std::uint32_t expected_bytes) {
+Message TcpClient::Implementation::read_payload(std::uint32_t expected_bytes) {
 	if (expected_bytes == 0) {
 		return {};
 	}
@@ -87,6 +108,34 @@ Message TcpClient::read_payload(std::uint32_t expected_bytes) {
 	Message payload(expected_bytes, '\0');
 	asio::read(m_socket, asio::buffer(payload.data(), payload.size()));
 	return payload;
+}
+
+
+TcpClient::TcpClient() : m_pimpl(std::make_unique<Implementation>()) {
+}
+
+TcpClient::~TcpClient() {
+	disconnect();
+}
+
+void TcpClient::connect(std::string host, std::uint16_t port) {
+	m_pimpl->connect(host, port);
+}
+
+void TcpClient::disconnect() {
+	m_pimpl->disconnect();
+}
+
+bool TcpClient::isConnected() const {
+	return m_pimpl->isConnected();
+}
+
+bool TcpClient::send(const Message& message) {
+	return m_pimpl->send(message);
+}
+
+Message TcpClient::read() {
+	return m_pimpl->read();
 }
 
 } // namespace network

@@ -6,7 +6,7 @@ set(headers
     ${CMAKE_CURRENT_LIST_DIR}/include/network/protocol.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/network/tcpServer.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/network/tcpClient.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/include/network/connection.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/connection.hpp
 )
 
 set(sources
@@ -26,9 +26,8 @@ target_include_directories(${targetName}
         ${CMAKE_CURRENT_LIST_DIR}/include
 )
 
-# TODO: Implement PIMPLs to hide asio. Make this a private linking
 target_link_libraries(${targetName}
-    PUBLIC
+    PRIVATE
         asio
 )
 

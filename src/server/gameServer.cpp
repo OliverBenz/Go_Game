@@ -4,8 +4,7 @@
 #include "core/game.hpp"
 #include "network/protocol.hpp"
 
-#include <asio/ip/tcp.hpp>
-
+#include <cassert>
 #include <format>
 #include <iomanip>
 #include <random>
