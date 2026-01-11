@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <variant>
+#include <vector>
 
 namespace go::gameNet {
 
@@ -23,19 +24,30 @@ struct ClientChat {
 struct ServerSessionAssign {
 	SessionId sessionId;
 };
-// TODO: Could do a single 'ServerGameUpdate' that contains the delta from the last applied move (including move number for validation).
-//       Might be better for a authoritative server.
-
-struct ServerBoardUpdate {
-	Seat seat; //!< Only player values.
+enum class ServerAction {
+	Place,
+	Pass,
+	Resign,
+};
+enum class GameStatus {
+	Active,
+	BlackWin,
+	WhiteWin,
+	Draw,
+};
+struct CaptureCoord {
 	unsigned x;
 	unsigned y;
 };
-struct ServerPass {
+struct ServerDelta {
+	unsigned turn;
 	Seat seat; //!< Only player values.
-};
-struct ServerResign {
-	Seat seat; //!< Only player values.
+	ServerAction action;
+	std::optional<unsigned> x;
+	std::optional<unsigned> y;
+	std::vector<CaptureCoord> captures;
+	Seat next; //!< Only player values.
+	GameStatus status;
 };
 struct ServerChat {
 	Seat seat; //!< Only player values.
@@ -43,7 +55,7 @@ struct ServerChat {
 };
 
 using ClientEvent = std::variant<ClientPutStone, ClientPass, ClientResign, ClientChat>;
-using ServerEvent = std::variant<ServerSessionAssign, ServerBoardUpdate, ServerChat, ServerPass, ServerResign>;
+using ServerEvent = std::variant<ServerSessionAssign, ServerDelta, ServerChat>;
 
 std::string toMessage(ClientEvent event); //!< Client network event to message string.
 std::string toMessage(ServerEvent event); //!< Server network event to message string.
