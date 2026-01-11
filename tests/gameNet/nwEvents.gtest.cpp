@@ -10,7 +10,7 @@ namespace go::gtest {
 TEST(GameNetMessages, ClientToMessage) {
 	using nlohmann::json;
 
-	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ClientPutStone{1u, 2u})), json({{"type", "put"}, {"x", 1u}, {"y", 2u}}));
+	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ClientPutStone{.c = {1u, 2u}})), json({{"type", "put"}, {"x", 1u}, {"y", 2u}}));
 	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ClientPass{})), json({{"type", "pass"}}));
 	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ClientResign{})), json({{"type", "resign"}}));
 	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ClientChat{"hello"})), json({{"type", "chat"}, {"message", "hello"}}));
@@ -21,8 +21,8 @@ TEST(GameNetMessages, ClientFromMessageValid) {
 	ASSERT_TRUE(put.has_value());
 	ASSERT_TRUE(std::holds_alternative<gameNet::ClientPutStone>(*put));
 	const auto putEvent = std::get<gameNet::ClientPutStone>(*put);
-	EXPECT_EQ(putEvent.x, 3u);
-	EXPECT_EQ(putEvent.y, 4u);
+	EXPECT_EQ(putEvent.c.x, 3u);
+	EXPECT_EQ(putEvent.c.y, 4u);
 
 	const auto pass = gameNet::fromClientMessage(R"({"type":"pass"})");
 	ASSERT_TRUE(pass.has_value());
@@ -55,9 +55,8 @@ TEST(GameNetMessages, ServerToMessage) {
 	                  .turn     = 42u,
 	                  .seat     = gameNet::Seat::Black,
 	                  .action   = gameNet::ServerAction::Place,
-	                  .x        = 3u,
-	                  .y        = 4u,
-	                  .captures = {gameNet::CaptureCoord{1u, 2u}, gameNet::CaptureCoord{5u, 6u}},
+	                  .coord    = gameNet::Coord{3u, 4u},
+	                  .captures = {gameNet::Coord{1u, 2u}, gameNet::Coord{5u, 6u}},
 	                  .next     = gameNet::Seat::White,
 	                  .status   = gameNet::GameStatus::Active,
 	          })),
@@ -75,8 +74,7 @@ TEST(GameNetMessages, ServerToMessage) {
 	                  .turn     = 43u,
 	                  .seat     = gameNet::Seat::White,
 	                  .action   = gameNet::ServerAction::Pass,
-	                  .x        = std::nullopt,
-	                  .y        = std::nullopt,
+	                  .coord    = std::nullopt,
 	                  .captures = {},
 	                  .next     = gameNet::Seat::Black,
 	                  .status   = gameNet::GameStatus::Active,
@@ -92,8 +90,7 @@ TEST(GameNetMessages, ServerToMessage) {
 	                  .turn     = 44u,
 	                  .seat     = gameNet::Seat::Black,
 	                  .action   = gameNet::ServerAction::Resign,
-	                  .x        = std::nullopt,
-	                  .y        = std::nullopt,
+	                  .coord    = std::nullopt,
 	                  .captures = {},
 	                  .next     = gameNet::Seat::White,
 	                  .status   = gameNet::GameStatus::WhiteWin,
@@ -122,8 +119,9 @@ TEST(GameNetMessages, ServerFromMessageValid) {
 	EXPECT_EQ(deltaEvent.turn, 7u);
 	EXPECT_EQ(deltaEvent.seat, gameNet::Seat::Black);
 	EXPECT_EQ(deltaEvent.action, gameNet::ServerAction::Place);
-	EXPECT_EQ(deltaEvent.x, 1u);
-	EXPECT_EQ(deltaEvent.y, 2u);
+	ASSERT_TRUE(deltaEvent.coord.has_value());
+	EXPECT_EQ(deltaEvent.coord->x, 1u);
+	EXPECT_EQ(deltaEvent.coord->y, 2u);
 	ASSERT_EQ(deltaEvent.captures.size(), 2u);
 	EXPECT_EQ(deltaEvent.captures[0].x, 3u);
 	EXPECT_EQ(deltaEvent.captures[0].y, 4u);
@@ -137,8 +135,7 @@ TEST(GameNetMessages, ServerFromMessageValid) {
 	ASSERT_TRUE(std::holds_alternative<gameNet::ServerDelta>(*passDelta));
 	const auto passEvent = std::get<gameNet::ServerDelta>(*passDelta);
 	EXPECT_EQ(passEvent.action, gameNet::ServerAction::Pass);
-	EXPECT_FALSE(passEvent.x.has_value());
-	EXPECT_FALSE(passEvent.y.has_value());
+	EXPECT_FALSE(passEvent.coord.has_value());
 	EXPECT_TRUE(passEvent.captures.empty());
 
 	const auto chat = gameNet::fromServerMessage(R"({"type":"chat","seat":2,"message":"hello,world"})");
@@ -174,8 +171,7 @@ TEST(GameNetMessages, ServerDeltaOmitsEmptyFields) {
 	        .turn     = 9u,
 	        .seat     = gameNet::Seat::Black,
 	        .action   = gameNet::ServerAction::Pass,
-	        .x        = std::nullopt,
-	        .y        = std::nullopt,
+	        .coord    = std::nullopt,
 	        .captures = {},
 	        .next     = gameNet::Seat::White,
 	        .status   = gameNet::GameStatus::Active,
@@ -193,14 +189,13 @@ TEST(GameNetMessages, ServerDeltaMissingXYSerialization) {
 		        .turn     = 1u,
 		        .seat     = gameNet::Seat::Black,
 		        .action   = gameNet::ServerAction::Place,
-		        .x        = std::nullopt,
-		        .y        = std::nullopt,
+		        .coord    = std::nullopt,
 		        .captures = {},
 		        .next     = gameNet::Seat::White,
 		        .status   = gameNet::GameStatus::Active,
 		});
 	};
-	EXPECT_DEATH(build(), "ServerDelta::Place requires x and y");
+	EXPECT_DEATH(build(), "ServerDelta::Place requires coord");
 }
 #endif
 

@@ -36,8 +36,8 @@ constexpr bool isValid(GameStatus a) noexcept {
 static std::string toMessage(const ClientPutStone& e) {
 	json j;
 	j["type"] = "put";
-	j["x"]    = e.x;
-	j["y"]    = e.y;
+	j["x"]    = e.c.x;
+	j["y"]    = e.c.y;
 	return j.dump();
 }
 static std::string toMessage(const ClientPass&) {
@@ -74,7 +74,7 @@ std::optional<ClientEvent> fromClientMessage(const std::string& message) {
 		if (!j.contains("x") || !j.contains("y") || !j["x"].is_number_unsigned() || !j["y"].is_number_unsigned()) {
 			return {};
 		}
-		return ClientPutStone{.x = j["x"].get<unsigned>(), .y = j["y"].get<unsigned>()};
+		return ClientPutStone{.c = {j["x"].get<unsigned>(), j["y"].get<unsigned>()}};
 	}
 	if (type == "pass") {
 		return ClientPass{};
@@ -107,12 +107,12 @@ static std::string toMessage(const ServerDelta& e) {
 	j["status"] = static_cast<unsigned>(e.status);
 
 	if (e.action == ServerAction::Place) {
-		if (!e.x || !e.y) {
-			assert(false && "ServerDelta::Place requires x and y");
+		if (!e.coord.has_value()) {
+			assert(false && "ServerDelta::Place requires coord");
 			return {};
 		}
-		j["x"] = *e.x;
-		j["y"] = *e.y;
+		j["x"] = e.coord->x;
+		j["y"] = e.coord->y;
 		if (!e.captures.empty()) {
 			auto caps = json::array();
 			for (const auto& cap: e.captures) {
@@ -137,28 +137,22 @@ std::string toMessage(ServerEvent event) {
 }
 
 static std::optional<ServerEvent> fromServerDeltaMessage(const json& j) {
-	if (!j.contains("turn") || !j["turn"].is_number_unsigned()) {
+	// clang-format off
+	if (!j.contains("turn")   || !j["turn"].is_number_unsigned()   ||
+		!j.contains("seat")   || !j["seat"].is_number_unsigned()   ||
+		!j.contains("action") || !j["action"].is_number_unsigned() ||
+		!j.contains("next")   || !j["next"].is_number_unsigned()   ||
+		!j.contains("status") || !j["status"].is_number_unsigned())
+	{
 		return {};
 	}
-	if (!j.contains("seat") || !j["seat"].is_number_unsigned()) {
-		return {};
-	}
-	if (!j.contains("action") || !j["action"].is_number_unsigned()) {
-		return {};
-	}
-	if (!j.contains("next") || !j["next"].is_number_unsigned()) {
-		return {};
-	}
-	if (!j.contains("status") || !j["status"].is_number_unsigned()) {
-		return {};
-	}
+	// clang-format on
 
 	ServerDelta delta{
 	        .turn     = 0u,
 	        .seat     = Seat::None,
 	        .action   = ServerAction::Place,
-	        .x        = std::nullopt,
-	        .y        = std::nullopt,
+	        .coord    = std::nullopt,
 	        .captures = {},
 	        .next     = Seat::None,
 	        .status   = GameStatus::Active,
@@ -186,8 +180,7 @@ static std::optional<ServerEvent> fromServerDeltaMessage(const json& j) {
 		if (!j.contains("x") || !j.contains("y") || !j["x"].is_number_unsigned() || !j["y"].is_number_unsigned()) {
 			return {};
 		}
-		delta.x = j["x"].get<unsigned>();
-		delta.y = j["y"].get<unsigned>();
+		delta.coord = Coord{.x = j["x"].get<unsigned>(), .y = j["y"].get<unsigned>()};
 		if (j.contains("captures")) {
 			if (!j["captures"].is_array()) {
 				return {};
@@ -196,7 +189,7 @@ static std::optional<ServerEvent> fromServerDeltaMessage(const json& j) {
 				if (!cap.is_array() || cap.size() != 2 || !cap[0].is_number_unsigned() || !cap[1].is_number_unsigned()) {
 					return {};
 				}
-				delta.captures.push_back(CaptureCoord{.x = cap[0].get<unsigned>(), .y = cap[1].get<unsigned>()});
+				delta.captures.push_back(Coord{.x = cap[0].get<unsigned>(), .y = cap[1].get<unsigned>()});
 			}
 		}
 	} else {

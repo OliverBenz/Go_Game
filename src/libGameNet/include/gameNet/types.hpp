@@ -21,7 +21,7 @@ enum class GameStatus : std::uint8_t {
 	Count //!< Used in serialisation to check when enum changes.
 };
 
-struct CaptureCoord {
+struct Coord {
 	unsigned x;
 	unsigned y;
 };

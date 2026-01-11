@@ -31,9 +31,9 @@ void GameServer::stop() {
 	}
 }
 
-void GameServer::onClientConnected(SessionId sessionId, Seat seat) {
+void GameServer::onClientConnected(gameNet::SessionId sessionId, gameNet::Seat seat) {
 	assert(gameNet::isPlayer(seat));
-	const auto player = seat == Seat::Black ? Player::Black : Player::White;
+	const auto player = seat == gameNet::Seat::Black ? Player::Black : Player::White;
 	if (m_game.isActive()) {
 		return; // TODO: Reconnect?
 	}
@@ -50,12 +50,12 @@ void GameServer::onClientConnected(SessionId sessionId, Seat seat) {
 	}
 }
 
-void GameServer::onClientDisconnected(SessionId sessionId) {
+void GameServer::onClientDisconnected(gameNet::SessionId sessionId) {
 	// Not handled for now. No timing in game.
 	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Client '{}' disconnected.", sessionId));
 }
 
-void GameServer::onNetworkEvent(SessionId sessionId, const ClientEvent& event) {
+void GameServer::onNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientEvent& event) {
 	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Received event from client '{}'.", sessionId));
 	std::visit(
 	        [&](const auto& e) {
@@ -65,7 +65,7 @@ void GameServer::onNetworkEvent(SessionId sessionId, const ClientEvent& event) {
 			        return;
 		        }
 
-		        const auto player = seat == Seat::Black ? Player::Black : Player::White;
+		        const auto player = seat == gameNet::Seat::Black ? Player::Black : Player::White;
 		        handleNetworkEvent(player, e);
 	        },
 	        event);
@@ -78,7 +78,7 @@ void GameServer::handleNetworkEvent(Player player, const gameNet::ClientPutStone
 	}
 
 	// Push into the core game loop; legality (ko, captures, etc.) is still enforced there.
-	const auto move = Coord{event.x, event.y};
+	const auto move = Coord{event.c.x, event.c.y};
 	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Accepting PutStone from player {} at ({}, {}).", static_cast<int>(player), move.x, move.y));
 
 	m_game.pushEvent(PutStoneEvent{player, move});
@@ -105,7 +105,7 @@ void GameServer::handleNetworkEvent(Player player, const gameNet::ClientResign&)
 }
 
 void GameServer::handleNetworkEvent(Player player, const gameNet::ClientChat& event) {
-	m_server.broadcast(ServerChat{.seat = (player == Player::Black ? Seat::Black : Seat::White), .message = event.message});
+	m_server.broadcast(gameNet::ServerChat{.seat = (player == Player::Black ? gameNet::Seat::Black : gameNet::Seat::White), .message = event.message});
 }
 
 } // namespace go::server
