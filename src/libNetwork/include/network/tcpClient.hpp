@@ -2,11 +2,9 @@
 
 #include "network/protocol.hpp"
 
-#include <asio.hpp>
-
 #include <cstdint>
+#include <memory>
 #include <string>
-#include <string_view>
 
 namespace go {
 namespace network {
@@ -18,23 +16,15 @@ public:
 	~TcpClient();
 
 	void connect(std::string host, std::uint16_t port = DEFAULT_PORT);
+	bool isConnected() const;
 	void disconnect();
 
 	bool send(const Message& message);
 	Message read();
 
-	bool isConnected() const;
-
 private:
-	BasicMessageHeader read_header();
-	Message read_payload(std::uint32_t expected_bytes);
-
-private:
-	asio::io_context m_ioContext{};
-	asio::ip::tcp::resolver m_resolver;
-	asio::ip::tcp::socket m_socket;
-
-	bool m_isConnected{false};
+	class Implementation;
+	std::unique_ptr<Implementation> m_pimpl; //!< Pimpl to hide asio stuff in public interfaces.
 };
 
 } // namespace network

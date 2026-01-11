@@ -1,4 +1,4 @@
-#include "network/connection.hpp"
+#include "connection.hpp"
 
 #include <asio/read.hpp>
 #include <asio/write.hpp>

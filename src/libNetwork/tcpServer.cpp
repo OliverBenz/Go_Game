@@ -1,17 +1,55 @@
 #include "network/tcpServer.hpp"
+#include "connection.hpp"
 
+#include <asio.hpp>
 #include <asio/ip/tcp.hpp>
 
+#include <atomic>
+#include <cassert>
+#include <mutex>
+#include <optional>
+#include <thread>
+#include <unordered_map>
 #include <utility>
 
 namespace go::network {
 
 static ConnectionId CONN_ID = 1u;
 
-TcpServer::TcpServer(std::uint16_t port) : m_ioContext(), m_acceptor(m_ioContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)) {
+class TcpServer::Implementation {
+public:
+	Implementation(std::uint16_t port);
+
+	void start();
+	void connect(Callbacks callbacks);
+	void stop();
+
+	bool send(ConnectionId connectionId, const Message& msg);
+	void reject(ConnectionId connectionId);
+
+private:
+	void doAccept();                                                                //!< Start async accept loop.
+	bool createConnection(asio::ip::tcp::socket socket, ConnectionId connectionId); //!< Create and add new connection to map.
+
+private:
+	asio::io_context m_ioContext{};
+	asio::ip::tcp::acceptor m_acceptor;
+	std::optional<asio::executor_work_guard<asio::io_context::executor_type>> m_workGuard;
+
+	std::thread m_ioThread;             //!< IO context thread.
+	std::atomic<bool> m_running{false}; //!< TCP Server running.
+
+	Callbacks m_callbacks; //!< Callback functions to signal events.
+
+	std::unordered_map<ConnectionId, Connection> m_connections; //!< Active connections.
+	std::mutex m_connectionsMutex;                              //!< Handle concurrency.
+};
+
+
+TcpServer::Implementation::Implementation(std::uint16_t port) : m_acceptor(m_ioContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)) {
 }
 
-void TcpServer::start() {
+void TcpServer::Implementation::start() {
 	if (m_running.exchange(true)) {
 		return;
 	}
@@ -22,11 +60,11 @@ void TcpServer::start() {
 	m_ioThread = std::thread([this]() { m_ioContext.run(); });
 }
 
-void TcpServer::connect(Callbacks callbacks) {
+void TcpServer::Implementation::connect(Callbacks callbacks) {
 	m_callbacks = std::move(callbacks);
 }
 
-void TcpServer::stop() {
+void TcpServer::Implementation::stop() {
 	if (!m_running.exchange(false)) {
 		return;
 	}
@@ -55,7 +93,7 @@ void TcpServer::stop() {
 	}
 }
 
-bool TcpServer::send(ConnectionId connectionId, Message msg) {
+bool TcpServer::Implementation::send(ConnectionId connectionId, const Message& msg) {
 	std::lock_guard<std::mutex> lock(m_connectionsMutex);
 
 	if (m_connections.contains(connectionId)) {
@@ -66,7 +104,7 @@ bool TcpServer::send(ConnectionId connectionId, Message msg) {
 	return false;
 }
 
-void TcpServer::reject(ConnectionId connectionId) {
+void TcpServer::Implementation::reject(ConnectionId connectionId) {
 	std::lock_guard<std::mutex> lock(m_connectionsMutex);
 
 	if (m_connections.contains(connectionId)) {
@@ -75,7 +113,7 @@ void TcpServer::reject(ConnectionId connectionId) {
 	}
 }
 
-void TcpServer::doAccept() {
+void TcpServer::Implementation::doAccept() {
 	m_acceptor.async_accept([this](asio::error_code ec, asio::ip::tcp::socket socket) {
 		if (!m_running) {
 			return;
@@ -95,7 +133,7 @@ void TcpServer::doAccept() {
 	});
 }
 
-bool TcpServer::createConnection(asio::ip::tcp::socket socket, ConnectionId connectionId) {
+bool TcpServer::Implementation::createConnection(asio::ip::tcp::socket socket, ConnectionId connectionId) {
 	if (m_connections.contains(connectionId)) {
 		return false;
 	}
@@ -127,5 +165,34 @@ bool TcpServer::createConnection(asio::ip::tcp::socket socket, ConnectionId conn
 	const auto [it, inserted] = m_connections.try_emplace(connectionId, std::move(socket), connectionId, std::move(callbacks));
 	return inserted;
 }
+
+
+TcpServer::TcpServer(std::uint16_t port) : m_pimpl(std::make_unique<Implementation>(port)) {
+}
+
+TcpServer::~TcpServer() {
+	stop();
+}
+
+void TcpServer::start() {
+	m_pimpl->start();
+}
+
+void TcpServer::connect(Callbacks callbacks) {
+	m_pimpl->connect(callbacks);
+}
+
+void TcpServer::stop() {
+	m_pimpl->stop();
+}
+
+bool TcpServer::send(ConnectionId connectionId, const Message& msg) {
+	return m_pimpl->send(connectionId, msg);
+}
+
+void TcpServer::reject(ConnectionId connectionId) {
+	m_pimpl->reject(connectionId);
+}
+
 
 } // namespace go::network
