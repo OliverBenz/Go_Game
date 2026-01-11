@@ -32,6 +32,7 @@ target_include_directories(${targetName}
 target_link_libraries(${targetName}
     PRIVATE
         go::network
+        nlohmann_json::nlohmann_json
 )
 
 # Setup project settings

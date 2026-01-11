@@ -11,7 +11,7 @@ enum class ServerQueueEventType { ClientConnected, ClientDisconnected, ClientMes
 struct ServerQueueEvent {
 	ServerQueueEventType type{};
 	network::ConnectionId connectionId{}; //!< Network connection id.
-	network::Message payload{};           //!< Network message. Protocol examples: "PUT:3,4", "CHAT:hello".
+	network::Message payload{};           //!< Network message. Protocol examples: {"type":"put","x":3,"y":4}, {"type":"chat","message":"hello"}.
 };
 
 } // namespace go::gameNet

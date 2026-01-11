@@ -10,7 +10,12 @@ add_executable(${targetName}
 )
 
 # Link to required libraries
-target_link_libraries(${targetName} PUBLIC go::gameNet GTest::gtest_main)
+target_link_libraries(${targetName}
+    PRIVATE
+        go::gameNet
+        GTest::gtest_main
+        nlohmann_json::nlohmann_json
+)
 set_target_properties(${targetName} PROPERTIES FOLDER "${ideFolderSource}")
 
 # Setup project settings
