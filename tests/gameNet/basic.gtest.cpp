@@ -24,9 +24,26 @@ public:
 	void onClientDisconnected(gameNet::SessionId sessionId) override {
 		std::cout << std::format("[Server] {} disconnected.\n", sessionId);
 	}
-	void onNetworkEvent(gameNet::SessionId sessionId, const gameNet::NwEvent& event) override {
-		std::cout << std::format("[Server] {} sent event.\n", sessionId);
-		m_network.broadcast(event);
+	void onNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientEvent& event) override {
+		std::visit([&](const auto& e) { handleNetworkEvent(sessionId, e); }, event);
+	}
+
+private:
+	void handleNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientPutStone& event) {
+		const auto seat = m_network.getSeat(sessionId);
+		m_network.broadcast(gameNet::ServerBoardUpdate{.seat = seat, .x = event.x, .y = event.y});
+	}
+	void handleNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientPass&) {
+		const auto seat = m_network.getSeat(sessionId);
+		m_network.broadcast(gameNet::ServerPass{.seat = seat});
+	}
+	void handleNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientResign&) {
+		const auto seat = m_network.getSeat(sessionId);
+		m_network.broadcast(gameNet::ServerResign{.seat = seat});
+	}
+	void handleNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientChat& event) {
+		const auto seat = m_network.getSeat(sessionId);
+		m_network.broadcast(gameNet::ServerChat{.seat = seat, .message = event.message});
 	}
 
 private:
@@ -47,18 +64,14 @@ public:
 	}
 
 	void chat(const std::string& message) {
-		m_network.send(gameNet::NwChatEvent{message});
+		m_network.send(gameNet::ClientChat{message});
 	}
 	void tryPlace(unsigned x, unsigned y) {
-		m_network.send(gameNet::NwPutStoneEvent{x, y});
+		m_network.send(gameNet::ClientPutStone{x, y});
 	}
 
 public:
-	void onSessionAssigned(gameNet::SessionId sessionId) override {
-		// TODO: Does not give me the seat (or player colour)
-		std::cout << std::format("[Client] Got a session: {}.\n", sessionId);
-	}
-	void onNetworkEvent(const gameNet::NwEvent& event) override {
+	void onNetworkEvent(const gameNet::ServerEvent& event) override {
 		std::visit([&](const auto& e) { handleNetworkEvent(e); }, event);
 	}
 	void onDisconnected() override {
@@ -66,17 +79,25 @@ public:
 	}
 
 private:
-	void handleNetworkEvent(const gameNet::NwPutStoneEvent& event) {
-		std::cout << std::format("[Client] Client {} received Event PutStone at ({}, {})\n", m_network.sessionId(), event.x, event.y);
+	std::string toString(gameNet::Seat seat) {
+		assert(isPlayer(seat));
+		return seat == gameNet::Seat::Black ? "Black" : "White";
 	}
-	void handleNetworkEvent(const gameNet::NwPassEvent&) {
-		std::cout << std::format("[Client] Client {} received Event Pass.\n", m_network.sessionId());
+
+	void handleNetworkEvent(const gameNet::ServerSessionAssign& event) {
+		std::cout << std::format("[Client] Received sessionId: '{}'.\n", event.sessionId);
 	}
-	void handleNetworkEvent(const gameNet::NwResignEvent&) {
-		std::cout << std::format("[Client] Client {} received Event Resign\n", m_network.sessionId());
+	void handleNetworkEvent(const gameNet::ServerBoardUpdate& event) {
+		std::cout << std::format("[Client] Received board update from '{}' at ({}, {}).\n", toString(event.seat), event.x, event.y);
 	}
-	void handleNetworkEvent(const gameNet::NwChatEvent& event) {
-		std::cout << std::format("[Client] Client {} received message: {}\n", m_network.sessionId(), event.message);
+	void handleNetworkEvent(const gameNet::ServerPass& event) {
+		std::cout << std::format("[Client] Received pass from '{}'.\n", toString(event.seat));
+	}
+	void handleNetworkEvent(const gameNet::ServerResign& event) {
+		std::cout << std::format("[Client] Received resign from '{}'\n", toString(event.seat));
+	}
+	void handleNetworkEvent(const gameNet::ServerChat& event) {
+		std::cout << std::format("[Client] Received message from '{}':{}\n", toString(event.seat), event.message);
 	}
 
 private:
@@ -84,7 +105,6 @@ private:
 };
 
 TEST(GameNet, Connection) {
-	// TODO: Update threading. The server/client should not run in main thread.
 	auto server  = MockServer();
 	auto client1 = MockClient();
 	auto client2 = MockClient();
