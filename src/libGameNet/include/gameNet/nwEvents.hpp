@@ -11,8 +11,7 @@ namespace go::gameNet {
 
 // Client Network Events
 struct ClientPutStone {
-	unsigned x;
-	unsigned y;
+	Coord c;
 };
 struct ClientPass {};
 struct ClientResign {};
@@ -22,21 +21,23 @@ struct ClientChat {
 
 // Server Events
 struct ServerSessionAssign {
-	SessionId sessionId;
+	SessionId sessionId; //!< Session Id assigned to player.
 };
+
+//! Board update event with relevant data so the client to apply the delta.
 struct ServerDelta {
-	unsigned turn;
-	Seat seat; //!< Only player values.
-	ServerAction action;
-	std::optional<unsigned> x;
-	std::optional<unsigned> y;
-	std::vector<CaptureCoord> captures;
-	Seat next; //!< Only player values.
-	GameStatus status;
+	unsigned turn;               //!< Move number of game.
+	Seat seat;                   //!< Player who made move.
+	ServerAction action;         //!< Type of move made by player.
+	std::optional<Coord> coord;  //!< Coord of place. Set for place action.
+	std::vector<Coord> captures; //!< List of captured stones.
+	Seat next;                   //!< Next player to make a move.
+	GameStatus status;           //!< Game status.
 };
+
 struct ServerChat {
-	Seat seat; //!< Only player values.
-	std::string message;
+	Seat seat;           //!< Only player values.
+	std::string message; //!< Chat message.
 };
 
 

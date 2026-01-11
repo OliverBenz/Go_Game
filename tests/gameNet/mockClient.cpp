@@ -25,7 +25,7 @@ void MockClient::chat(const std::string& message) {
 }
 
 void MockClient::tryPlace(unsigned x, unsigned y) {
-	m_network.send(gameNet::ClientPutStone{x, y});
+	m_network.send(gameNet::ClientPutStone{.c = {x, y}});
 }
 
 std::string MockClient::toString(gameNet::Seat seat) {
@@ -37,7 +37,11 @@ void MockClient::onGameUpdate(const gameNet::ServerDelta& event) {
 	const auto seat = toString(event.seat);
 	switch (event.action) {
 	case gameNet::ServerAction::Place:
-		std::cout << std::format("[Client] Received board update from '{}' at ({}, {}).\n", seat, event.x.value_or(0u), event.y.value_or(0u));
+		if (event.coord.has_value()) {
+			std::cout << std::format("[Client] Received board update from '{}' at ({}, {}).\n", seat, event.coord->x, event.coord->y);
+		} else {
+			std::cout << std::format("[Client] Received board update from '{}'.\n", seat);
+		}
 		break;
 	case gameNet::ServerAction::Pass:
 		std::cout << std::format("[Client] Received pass from '{}'.\n", seat);

@@ -14,9 +14,7 @@
 namespace go {
 namespace server {
 
-using namespace gameNet;
-
-class GameServer : public IServerHandler {
+class GameServer : public gameNet::IServerHandler {
 public:
 	explicit GameServer();
 	~GameServer();
@@ -24,9 +22,9 @@ public:
 	void start(); //!< Boot the network listener and the server event loop.
 	void stop();  //!< Signal shutdown to the server loop and stop the network listener.
 
-	void onClientConnected(SessionId sessionId, Seat seat) override;
-	void onClientDisconnected(SessionId sessionId) override;
-	void onNetworkEvent(SessionId sessionId, const ClientEvent& event) override;
+	void onClientConnected(gameNet::SessionId sessionId, gameNet::Seat seat) override;
+	void onClientDisconnected(gameNet::SessionId sessionId) override;
+	void onNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientEvent& event) override;
 
 private:
 	// Processing of the network events that are sent in the server event message payload.
@@ -40,7 +38,7 @@ private:
 	std::thread m_gameThread; //!< Runs the game loop.
 	bool m_gameReady{false};  //!< Two players connected and assigned a seat.
 
-	std::unordered_map<Player, SessionId> m_players;
+	std::unordered_map<Player, gameNet::SessionId> m_players;
 
 	gameNet::Server m_server{};
 };
