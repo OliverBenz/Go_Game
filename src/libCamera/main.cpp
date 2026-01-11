@@ -160,9 +160,7 @@ bool supportsHighGui() {
 		cv::namedWindow("Probe", cv::WINDOW_AUTOSIZE);
 		cv::destroyWindow("Probe");
 		return true;
-	} catch (const cv::Exception&) {
-		return false;
-	}
+	} catch (const cv::Exception&) { return false; }
 }
 
 cv::Mat makeGrid(const std::vector<cv::Mat>& images) {
@@ -230,7 +228,7 @@ int main() {
 		for (auto& img: images) {
 			processed.push_back(mask.process(img));
 		}
-		cv::Mat grid = makeGrid(processed);
+		cv::Mat grid       = makeGrid(processed);
 		const auto outPath = std::filesystem::path("mask_grid.png");
 		if (cv::imwrite(outPath.string(), grid)) {
 			std::cout << "Saved " << outPath << " (GUI unavailable).\n";
