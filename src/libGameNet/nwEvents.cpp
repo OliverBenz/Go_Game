@@ -1,7 +1,10 @@
 #include "gameNet/nwEvents.hpp"
 
+#include <cassert>
+#include <charconv>
 #include <format>
 #include <string_view>
+#include <vector>
 
 namespace go::gameNet {
 
@@ -66,54 +69,244 @@ std::optional<ClientEvent> fromClientMessage(const std::string& message) {
 	return {};
 }
 
+static std::string encodeCaptures(const std::vector<CaptureCoord>& caps) {
+	std::string out;
+	for (std::size_t i = 0; i < caps.size(); ++i) {
+		if (i)
+			out.push_back(';');
+		out += std::to_string(caps[i].x);
+		out.push_back('|');
+		out += std::to_string(caps[i].y);
+	}
+	return out;
+}
+
 static std::string toMessage(const ServerSessionAssign& e) {
 	return std::format("{}{}", SERVER_SESSION, e.sessionId);
 }
 static std::string toMessage(const ServerDelta& e) {
-	std::string captures;
-	for (std::size_t i = 0; i < e.captures.size(); ++i) {
-		if (i != 0) {
-			captures.push_back(';');
+	std::string payload;
+	payload.reserve(96);
+	payload += std::format("turn={},seat={},action={}", e.turn, static_cast<unsigned>(e.seat), static_cast<unsigned>(e.action));
+
+	if (e.action == ServerAction::Place) {
+		if (!e.x || !e.y) {
+			assert(false && "ServerDelta::Place requires x and y");
+			return {};
 		}
-		captures += std::format("{}|{}", e.captures[i].x, e.captures[i].y);
+		payload += std::format(",x={},y={}", *e.x, *e.y);
+		if (!e.captures.empty()) {
+			payload += ",captures=";
+			payload += encodeCaptures(e.captures);
+		}
 	}
+	payload += std::format(",next={},status={}", static_cast<unsigned>(e.next), static_cast<unsigned>(e.status));
 
-	const auto action = [&]() -> std::string_view {
-		switch (e.action) {
-		case ServerAction::Place:
-			return "PLACE";
-		case ServerAction::Pass:
-			return "PASS";
-		case ServerAction::Resign:
-			return "RESIGN";
-		}
-		return "PLACE";
-	}();
-	const auto status = [&]() -> std::string_view {
-		switch (e.status) {
-		case GameStatus::Active:
-			return "ACTIVE";
-		case GameStatus::BlackWin:
-			return "BLACK_WIN";
-		case GameStatus::WhiteWin:
-			return "WHITE_WIN";
-		case GameStatus::Draw:
-			return "DRAW";
-		}
-		return "ACTIVE";
-	}();
-
-	const auto x = e.x ? std::to_string(*e.x) : std::string{};
-	const auto y = e.y ? std::to_string(*e.y) : std::string{};
-
-	return std::format("{}turn={},seat={},action={},x={},y={},captures={},next={},status={}", SERVER_DELTA, e.turn, static_cast<unsigned>(e.seat), action, x, y,
-	                   captures, static_cast<unsigned>(e.next), status);
+	payload.insert(0, SERVER_DELTA);
+	return payload;
 }
+
 static std::string toMessage(const ServerChat& e) {
 	return std::format("{}{},{}", SERVER_CHAT, static_cast<unsigned>(e.seat), e.message);
 }
 std::string toMessage(ServerEvent event) {
 	return std::visit([&](auto&& ev) { return toMessage(ev); }, event);
+}
+
+static std::optional<ServerEvent> fromServerDeltaMessage(const std::string& payload) {
+	auto parseUnsigned = [](std::string_view value, unsigned& out) -> bool {
+		if (value.empty()) {
+			return false;
+		}
+		const auto* begin    = value.data();
+		const auto* end      = value.data() + value.size();
+		unsigned parsed      = 0;
+		const auto [ptr, ec] = std::from_chars(begin, end, parsed);
+		if (ec != std::errc() || ptr != end) {
+			return false;
+		}
+		out = parsed;
+		return true;
+	};
+
+	ServerDelta delta{
+	        .turn     = 0u,
+	        .seat     = Seat::None,
+	        .action   = ServerAction::Place,
+	        .x        = std::nullopt,
+	        .y        = std::nullopt,
+	        .captures = {},
+	        .next     = Seat::None,
+	        .status   = GameStatus::Active,
+	};
+
+	std::optional<ServerAction> action;
+	std::optional<GameStatus> status;
+	bool hasSeat = false;
+	bool hasNext = false;
+	bool hasTurn = false;
+	bool hasAction = false;
+	bool hasStatus = false;
+	bool hasX = false;
+	bool hasY = false;
+	bool hasCaptures = false;
+
+	std::vector<std::string_view> tokens;
+	tokens.reserve(12);
+	std::size_t start = 0;
+	while (start <= payload.size()) {
+		const auto end   = payload.find(',', start);
+		const auto token = std::string_view(payload).substr(start, end == std::string::npos ? std::string_view::npos : end - start);
+		if (token.empty()) {
+			return {};
+		}
+		tokens.push_back(token);
+		if (end == std::string::npos) {
+			break;
+		}
+		start = end + 1;
+	}
+
+	for (const auto token: tokens) {
+		const auto eq = token.find('=');
+		if (eq == std::string_view::npos) {
+			return {};
+		}
+		const auto key   = token.substr(0, eq);
+		const auto value = token.substr(eq + 1);
+		if (value.empty()) {
+			return {};
+		}
+
+		if (key == "turn") {
+			if (hasTurn) {
+				return {};
+			}
+			unsigned parsed = 0;
+			if (!parseUnsigned(value, parsed)) {
+				return {};
+			}
+			delta.turn = parsed;
+			hasTurn    = true;
+		} else if (key == "seat") {
+			if (hasSeat) {
+				return {};
+			}
+			unsigned parsed = 0;
+			if (!parseUnsigned(value, parsed)) {
+				return {};
+			}
+			delta.seat = static_cast<Seat>(parsed);
+			hasSeat    = true;
+		} else if (key == "action") {
+			if (hasAction) {
+				return {};
+			}
+			unsigned parsed = 0;
+			if (!parseUnsigned(value, parsed)) {
+				return {};
+			}
+			if (parsed > static_cast<unsigned>(ServerAction::Resign)) {
+				return {};
+			}
+			action = static_cast<ServerAction>(parsed);
+			hasAction = true;
+		} else if (key == "x") {
+			if (hasX) {
+				return {};
+			}
+			unsigned parsed = 0;
+			if (!parseUnsigned(value, parsed)) {
+				return {};
+			}
+			delta.x = parsed;
+			hasX = true;
+		} else if (key == "y") {
+			if (hasY) {
+				return {};
+			}
+			unsigned parsed = 0;
+			if (!parseUnsigned(value, parsed)) {
+				return {};
+			}
+			delta.y = parsed;
+			hasY = true;
+		} else if (key == "captures") {
+			if (hasCaptures) {
+				return {};
+			}
+			hasCaptures = true;
+			std::size_t capStart = 0;
+				while (capStart <= value.size()) {
+					const auto capEnd   = value.find(';', capStart);
+					const auto capToken = value.substr(capStart, capEnd == std::string_view::npos ? std::string_view::npos : capEnd - capStart);
+					if (capToken.empty()) {
+						return {};
+					}
+					const auto sep = capToken.find('|');
+					if (sep == std::string_view::npos) {
+						return {};
+					}
+					unsigned cx = 0;
+					unsigned cy = 0;
+					if (!parseUnsigned(capToken.substr(0, sep), cx) || !parseUnsigned(capToken.substr(sep + 1), cy)) {
+						return {};
+					}
+					delta.captures.push_back(CaptureCoord{.x = cx, .y = cy});
+					if (capEnd == std::string_view::npos) {
+						break;
+					}
+				capStart = capEnd + 1;
+			}
+		} else if (key == "next") {
+			if (hasNext) {
+				return {};
+			}
+			unsigned parsed = 0;
+			if (!parseUnsigned(value, parsed)) {
+				return {};
+			}
+			delta.next = static_cast<Seat>(parsed);
+			hasNext    = true;
+		} else if (key == "status") {
+			if (hasStatus) {
+				return {};
+			}
+			unsigned parsed = 0;
+			if (!parseUnsigned(value, parsed)) {
+				return {};
+			}
+			if (parsed > static_cast<unsigned>(GameStatus::Draw)) {
+				return {};
+			}
+			status = static_cast<GameStatus>(parsed);
+			hasStatus = true;
+		} else {
+			return {};
+		}
+	}
+
+	if (!hasTurn || !hasSeat || !hasNext || !action || !status) {
+		return {};
+	}
+	if (!isPlayer(delta.seat) || !isPlayer(delta.next)) {
+		return {};
+	}
+	delta.action = *action;
+	delta.status = *status;
+	if (delta.action == ServerAction::Place) {
+		if (!delta.x || !delta.y) {
+			return {};
+		}
+	} else {
+		if (delta.x || delta.y || hasCaptures) {
+			return {};
+		}
+		delta.x = std::nullopt;
+		delta.y = std::nullopt;
+	}
+
+	return delta;
 }
 
 std::optional<ServerEvent> fromServerMessage(const std::string& message) {
@@ -127,120 +320,7 @@ std::optional<ServerEvent> fromServerMessage(const std::string& message) {
 
 	if (message.rfind(SERVER_DELTA, 0) == 0) {
 		const auto payload = message.substr(SERVER_DELTA.size());
-		ServerDelta delta{
-		        .turn     = 0u,
-		        .seat     = Seat::None,
-		        .action   = ServerAction::Place,
-		        .x        = std::nullopt,
-		        .y        = std::nullopt,
-		        .captures = {},
-		        .next     = Seat::None,
-		        .status   = GameStatus::Active,
-		};
-
-		std::optional<ServerAction> action;
-		std::optional<GameStatus> status;
-		bool hasSeat = false;
-		bool hasNext = false;
-		bool hasTurn = false;
-
-		std::size_t start = 0;
-		while (start <= payload.size()) {
-			const auto end   = payload.find(',', start);
-			const auto token = payload.substr(start, end == std::string::npos ? std::string::npos : end - start);
-			if (!token.empty()) {
-				const auto eq = token.find('=');
-				if (eq != std::string::npos) {
-					const auto key   = token.substr(0, eq);
-					const auto value = token.substr(eq + 1);
-
-					try {
-						if (key == "turn") {
-							delta.turn = static_cast<unsigned>(std::stoul(value));
-							hasTurn    = true;
-						} else if (key == "seat") {
-							const auto seatValue = static_cast<unsigned>(std::stoul(value));
-							delta.seat           = static_cast<Seat>(seatValue);
-							hasSeat              = true;
-						} else if (key == "action") {
-							if (value == "PLACE") {
-								action = ServerAction::Place;
-							} else if (value == "PASS") {
-								action = ServerAction::Pass;
-							} else if (value == "RESIGN") {
-								action = ServerAction::Resign;
-							}
-						} else if (key == "x") {
-							if (!value.empty()) {
-								delta.x = static_cast<unsigned>(std::stoul(value));
-							}
-						} else if (key == "y") {
-							if (!value.empty()) {
-								delta.y = static_cast<unsigned>(std::stoul(value));
-							}
-						} else if (key == "captures") {
-							if (!value.empty()) {
-								std::size_t capStart = 0;
-								while (capStart <= value.size()) {
-									const auto capEnd   = value.find(';', capStart);
-									const auto capToken = value.substr(capStart, capEnd == std::string::npos ? std::string::npos : capEnd - capStart);
-									if (!capToken.empty()) {
-										const auto sep = capToken.find('|');
-										if (sep == std::string::npos) {
-											return {};
-										}
-										const auto cx = static_cast<unsigned>(std::stoul(capToken.substr(0, sep)));
-										const auto cy = static_cast<unsigned>(std::stoul(capToken.substr(sep + 1)));
-										delta.captures.push_back(CaptureCoord{.x = cx, .y = cy});
-									}
-									if (capEnd == std::string::npos) {
-										break;
-									}
-									capStart = capEnd + 1;
-								}
-							}
-						} else if (key == "next") {
-							const auto seatValue = static_cast<unsigned>(std::stoul(value));
-							delta.next           = static_cast<Seat>(seatValue);
-							hasNext              = true;
-						} else if (key == "status") {
-							if (value == "ACTIVE") {
-								status = GameStatus::Active;
-							} else if (value == "BLACK_WIN") {
-								status = GameStatus::BlackWin;
-							} else if (value == "WHITE_WIN") {
-								status = GameStatus::WhiteWin;
-							} else if (value == "DRAW") {
-								status = GameStatus::Draw;
-							}
-						}
-					} catch (const std::exception&) { return {}; }
-				}
-			}
-			if (end == std::string::npos) {
-				break;
-			}
-			start = end + 1;
-		}
-
-		if (!hasTurn || !hasSeat || !hasNext || !action || !status) {
-			return {};
-		}
-		if (!isPlayer(delta.seat) || !isPlayer(delta.next)) {
-			return {};
-		}
-		delta.action = *action;
-		delta.status = *status;
-		if (delta.action == ServerAction::Place) {
-			if (!delta.x || !delta.y) {
-				return {};
-			}
-		} else {
-			delta.x = std::nullopt;
-			delta.y = std::nullopt;
-		}
-
-		return delta;
+		return fromServerDeltaMessage(payload);
 	}
 
 	if (message.rfind(SERVER_CHAT, 0) == 0) {
