@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <filesystem>
 #include <iostream>
 #include <opencv2/opencv.hpp>
@@ -154,6 +155,16 @@ public:
 	int hmax = 37, smax = 197, vmax = 255;
 };
 
+bool supportsHighGui() {
+	try {
+		cv::namedWindow("Probe", cv::WINDOW_AUTOSIZE);
+		cv::destroyWindow("Probe");
+		return true;
+	} catch (const cv::Exception&) {
+		return false;
+	}
+}
+
 cv::Mat makeGrid(const std::vector<cv::Mat>& images) {
 	if (images.size() != 6) {
 		std::cerr << "Need exactly 6 images\n";
@@ -197,19 +208,35 @@ int main() {
 		images.push_back(img);
 	}
 
-	MaskTesterHSV mask;
-	// MaskContour mask;
-	// BoardDetect boardHandler;
-	while (true) {
-		std::vector<cv::Mat> processed;
+	const bool forceHeadless = std::getenv("GO_CAMERA_HEADLESS") != nullptr;
+	const bool guiAvailable  = !forceHeadless && supportsHighGui();
+
+	std::vector<cv::Mat> processed;
+	if (guiAvailable) {
+		MaskTesterHSV mask;
+		while (true) {
+			processed.clear();
+			for (auto& img: images) {
+				processed.push_back(mask.process(img));
+			}
+			cv::Mat grid = makeGrid(processed);
+			cv::imshow("Masks", grid);
+
+			if (cv::waitKey(30) == 27)
+				break; // Esc to quit
+		}
+	} else {
+		MaskContour mask;
 		for (auto& img: images) {
 			processed.push_back(mask.process(img));
 		}
 		cv::Mat grid = makeGrid(processed);
-		cv::imshow("Masks", grid);
-
-		if (cv::waitKey(30) == 27)
-			break; // Esc to quit
+		const auto outPath = std::filesystem::path("mask_grid.png");
+		if (cv::imwrite(outPath.string(), grid)) {
+			std::cout << "Saved " << outPath << " (GUI unavailable).\n";
+		} else {
+			std::cerr << "Failed to write " << outPath << ".\n";
+		}
 	}
 
 	return 0;

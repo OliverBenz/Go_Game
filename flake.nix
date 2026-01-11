@@ -10,13 +10,20 @@
       pkgs = import nixpkgs { inherit system; };
     in {
       devShells.${system}.default = pkgs.mkShell {
-        packages = [
+        packages =
+          let
+            opencvWithGui = pkgs.opencv4.override {
+              enableGtk3 = true;
+            };
+          in [
           pkgs.gcc
           pkgs.cmake
           pkgs.qt6.qtbase
           pkgs.qt6.qtwayland
           pkgs.glfw
-          pkgs.opencv
+          opencvWithGui
+          pkgs.gtk3
+          pkgs.pkg-config
           pkgs.zlib
           pkgs.libpng
           pkgs.libjpeg
