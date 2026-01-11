@@ -23,11 +23,11 @@ TEST(Networking, Server) {
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-	EXPECT_TRUE(client1.send(gameNet::toMessage(gameNet::NwPutStoneEvent{1u, 2u})));
-	EXPECT_TRUE(client2.send(gameNet::toMessage(gameNet::NwChatEvent{"Heyo this is my chat message"})));
+	EXPECT_TRUE(client1.send(gameNet::toMessage(gameNet::ClientPutStone{1u, 2u})));
+	EXPECT_TRUE(client2.send(gameNet::toMessage(gameNet::ClientChat{"Heyo this is my chat message"})));
 
-	EXPECT_TRUE(client1.send(gameNet::toMessage(gameNet::NwPutStoneEvent{1u, 2u})));
-	EXPECT_TRUE(client1.send(gameNet::toMessage(gameNet::NwPassEvent{})));
+	EXPECT_TRUE(client1.send(gameNet::toMessage(gameNet::ClientPutStone{1u, 2u})));
+	EXPECT_TRUE(client1.send(gameNet::toMessage(gameNet::ClientPass{})));
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
