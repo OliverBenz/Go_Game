@@ -67,16 +67,16 @@ public:
 
 private:
 	void handleNetworkEvent(const gameNet::NwPutStoneEvent& event) {
-		std::cout << std::format("Client {} received Event PutStone at ({}, {})\n", m_network.sessionId(), event.x, event.y);
+		std::cout << std::format("[Client] Client {} received Event PutStone at ({}, {})\n", m_network.sessionId(), event.x, event.y);
 	}
 	void handleNetworkEvent(const gameNet::NwPassEvent&) {
-		std::cout << std::format("Client {} received Event Pass.\n", m_network.sessionId());
+		std::cout << std::format("[Client] Client {} received Event Pass.\n", m_network.sessionId());
 	}
 	void handleNetworkEvent(const gameNet::NwResignEvent&) {
-		std::cout << std::format("Client {} received Event Resign\n", m_network.sessionId());
+		std::cout << std::format("[Client] Client {} received Event Resign\n", m_network.sessionId());
 	}
 	void handleNetworkEvent(const gameNet::NwChatEvent& event) {
-		std::cout << std::format("Client {} received message: {}\n", m_network.sessionId(), event.message);
+		std::cout << std::format("[Client] Client {} received message: {}\n", m_network.sessionId(), event.message);
 	}
 
 private:
@@ -90,7 +90,7 @@ TEST(GameNet, Connection) {
 	auto client2 = MockClient();
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(50));
-	client1.chat("Helloooooo");
+	client1.chat("Helloooooou");
 	client2.tryPlace(0u, 0u);
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(50));
