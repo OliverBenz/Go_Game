@@ -18,8 +18,8 @@ public:
 	void stop();
 	bool registerHandler(IServerHandler* handler);
 
-	bool send(SessionId sessionId, const NwEvent& event); //!< Send event to client with given sessionId.
-	bool broadcast(const NwEvent& event);                 //!< Send event to all connected clients.
+	bool send(SessionId sessionId, const ServerEvent& event); //!< Send event to client with given sessionId.
+	bool broadcast(const ServerEvent& event);                 //!< Send event to all connected clients.
 
 	Seat getSeat(SessionId sessionId) const; //!< Get the seat connection with a sessionId.
 
@@ -97,7 +97,7 @@ bool Server::Implementation::registerHandler(IServerHandler* handler) {
 	return true;
 }
 
-bool Server::Implementation::send(SessionId sessionId, const NwEvent& event) {
+bool Server::Implementation::send(SessionId sessionId, const ServerEvent& event) {
 	const auto connectionId = m_sessionManager.getConnectionId(sessionId);
 	if (!connectionId) {
 		return false;
@@ -105,7 +105,7 @@ bool Server::Implementation::send(SessionId sessionId, const NwEvent& event) {
 	return m_network.send(connectionId, toMessage(event));
 }
 
-bool Server::Implementation::broadcast(const NwEvent& event) {
+bool Server::Implementation::broadcast(const ServerEvent& event) {
 	const auto message = toMessage(event);
 	bool anySent       = false;
 
@@ -178,7 +178,7 @@ void Server::Implementation::processClientConnect(const ServerQueueEvent& event)
 
 	// If we have a player free
 	m_sessionManager.setSeat(sessionId, seat);
-	m_network.send(event.connectionId, "SESSION:" + std::to_string(sessionId)); // TODO: Move to protocol
+	send(sessionId, ServerSessionAssign{.sessionId = sessionId});
 
 	if (m_handler && isPlayer(seat)) {
 		m_handler->onClientConnected(sessionId, seat);
@@ -197,7 +197,7 @@ void Server::Implementation::processClientMessage(const ServerQueueEvent& event)
 	}
 
 	// Server event message contains a network event. Parse and handle.
-	const auto networkEvent = gameNet::fromMessage(event.payload);
+	const auto networkEvent = gameNet::fromClientMessage(event.payload);
 	if (!networkEvent) {
 		return;
 	}
@@ -259,11 +259,11 @@ bool Server::registerHandler(IServerHandler* handler) {
 	return m_pimpl->registerHandler(handler);
 }
 
-bool Server::send(SessionId sessionId, const NwEvent& event) {
+bool Server::send(SessionId sessionId, const ServerEvent& event) {
 	return m_pimpl->send(sessionId, event);
 }
 
-bool Server::broadcast(const NwEvent& event) {
+bool Server::broadcast(const ServerEvent& event) {
 	return m_pimpl->broadcast(event);
 }
 
