@@ -1,15 +1,12 @@
 #pragma once
 
-#include "gameNet/SafeQueue.hpp"
 #include "gameNet/nwEvents.hpp"
-#include "gameNet/sessionManager.hpp"
-#include "network/tcpServer.hpp"
+#include "gameNet/types.hpp"
 
-#include <thread>
+#include <cstdint>
+#include <memory>
 
 namespace go::gameNet {
-
-struct ServerEvent;
 
 // Callback interface invoked on the server's processing thread.
 class IServerHandler {
@@ -22,7 +19,8 @@ public:
 
 class Server {
 public:
-	explicit Server(std::uint16_t port = network::DEFAULT_PORT);
+	Server();
+	explicit Server(std::uint16_t port);
 	~Server();
 
 	void start();
@@ -35,33 +33,8 @@ public:
 	Seat getSeat(SessionId sessionId) const; //!< Get the seat connection with a sessionId.
 
 private:
-	void serverLoop();                           //!< Server thread: drain queue and act.
-	void processEvent(const ServerEvent& event); //!< Server loop calls this. Reads event type and distributes.
-
-	Seat freeSeat() const;
-
-private:
-	// Network callbacks (run on libNetwork threads) just enqueue events.
-	void onClientConnected(network::ConnectionId connectionId);
-	void onClientMessage(network::ConnectionId connectionId, const network::Message& payload);
-	void onClientDisconnected(network::ConnectionId connectionId);
-
-private:
-	// Processing of server events.
-	void processClientMessage(const ServerEvent& event);    //!< Translate payload to network event and handle.
-	void processClientConnect(const ServerEvent& event);    //!< Creates session key.
-	void processClientDisconnect(const ServerEvent& event); //!< Destroys session key.
-	void processShutdown(const ServerEvent& event);         //!< Shutdown server.
-
-private:
-	std::atomic<bool> m_isRunning{false};
-	std::thread m_serverThread;
-
-	SessionManager m_sessionManager;
-	network::TcpServer m_network;
-
-	IServerHandler* m_handler{nullptr};  //!< The class that will handle server events.
-	SafeQueue<ServerEvent> m_eventQueue; //!< Event queue between network threads and server thread.
+	class Implementation;
+	std::unique_ptr<Implementation> m_pimpl; //!< Pimpl to hide networking protocol stuff.
 };
 
 } // namespace go::gameNet

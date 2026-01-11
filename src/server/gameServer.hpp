@@ -9,6 +9,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <unordered_map>
 
 namespace go {
 namespace server {
@@ -17,7 +18,7 @@ using namespace gameNet;
 
 class GameServer : public IServerHandler {
 public:
-	explicit GameServer(std::uint16_t port = network::DEFAULT_PORT);
+	explicit GameServer();
 	~GameServer();
 
 	void start(); //!< Boot the network listener and the server event loop.
@@ -41,7 +42,7 @@ private:
 
 	std::unordered_map<Player, SessionId> m_players;
 
-	gameNet::Server m_server;
+	gameNet::Server m_server{};
 };
 
 } // namespace server

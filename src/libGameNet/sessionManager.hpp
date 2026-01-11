@@ -10,8 +10,6 @@
 
 namespace go::gameNet {
 
-using SessionId = std::uint32_t;
-
 struct SessionContext {
 	network::ConnectionId connectionId; //!< Identify connection on network layer.
 	SessionId sessionId;                //!< Identify connection on application layer.

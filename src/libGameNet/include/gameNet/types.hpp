@@ -4,6 +4,8 @@
 
 namespace go::gameNet {
 
+using SessionId = std::uint32_t;
+
 //! The role in the game.
 enum class Seat : std::uint8_t {
 	None     = 0,      //!< Just connected.

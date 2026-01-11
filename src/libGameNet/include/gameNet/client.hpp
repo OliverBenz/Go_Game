@@ -1,13 +1,11 @@
 #pragma once
 
 #include "gameNet/nwEvents.hpp"
-#include "gameNet/sessionManager.hpp"
-#include "network/tcpClient.hpp"
+#include "gameNet/types.hpp"
 
-#include <atomic>
 #include <cstdint>
+#include <memory>
 #include <string>
-#include <thread>
 
 namespace go::gameNet {
 
@@ -27,27 +25,18 @@ public:
 
 	bool registerHandler(IClientHandler* handler);
 
-	void connect(const std::string& host, std::uint16_t port = network::DEFAULT_PORT);
+	void connect(const std::string& host);
+	void connect(const std::string& host, std::uint16_t port);
 	void disconnect();
+	bool isConnected() const;
 
 	bool send(const NwEvent& event);
-	bool isConnected() const;
 
 	SessionId sessionId() const;
 
 private:
-	void startReadLoop(); //!< Starts background read thread for blocking reads.
-	void stopReadLoop();
-	void readLoop();
-	void handleIncoming(const network::Message& message);
-
-private:
-	network::TcpClient m_client;
-	std::atomic<bool> m_running{false}; //!< Read thread running.
-	std::thread m_readThread;
-
-	IClientHandler* m_handler{nullptr};
-	SessionId m_sessionId{0};
+	class Implementation;
+	std::unique_ptr<Implementation> m_pimpl; //!< Pimpl to hide networking protocol stuff.
 };
 
 } // namespace go::gameNet
