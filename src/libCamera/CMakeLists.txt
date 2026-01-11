@@ -5,7 +5,10 @@ find_package(OpenCV REQUIRED)
 
 # Get files to build
 set(headers )
-set(sources ${CMAKE_CURRENT_LIST_DIR}/main.cpp)
+set(sources
+    ${CMAKE_CURRENT_LIST_DIR}/main.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/BoardDetect.cpp
+)
 
 # TODO: This core/ will be a library. Not the executable.
 # Create target
@@ -29,4 +32,3 @@ set_output_directory(${targetName})  # Set the output directory of the library
 target_compile_definitions(${targetName} PUBLIC VERSION_MAJOR=0)
 target_compile_definitions(${targetName} PUBLIC VERSION_MINOR=0)
 target_compile_definitions(${targetName} PUBLIC VERSION_PATCH=1)
-

@@ -1,7 +1,13 @@
+#include "BoardDetect.hpp"
+
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
 #include <opencv2/opencv.hpp>
+#include <string>
+
+static constexpr bool kUseLiveCamera = true;
+static constexpr int kCameraIndex    = 0;
 
 int hmin = 0, smin = 89, vmin = 178;
 int hmax = 161, smax = 220, vmax = 226;
@@ -193,47 +199,105 @@ cv::Mat makeGrid(const std::vector<cv::Mat>& images) {
 	return grid;
 }
 
+cv::Mat loadIfExists(const std::filesystem::path& path) {
+	const auto img = cv::imread(path.string());
+	return img.empty() ? cv::Mat() : img;
+}
 
-int main() {
-	// Load your 6 reference images
-	std::vector<cv::Mat> images;
-	for (auto i = 1; i != 7; ++i) {
-		cv::Mat img = cv::imread(std::filesystem::path(PATH_TEST_IMG) / std::format("boards_easy/angle_{}.jpeg", i));
-		if (img.empty()) {
-			std::cerr << "Could not read " << i << std::endl;
-			return -1;
-		}
-		images.push_back(img);
+cv::Mat buildFinalView(const std::filesystem::path& debugDir) {
+	const auto warped = loadIfExists(debugDir / "3_warped.png");
+	if (warped.empty()) {
+		return {};
 	}
 
+	cv::Mat combined = warped.clone();
+	const auto contour = loadIfExists(debugDir / "2_boardContour.png");
+	const auto lines   = loadIfExists(debugDir / "4_gridLines.png");
+	auto stones        = loadIfExists(debugDir / "5_stones.png");
+	if (stones.empty()) {
+		stones = loadIfExists(debugDir / "5_stones_grid.png");
+	}
+
+	const auto overlay = [&](const cv::Mat& img) {
+		if (img.empty()) {
+			return;
+		}
+		if (img.size() == combined.size()) {
+			cv::addWeighted(combined, 0.7, img, 0.3, 0.0, combined);
+			return;
+		}
+		cv::Mat resized;
+		cv::resize(img, resized, combined.size(), 0.0, 0.0, cv::INTER_NEAREST);
+		cv::addWeighted(combined, 0.7, resized, 0.3, 0.0, combined);
+	};
+
+	overlay(contour);
+	overlay(lines);
+	overlay(stones);
+
+	return combined;
+}
+
+
+int main() {
 	const bool forceHeadless = std::getenv("GO_CAMERA_HEADLESS") != nullptr;
 	const bool guiAvailable  = !forceHeadless && supportsHighGui();
 
-	std::vector<cv::Mat> processed;
-	if (guiAvailable) {
-		MaskTesterHSV mask;
-		while (true) {
-			processed.clear();
-			for (auto& img: images) {
-				processed.push_back(mask.process(img));
-			}
-			cv::Mat grid = makeGrid(processed);
-			cv::imshow("Masks", grid);
+	if (guiAvailable && kUseLiveCamera) {
+		cv::VideoCapture cap(kCameraIndex);
+		if (!cap.isOpened()) {
+			std::cerr << "Failed to open camera index " << kCameraIndex << ".\n";
+			return 1;
+		}
 
-			if (cv::waitKey(30) == 27)
+		BoardDetect detector("camera_debug_live");
+		while (true) {
+			cv::Mat frame;
+			cap >> frame;
+			if (frame.empty()) {
+				break;
+			}
+
+			detector.process(frame);
+			cv::Mat view = buildFinalView("camera_debug_live");
+			if (view.empty()) {
+				view = frame;
+			}
+			cv::imshow("BoardDetect", view);
+
+			if (cv::waitKey(1) == 27) {
 				break; // Esc to quit
+			}
 		}
 	} else {
-		MaskContour mask;
-		for (auto& img: images) {
-			processed.push_back(mask.process(img));
+		// Load your 6 reference images
+		std::vector<cv::Mat> processed;
+		for (auto i = 1; i != 7; ++i) {
+			const auto imgPath = std::filesystem::path(PATH_TEST_IMG) / std::format("boards_easy/angle_{}.jpeg", i);
+			cv::Mat img = cv::imread(imgPath);
+			if (img.empty()) {
+				std::cerr << "Could not read " << imgPath << std::endl;
+				return -1;
+			}
+
+			const auto debugDir = std::filesystem::path("camera_debug_static") / ("angle_" + std::to_string(i));
+			BoardDetect detector(debugDir.string());
+			detector.process(img);
+			const auto view = buildFinalView(debugDir);
+			processed.push_back(view.empty() ? img : view);
 		}
-		cv::Mat grid       = makeGrid(processed);
-		const auto outPath = std::filesystem::path("mask_grid.png");
-		if (cv::imwrite(outPath.string(), grid)) {
-			std::cout << "Saved " << outPath << " (GUI unavailable).\n";
+
+		const cv::Mat grid = makeGrid(processed);
+		if (guiAvailable) {
+			cv::imshow("BoardDetect", grid);
+			cv::waitKey(0);
 		} else {
-			std::cerr << "Failed to write " << outPath << ".\n";
+			const auto outPath = std::filesystem::path("board_detect_grid.png");
+			if (cv::imwrite(outPath.string(), grid)) {
+				std::cout << "Saved " << outPath << " (GUI unavailable).\n";
+			} else {
+				std::cerr << "Failed to write " << outPath << ".\n";
+			}
 		}
 	}
 
