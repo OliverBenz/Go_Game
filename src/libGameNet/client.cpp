@@ -9,11 +9,6 @@
 
 namespace go::gameNet {
 
-namespace {
-// TODO: Move to protocol.
-constexpr const char* SESSION_PREFIX = "SESSION:";
-} // namespace
-
 class Client::Implementation {
 public:
 	Implementation() = default;
@@ -24,7 +19,7 @@ public:
 	void disconnect();
 	bool isConnected() const;
 
-	bool send(const NwEvent& event);
+	bool send(const ClientEvent& event);
 
 	SessionId sessionId() const;
 
@@ -68,7 +63,7 @@ bool Client::Implementation::isConnected() const {
 	return m_client.isConnected();
 }
 
-bool Client::Implementation::send(const NwEvent& event) {
+bool Client::Implementation::send(const ClientEvent& event) {
 	return m_client.send(toMessage(event));
 }
 
@@ -114,19 +109,7 @@ void Client::Implementation::readLoop() {
 }
 
 void Client::Implementation::handleIncoming(const network::Message& message) {
-	if (message.rfind(SESSION_PREFIX, 0) == 0) {
-		std::istringstream stream(message.substr(std::strlen(SESSION_PREFIX)));
-		SessionId sessionId{};
-		if (stream >> sessionId) {
-			m_sessionId = sessionId;
-			if (m_handler) {
-				m_handler->onSessionAssigned(sessionId);
-			}
-		}
-		return;
-	}
-
-	const auto event = fromMessage(message);
+	const auto event = fromServerMessage(message);
 	if (!event) {
 		return;
 	}
@@ -164,7 +147,7 @@ bool Client::isConnected() const {
 	return m_pimpl->isConnected();
 }
 
-bool Client::send(const NwEvent& event) {
+bool Client::send(const ClientEvent& event) {
 	return m_pimpl->send(event);
 }
 

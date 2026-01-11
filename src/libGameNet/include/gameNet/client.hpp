@@ -12,10 +12,9 @@ namespace go::gameNet {
 // Callback interface invoked on the client's read thread.
 class IClientHandler {
 public:
-	virtual ~IClientHandler()                           = default;
-	virtual void onSessionAssigned(SessionId sessionId) = 0;
-	virtual void onNetworkEvent(const NwEvent& event)   = 0;
-	virtual void onDisconnected()                       = 0;
+	virtual ~IClientHandler()                             = default;
+	virtual void onNetworkEvent(const ServerEvent& event) = 0;
+	virtual void onDisconnected()                         = 0;
 };
 
 class Client {
@@ -35,7 +34,7 @@ public:
 	void disconnect();
 	bool isConnected() const;
 
-	bool send(const NwEvent& event);
+	bool send(const ClientEvent& event);
 
 	SessionId sessionId() const;
 
