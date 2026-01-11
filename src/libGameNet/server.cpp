@@ -176,7 +176,7 @@ void Server::Implementation::processClientConnect(const ServerQueueEvent& event)
 	const auto sessionId = m_sessionManager.add(event.connectionId);
 	const auto seat      = freeSeat();
 
-	// If we have a player free
+	// Store sessionId & send to client
 	m_sessionManager.setSeat(sessionId, seat);
 	send(sessionId, ServerSessionAssign{.sessionId = sessionId});
 
