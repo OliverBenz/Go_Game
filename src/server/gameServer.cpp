@@ -119,7 +119,8 @@ void GameServer::handleNetworkEvent(Player player, const gameNet::ClientPutStone
 
 	// Push into the core game loop; legality (ko, captures, etc.) is still enforced there.
 	const auto move = Coord{event.c.x, event.c.y};
-	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Accepting PutStone from player {} at ({}, {}).", static_cast<int>(player), move.x, move.y));
+	Logger().Log(Logging::LogLevel::Info,
+	             std::format("[GameServer] Forwarding PutStone from player {} at ({}, {}).", static_cast<int>(player), move.x, move.y));
 
 	m_game.pushEvent(PutStoneEvent{player, move});
 }
