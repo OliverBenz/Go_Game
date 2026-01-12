@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/IGameStateListener.hpp"
 #include "core/game.hpp"
 #include "gameNet/server.hpp"
 
@@ -14,7 +15,7 @@
 namespace go {
 namespace server {
 
-class GameServer : public gameNet::IServerHandler {
+class GameServer : public gameNet::IServerHandler, public IGameStateListener {
 public:
 	explicit GameServer();
 	~GameServer();
@@ -22,9 +23,13 @@ public:
 	void start(); //!< Boot the network listener and the server event loop.
 	void stop();  //!< Signal shutdown to the server loop and stop the network listener.
 
+	// IServerHandler overrides
 	void onClientConnected(gameNet::SessionId sessionId, gameNet::Seat seat) override;
 	void onClientDisconnected(gameNet::SessionId sessionId) override;
 	void onNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientEvent& event) override;
+
+	// IGameStateListener overrides
+	void onGameDelta(const GameDelta& delta) override;
 
 private:
 	// Processing of the network events that are sent in the server event message payload.

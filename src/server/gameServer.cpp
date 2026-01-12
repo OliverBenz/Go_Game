@@ -20,11 +20,13 @@ GameServer::~GameServer() {
 
 void GameServer::start() {
 	m_server.registerHandler(this);
+	m_game.subscribeState(this);
 	m_server.start();
 }
 
 void GameServer::stop() {
 	m_server.stop();
+	m_game.unsubscribeState(this);
 
 	if (m_gameThread.joinable()) {
 		m_gameThread.join();
@@ -69,6 +71,44 @@ void GameServer::onNetworkEvent(gameNet::SessionId sessionId, const gameNet::Cli
 		        handleNetworkEvent(player, e);
 	        },
 	        event);
+}
+
+void GameServer::onGameDelta(const GameDelta& delta) {
+	const auto toGameNetCoord  = [](Coord c) -> gameNet::Coord { return gameNet::Coord{c.x, c.y}; };
+	const auto toGameNetCoords = [](const std::vector<Coord>& coords) -> std::vector<gameNet::Coord> {
+		std::vector<gameNet::Coord> res;
+		res.reserve(coords.size());
+		for (const auto& c: coords) {
+			res.emplace_back(gameNet::Coord{c.x, c.y});
+		}
+		return res;
+	};
+
+	gameNet::ServerAction action = gameNet::ServerAction::Pass;
+	switch (delta.action) {
+	case GameAction::Place:
+		action = gameNet::ServerAction::Place;
+		break;
+	case GameAction::Pass:
+		action = gameNet::ServerAction::Pass;
+		break;
+	case GameAction::Resign:
+		action = gameNet::ServerAction::Resign;
+		break;
+	}
+
+	// TODO: Game status: Core cannot count territory yet so game not active is signaled as draw.
+	gameNet::ServerDelta updateEvent{
+	        .turn     = delta.moveId,
+	        .seat     = delta.player == Player::Black ? gameNet::Seat::Black : gameNet::Seat::White,
+	        .action   = action,
+	        .coord    = delta.coord.has_value() ? std::optional<gameNet::Coord>(toGameNetCoord(*delta.coord)) : std::nullopt,
+	        .captures = toGameNetCoords(delta.captures),
+	        .next     = delta.nextPlayer == Player::Black ? gameNet::Seat::Black : gameNet::Seat::White,
+	        .status   = delta.gameActive ? gameNet::GameStatus::Active : gameNet::GameStatus::Draw,
+	};
+
+	m_server.broadcast(updateEvent);
 }
 
 void GameServer::handleNetworkEvent(Player player, const gameNet::ClientPutStone& event) {
