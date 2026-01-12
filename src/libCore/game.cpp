@@ -5,6 +5,24 @@
 
 namespace go {
 
+namespace {
+
+std::vector<Coord> diffCaptured(const Board& before, const Board& after) {
+	std::vector<Coord> captures;
+	const auto size = before.size();
+	for (Id x = 0; x < size; ++x) {
+		for (Id y = 0; y < size; ++y) {
+			const Coord c{x, y};
+			if (before.getAt(c) != Board::Value::Empty && after.getAt(c) == Board::Value::Empty) {
+				captures.push_back(c);
+			}
+		}
+	}
+	return captures;
+}
+
+} // namespace
+
 Game::Game(const std::size_t boardSize) : m_gameActive{false}, m_position{boardSize} {
 	switch (m_position.board.size()) {
 	case 9u:
@@ -60,11 +78,21 @@ void Game::handleEvent(const PutStoneEvent& event) {
 	if (isNextPositionLegal(m_position, m_position.currentPlayer, event.c, *m_hasher, m_seenHashes, next)) {
 		m_consecutivePasses = 0;
 
-		m_position = std::move(next);
+		const auto captures = diffCaptured(m_position.board, next.board);
+		m_position          = std::move(next);
 		m_seenHashes.insert(m_position.hash);
 
 		m_eventHub.signal(GS_BoardChange);
 		m_eventHub.signal(GS_PlayerChange);
+		m_eventHub.signalDelta(GameDelta{
+		        .moveId     = m_position.moveId,
+		        .action     = GameAction::Place,
+		        .player     = event.player,
+		        .coord      = event.c,
+		        .captures   = captures,
+		        .nextPlayer = m_position.currentPlayer,
+		        .gameActive = m_gameActive,
+		});
 	}
 }
 
@@ -78,6 +106,15 @@ void Game::handleEvent(const PassEvent& event) {
 	++m_consecutivePasses;
 	if (m_consecutivePasses == 2) {
 		m_gameActive = false;
+		m_eventHub.signalDelta(GameDelta{
+		        .moveId     = m_position.moveId + 1,
+		        .action     = GameAction::Pass,
+		        .player     = event.player,
+		        .coord      = std::nullopt,
+		        .captures   = {},
+		        .nextPlayer = opponent(event.player),
+		        .gameActive = m_gameActive,
+		});
 		m_eventHub.signal(GS_StateChange);
 		return;
 	}
@@ -93,23 +130,49 @@ void Game::handleEvent(const PassEvent& event) {
 	m_seenHashes.insert(m_position.hash);
 
 	m_eventHub.signal(GS_PlayerChange);
+	m_eventHub.signalDelta(GameDelta{
+	        .moveId     = m_position.moveId,
+	        .action     = GameAction::Pass,
+	        .player     = event.player,
+	        .coord      = std::nullopt,
+	        .captures   = {},
+	        .nextPlayer = m_position.currentPlayer,
+	        .gameActive = m_gameActive,
+	});
 }
 
 void Game::handleEvent(const ResignEvent&) {
 	m_gameActive = false;
 
 	m_eventHub.signal(GS_StateChange);
+	m_eventHub.signalDelta(GameDelta{
+	        .moveId     = m_position.moveId + 1,
+	        .action     = GameAction::Resign,
+	        .player     = m_position.currentPlayer,
+	        .coord      = std::nullopt,
+	        .captures   = {},
+	        .nextPlayer = opponent(m_position.currentPlayer),
+	        .gameActive = m_gameActive,
+	});
 }
 
 void Game::handleEvent(const ShutdownEvent&) {
 	m_gameActive = false;
 }
 
-void Game::subscribeEvents(IGameListener* listener, uint64_t signalMask) {
+void Game::subscribeSignals(IGameSignalListener* listener, uint64_t signalMask) {
 	m_eventHub.subscribe(listener, signalMask);
 }
 
-void Game::unsubscribeEvents(IGameListener* listener) {
+void Game::unsubscribeSignals(IGameSignalListener* listener) {
+	m_eventHub.unsubscribe(listener);
+}
+
+void Game::subscribeState(IGameStateListener* listener) {
+	m_eventHub.subscribe(listener);
+}
+
+void Game::unsubscribeState(IGameStateListener* listener) {
 	m_eventHub.unsubscribe(listener);
 }
 

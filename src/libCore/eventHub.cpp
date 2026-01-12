@@ -4,28 +4,51 @@
 
 namespace go {
 
-void EventHub::subscribe(IGameListener* listener, uint64_t signalMask) {
+void EventHub::subscribe(IGameSignalListener* listener, uint64_t signalMask) {
 	std::lock_guard<std::mutex> lock(m_listenerMutex);
 
-	m_listeners.push_back({listener, signalMask});
+	m_signalListeners.push_back({listener, signalMask});
 }
 
-void EventHub::unsubscribe(IGameListener* listener) {
+void EventHub::unsubscribe(IGameSignalListener* listener) {
 	std::lock_guard<std::mutex> lock(m_listenerMutex);
 
-	m_listeners.erase(std::remove_if(m_listeners.begin(), m_listeners.end(), [&](const ListenerEntry& e) { return e.listener == listener; }),
-	                  m_listeners.end());
+	m_signalListeners.erase(
+	        std::remove_if(m_signalListeners.begin(), m_signalListeners.end(), [&](const SignalListenerEntry& e) { return e.listener == listener; }),
+	        m_signalListeners.end());
+}
+
+void EventHub::subscribe(IGameStateListener* listener) {
+	std::lock_guard<std::mutex> lock(m_listenerMutex);
+
+	m_stateListeners.push_back({listener});
+}
+
+void EventHub::unsubscribe(IGameStateListener* listener) {
+	std::lock_guard<std::mutex> lock(m_listenerMutex);
+
+	m_stateListeners.erase(
+	        std::remove_if(m_stateListeners.begin(), m_stateListeners.end(), [&](const StateListenerEntry& e) { return e.listener == listener; }),
+	        m_stateListeners.end());
 }
 
 void EventHub::signal(GameSignal signal) {
 	std::lock_guard<std::mutex> lock(m_listenerMutex);
 
-	for (const auto& [listener, signalMask]: m_listeners) {
+	for (const auto& [listener, signalMask]: m_signalListeners) {
 		if (signalMask & signal) {
 			// TODO: How to ensure these listener side functions are not heavy.
 			//       Else they might block the game thread.
 			listener->onGameEvent(signal);
 		}
+	}
+}
+
+void EventHub::signalDelta(const GameDelta& delta) {
+	std::lock_guard<std::mutex> lock(m_listenerMutex);
+
+	for (const auto& entry: m_stateListeners) {
+		entry.listener->onGameDelta(delta);
 	}
 }
 

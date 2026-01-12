@@ -11,7 +11,7 @@
 
 namespace go::ui {
 
-class GameWindow : public QMainWindow, public IGameListener {
+class GameWindow : public QMainWindow, public IGameSignalListener {
 	Q_OBJECT
 
 public:

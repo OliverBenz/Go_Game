@@ -27,8 +27,10 @@ public:
 	bool isActive() const;        //!< Return if the game is active or not.
 
 public:
-	void subscribeEvents(IGameListener* listener, uint64_t signalMask);
-	void unsubscribeEvents(IGameListener* listener);
+	void subscribeSignals(IGameSignalListener* listener, uint64_t signalMask);
+	void unsubscribeSignals(IGameSignalListener* listener);
+	void subscribeState(IGameStateListener* listener);
+	void unsubscribeState(IGameStateListener* listener);
 
 private:
 	void handleEvent(const PutStoneEvent& event);

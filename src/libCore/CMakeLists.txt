@@ -8,11 +8,12 @@ set(headers
     ${CMAKE_CURRENT_LIST_DIR}/include/core/game.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/core/position.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/core/gameEvent.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/core/IGameStateListener.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/core/IGameSignalListener.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/core/SafeQueue.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/core/sgfHandler.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/core/moveChecker.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/core/eventHub.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/include/core/IGameListener.hpp
     ${CMAKE_CURRENT_LIST_DIR}/zobristHash.hpp
 )
 set(sources
@@ -45,4 +46,3 @@ set_output_directory(${targetName})  # Set the output directory of the library
 target_compile_definitions(${targetName} PUBLIC VERSION_MAJOR=0)
 target_compile_definitions(${targetName} PUBLIC VERSION_MINOR=0)
 target_compile_definitions(${targetName} PUBLIC VERSION_PATCH=1)
-
