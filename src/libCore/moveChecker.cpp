@@ -179,6 +179,7 @@ static Position simulatePosition(const Position& start, Coord move, Player playe
 	next.board         = std::move(nextBoard);
 	next.currentPlayer = opponent(player);
 	next.hash          = nextHash;
+	next.moveId        = start.moveId + 1;
 	return next;
 }
 

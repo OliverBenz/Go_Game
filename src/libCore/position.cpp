@@ -11,11 +11,15 @@ void Position::putStone(Coord c, IZobristHash& hasher) {
 
 	currentPlayer = opponent(currentPlayer);
 	hash ^= hasher.togglePlayer();
+
+	++moveId;
 }
 
 void Position::pass(IZobristHash& hasher) {
 	currentPlayer = opponent(currentPlayer);
 	hash ^= hasher.togglePlayer();
+
+	++moveId;
 }
 
 } // namespace go

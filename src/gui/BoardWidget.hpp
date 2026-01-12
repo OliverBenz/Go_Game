@@ -1,14 +1,14 @@
 #pragma once
 
 #include "boardRenderer.hpp"
-#include "core/IGameListener.hpp"
+#include "core/IGameSignalListener.hpp"
 #include "core/game.hpp"
 
 #include <QWidget>
 
 namespace go::ui {
 
-class BoardWidget : public QWidget, public IGameListener {
+class BoardWidget : public QWidget, public IGameSignalListener {
 	Q_OBJECT
 
 public:

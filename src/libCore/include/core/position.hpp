@@ -10,7 +10,8 @@ namespace go {
 struct Position {
 	Board board;                         //!< Current board.
 	Player currentPlayer{Player::Black}; //!< Current Player.
-	uint64_t hash = 0;                   //!< Game state hash.
+	uint64_t hash{0};                    //!< Game state hash.
+	unsigned moveId{0};                  //!< Move number of game.
 
 public:
 	Position(std::size_t boardSize);

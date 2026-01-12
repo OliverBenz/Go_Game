@@ -21,14 +21,14 @@ BoardWidget::BoardWidget(Game& game, QWidget* parent) : QWidget(parent), m_game(
 	setMouseTracking(false);
 
 	if (!m_listenerRegistered) {
-		m_game.subscribeEvents(this, GS_BoardChange);
+		m_game.subscribeSignals(this, GS_BoardChange);
 		m_listenerRegistered = true;
 	}
 }
 
 BoardWidget::~BoardWidget() {
 	if (m_listenerRegistered) {
-		m_game.unsubscribeEvents(this);
+		m_game.unsubscribeSignals(this);
 	}
 }
 

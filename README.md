@@ -20,7 +20,7 @@ Name        | Description
 ------------|------------
 libCore     | Library for game rules, basic types, board state validation, etc.
 libNetwork  | Library for network layer networking. Sending/Receiving messages.
-libGoNet    | Library for application layer networking. Translating game events to/from messages. Uses libNetwork.
+libGameNet  | Library for application layer networking. Translating game events to/from messages. Uses libNetwork.
 libCamera   | Library for physical board detection using OpenCV.
 GameGUI     | Executable defining the gui renderer with SDL2. Inherits and uses the Game library.
 

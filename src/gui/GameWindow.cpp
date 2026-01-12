@@ -22,11 +22,11 @@ GameWindow::GameWindow(Game& game, QWidget* parent) : QMainWindow(parent), m_gam
 	// Setup Game Stuff
 	setCurrentPlayerText();
 	setGameStateText();
-	m_game.subscribeEvents(this, GS_PlayerChange | GS_StateChange);
+	m_game.subscribeSignals(this, GS_PlayerChange | GS_StateChange);
 }
 
 GameWindow::~GameWindow() {
-	m_game.unsubscribeEvents(this);
+	m_game.unsubscribeSignals(this);
 }
 
 void GameWindow::onGameEvent(const GameSignal signal) {
