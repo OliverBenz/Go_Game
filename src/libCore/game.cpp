@@ -5,24 +5,6 @@
 
 namespace go {
 
-namespace {
-
-std::vector<Coord> diffCaptured(const Board& before, const Board& after) {
-	std::vector<Coord> captures;
-	const auto size = before.size();
-	for (Id x = 0; x < size; ++x) {
-		for (Id y = 0; y < size; ++y) {
-			const Coord c{x, y};
-			if (before.getAt(c) != Board::Value::Empty && after.getAt(c) == Board::Value::Empty) {
-				captures.push_back(c);
-			}
-		}
-	}
-	return captures;
-}
-
-} // namespace
-
 Game::Game(const std::size_t boardSize) : m_gameActive{false}, m_position{boardSize} {
 	switch (m_position.board.size()) {
 	case 9u:
@@ -55,7 +37,7 @@ void Game::run() {
 }
 
 const Board& Game::board() const {
-	// TODO: Other threads access this. We ensure game thread does not update board during a read.
+	// TODO: No other threads ever read this? We should work with the board deltas (GameStateListener)
 	return m_position.board;
 }
 
@@ -75,11 +57,11 @@ void Game::handleEvent(const PutStoneEvent& event) {
 	}
 
 	Position next{m_position.board.size()};
-	if (isNextPositionLegal(m_position, m_position.currentPlayer, event.c, *m_hasher, m_seenHashes, next)) {
+	std::vector<Coord> captures{};
+	if (isNextPositionLegal(m_position, m_position.currentPlayer, event.c, *m_hasher, m_seenHashes, next, captures)) {
 		m_consecutivePasses = 0;
 
-		const auto captures = diffCaptured(m_position.board, next.board);
-		m_position          = std::move(next);
+		m_position = std::move(next);
 		m_seenHashes.insert(m_position.hash);
 
 		m_eventHub.signal(GS_BoardChange);
