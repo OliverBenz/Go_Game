@@ -2,7 +2,7 @@
 
 #include "BoardWidget.hpp"
 #include "core/game.hpp"
-
+#include "sessionManager.hpp"
 #include <QCloseEvent>
 #include <QLabel>
 #include <QPushButton>
@@ -15,7 +15,7 @@ class GameWidget : public QWidget, public IGameSignalListener {
 	Q_OBJECT
 
 public:
-	explicit GameWidget(Game& game, QWidget* parent = nullptr);
+	explicit GameWidget(QWidget* parent = nullptr);
 	~GameWidget() override;
 
 	//! Called by the game thread. Ensure not blocking.
@@ -23,7 +23,7 @@ public:
 
 private:
 	//! Initial setup constructing the layout of the window.
-	void buildLayout();
+	void buildNetworkLayout();
 
 	void setCurrentPlayerText(); //!< Get current player from game and update the label.
 	void setGameStateText();     //!< Get game state from game and update the label.
@@ -33,7 +33,7 @@ private: // Slots
 	void onResignClicked();
 
 private:
-	Game& m_game;
+	SessionManager m_game;
 
 	BoardWidget* m_boardWidget = nullptr;
 	QTabWidget* m_sideTabs     = nullptr;

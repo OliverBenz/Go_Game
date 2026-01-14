@@ -10,11 +10,14 @@ add_executable(${targetName}
     ${CMAKE_CURRENT_LIST_DIR}/BoardWidget.cpp
     ${CMAKE_CURRENT_LIST_DIR}/boardRenderer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ConnectDialog.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/sessionManager.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/eventHub.cpp
     ${CMAKE_CURRENT_LIST_DIR}/Logging.cpp
 )
 
 target_link_libraries(${targetName} PRIVATE
     go::core
+    go::gameNet
     Logger::Logger
     Qt6::Widgets
 )

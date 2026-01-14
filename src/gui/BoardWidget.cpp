@@ -16,19 +16,19 @@
 
 namespace go::gui {
 
-BoardWidget::BoardWidget(Game& game, QWidget* parent) : QWidget(parent), m_game(game), m_boardRenderer(static_cast<unsigned>(game.board().size())) {
+BoardWidget::BoardWidget(SessionManager& game, QWidget* parent) : QWidget(parent), m_game(game), m_boardRenderer(static_cast<unsigned>(game.board().size())) {
 	setFocusPolicy(Qt::StrongFocus); // Required to get key events.
 	setMouseTracking(false);
 
 	if (!m_listenerRegistered) {
-		m_game.subscribeSignals(this, GS_BoardChange);
+		m_game.subscribe(this, GS_BoardChange);
 		m_listenerRegistered = true;
 	}
 }
 
 BoardWidget::~BoardWidget() {
 	if (m_listenerRegistered) {
-		m_game.unsubscribeSignals(this);
+		m_game.unsubscribe(this);
 	}
 }
 
@@ -65,12 +65,12 @@ void BoardWidget::keyReleaseEvent(QKeyEvent* event) {
 
 	switch (event->key()) {
 	case Qt::Key_P:
-		m_game.pushEvent(PassEvent{});
+		m_game.tryPass();
 		event->accept();
 		return;
 
 	case Qt::Key_R:
-		m_game.pushEvent(ResignEvent{});
+		m_game.tryResign();
 		event->accept();
 		return;
 
@@ -109,8 +109,7 @@ void BoardWidget::handleClick(const QPoint& pos) {
 	// Try push event
 	Coord coord{};
 	if (m_boardRenderer.pixelToCoord(local.x(), local.y(), coord)) {
-		// TODO: Not use value from game.
-		m_game.pushEvent(PutStoneEvent{m_game.currentPlayer(), coord});
+		m_game.tryPlace(coord.x, coord.y);
 	}
 }
 
