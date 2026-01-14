@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/game.hpp"
 #include <QMainWindow>
 
 namespace go::gui {
@@ -8,12 +9,12 @@ class MainWindow : public QMainWindow {
 	Q_OBJECT
 
 public:
-	explicit MainWindow(QWidget* parent = nullptr);
+	explicit MainWindow(Game& game, QWidget* parent = nullptr);
 	~MainWindow() override;
 
 private:
 	//! Initial setup constructing the layout of the window.
-	void buildLayout();
+	void buildLayout(Game& game);
 
 private: // Slots
 	void openConnectDialog();

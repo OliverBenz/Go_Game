@@ -1,4 +1,4 @@
-#include "GameWindow.hpp"
+#include "GameWidget.hpp"
 
 #include <QHBoxLayout>
 #include <QTabWidget>
@@ -7,14 +7,14 @@
 
 namespace go::gui {
 
-GameWindow::GameWindow(Game& game, QWidget* parent) : QWidget(parent), m_game(game) {
+GameWidget::GameWidget(Game& game, QWidget* parent) : QWidget(parent), m_game{game} {
 	// Setup Window
 	setWindowTitle("Go Game");
 	buildLayout();
 
 	// Connect slots
-	connect(m_passButton, &QPushButton::clicked, this, &GameWindow::onPassClicked);
-	connect(m_resignButton, &QPushButton::clicked, this, &GameWindow::onResignClicked);
+	connect(m_passButton, &QPushButton::clicked, this, &GameWidget::onPassClicked);
+	connect(m_resignButton, &QPushButton::clicked, this, &GameWidget::onResignClicked);
 
 	// Setup Game Stuff
 	setCurrentPlayerText();
@@ -22,11 +22,11 @@ GameWindow::GameWindow(Game& game, QWidget* parent) : QWidget(parent), m_game(ga
 	m_game.subscribeSignals(this, GS_PlayerChange | GS_StateChange);
 }
 
-GameWindow::~GameWindow() {
+GameWidget::~GameWidget() {
 	m_game.unsubscribeSignals(this);
 }
 
-void GameWindow::onGameEvent(const GameSignal signal) {
+void GameWidget::onGameEvent(const GameSignal signal) {
 	// TODO: This is called by core game thread
 	//  Game thread should not update stuff on the UI but push notifications and let the UI handle it.
 	switch (signal) {
@@ -42,7 +42,7 @@ void GameWindow::onGameEvent(const GameSignal signal) {
 }
 
 
-void GameWindow::buildLayout() {
+void GameWidget::buildLayout() {
 	auto* central = new QWidget(this);
 
 	// Layout Window top to bottom
@@ -103,21 +103,21 @@ void GameWindow::buildLayout() {
 	central->setLayout(mainLayout);
 }
 
-void GameWindow::setCurrentPlayerText() {
+void GameWidget::setCurrentPlayerText() {
 	const auto text = std::format("Current Player: {}", m_game.currentPlayer() == Player::Black ? "Black" : "White");
 	m_currPlayerLabel->setText(QString::fromStdString(text));
 }
 
-void GameWindow::setGameStateText() {
+void GameWidget::setGameStateText() {
 	const auto text = std::format("Game: {}", m_game.isActive() ? "Active" : "Finished");
 	m_statusLabel->setText(QString::fromStdString(text));
 }
 
-void GameWindow::onPassClicked() {
+void GameWidget::onPassClicked() {
 	m_game.pushEvent(PassEvent{m_game.currentPlayer()});
 }
 
-void GameWindow::onResignClicked() {
+void GameWidget::onResignClicked() {
 	m_game.pushEvent(ResignEvent{});
 }
 
