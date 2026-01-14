@@ -7,22 +7,22 @@
 
 namespace go::gui {
 
-MainWindow::MainWindow(Game& game, QWidget* parent) : QMainWindow(parent) {
+MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 	// Setup Window
 	setWindowTitle("Go Game");
-	buildLayout(game);
+	buildLayout();
 }
 
 MainWindow::~MainWindow() = default;
 
-void MainWindow::buildLayout(Game& game) {
+void MainWindow::buildLayout() {
 	// Menu Bar
 	auto* menu          = menuBar()->addMenu(tr("&Menu"));
 	auto* connectAction = new QAction("&Connect to Server", this);
 	menu->addAction(connectAction);
 	connect(connectAction, &QAction::triggered, this, &MainWindow::openConnectDialog);
 
-	m_gameWidget = new GameWidget(game);
+	m_gameWidget = new GameWidget();
 	setCentralWidget(m_gameWidget);
 }
 

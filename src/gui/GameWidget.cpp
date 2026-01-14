@@ -7,10 +7,10 @@
 
 namespace go::gui {
 
-GameWidget::GameWidget(Game& game, QWidget* parent) : QWidget(parent), m_game{game} {
+GameWidget::GameWidget(QWidget* parent) : QWidget(parent) {
 	// Setup Window
 	setWindowTitle("Go Game");
-	buildLayout();
+	buildNetworkLayout();
 
 	// Connect slots
 	connect(m_passButton, &QPushButton::clicked, this, &GameWidget::onPassClicked);
@@ -19,11 +19,11 @@ GameWidget::GameWidget(Game& game, QWidget* parent) : QWidget(parent), m_game{ga
 	// Setup Game Stuff
 	setCurrentPlayerText();
 	setGameStateText();
-	m_game.subscribeSignals(this, GS_PlayerChange | GS_StateChange);
+	m_game.subscribe(this, GS_PlayerChange | GS_StateChange);
 }
 
 GameWidget::~GameWidget() {
-	m_game.unsubscribeSignals(this);
+	m_game.unsubscribe(this);
 }
 
 void GameWidget::onGameEvent(const GameSignal signal) {
@@ -42,7 +42,7 @@ void GameWidget::onGameEvent(const GameSignal signal) {
 }
 
 
-void GameWidget::buildLayout() {
+void GameWidget::buildNetworkLayout() {
 	auto* central = new QWidget(this);
 
 	// Layout Window top to bottom
@@ -114,11 +114,11 @@ void GameWidget::setGameStateText() {
 }
 
 void GameWidget::onPassClicked() {
-	m_game.pushEvent(PassEvent{m_game.currentPlayer()});
+	m_game.tryPass();
 }
 
 void GameWidget::onResignClicked() {
-	m_game.pushEvent(ResignEvent{});
+	m_game.tryResign();
 }
 
 } // namespace go::gui

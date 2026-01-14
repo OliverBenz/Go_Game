@@ -9,12 +9,12 @@ class MainWindow : public QMainWindow {
 	Q_OBJECT
 
 public:
-	explicit MainWindow(Game& game, QWidget* parent = nullptr);
+	explicit MainWindow(QWidget* parent = nullptr);
 	~MainWindow() override;
 
 private:
 	//! Initial setup constructing the layout of the window.
-	void buildLayout(Game& game);
+	void buildLayout();
 
 private: // Slots
 	void openConnectDialog();

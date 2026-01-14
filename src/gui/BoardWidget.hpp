@@ -3,7 +3,7 @@
 #include "boardRenderer.hpp"
 #include "core/IGameSignalListener.hpp"
 #include "core/game.hpp"
-
+#include "sessionManager.hpp"
 #include <QWidget>
 
 namespace go::gui {
@@ -12,7 +12,7 @@ class BoardWidget : public QWidget, public IGameSignalListener {
 	Q_OBJECT
 
 public:
-	explicit BoardWidget(Game& game, QWidget* parent = nullptr);
+	explicit BoardWidget(SessionManager& game, QWidget* parent = nullptr);
 	~BoardWidget() override;
 
 	//! Called by the game thread. Ensure not blocking.
@@ -38,7 +38,7 @@ private:
 	QPoint boardOffset(unsigned boardSize) const;
 
 private:
-	Game& m_game;
+	SessionManager& m_game;
 
 	bool m_listenerRegistered = false;
 	BoardRenderer m_boardRenderer;
