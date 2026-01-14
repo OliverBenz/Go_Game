@@ -2,9 +2,9 @@
 
 #include "Logger/Logger.hpp"
 
-namespace go::ui {
+namespace go::gui {
 
 //! Returns the logger instance based on the set up configuration.
 Logging::Logger Logger();
 
-} // namespace go::ui
+} // namespace go::gui

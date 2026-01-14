@@ -4,7 +4,7 @@
 
 class QLineEdit;
 
-namespace go::ui {
+namespace go::gui {
 
 class ConnectDialog : public QDialog {
 	Q_OBJECT
@@ -18,4 +18,4 @@ private:
 	QLineEdit* ipEdit;
 };
 
-} // namespace go::ui
+} // namespace go::gui
