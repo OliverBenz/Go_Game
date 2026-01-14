@@ -1,16 +1,13 @@
 #include "GameWindow.hpp"
 
-#include "ConnectDialog.hpp"
-
 #include <QHBoxLayout>
-#include <QMenuBar>
 #include <QTabWidget>
 #include <QVBoxLayout>
 #include <format>
 
-namespace go::ui {
+namespace go::gui {
 
-GameWindow::GameWindow(Game& game, QWidget* parent) : QMainWindow(parent), m_game(game) {
+GameWindow::GameWindow(Game& game, QWidget* parent) : QWidget(parent), m_game(game) {
 	// Setup Window
 	setWindowTitle("Go Game");
 	buildLayout();
@@ -44,19 +41,8 @@ void GameWindow::onGameEvent(const GameSignal signal) {
 	}
 }
 
-void GameWindow::closeEvent(QCloseEvent* event) {
-	m_game.pushEvent(ShutdownEvent{});
-	QMainWindow::closeEvent(event);
-}
 
 void GameWindow::buildLayout() {
-	// Menu Bar
-	auto* menu          = menuBar()->addMenu(tr("&Menu"));
-	auto* connectAction = new QAction("&Connect to Server", this);
-	menu->addAction(connectAction);
-	connect(connectAction, &QAction::triggered, this, &GameWindow::openConnectDialog);
-
-	// Layout
 	auto* central = new QWidget(this);
 
 	// Layout Window top to bottom
@@ -115,7 +101,6 @@ void GameWindow::buildLayout() {
 	mainLayout->addWidget(footer);
 
 	central->setLayout(mainLayout);
-	setCentralWidget(central);
 }
 
 void GameWindow::setCurrentPlayerText() {
@@ -136,12 +121,4 @@ void GameWindow::onResignClicked() {
 	m_game.pushEvent(ResignEvent{});
 }
 
-void GameWindow::openConnectDialog() {
-	ConnectDialog dialog(this);
-
-	if (dialog.exec() == QDialog::Accepted) {
-		const auto ip = dialog.ipAddress().toStdString();
-	}
-}
-
-} // namespace go::ui
+} // namespace go::gui

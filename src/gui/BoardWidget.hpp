@@ -6,7 +6,7 @@
 
 #include <QWidget>
 
-namespace go::ui {
+namespace go::gui {
 
 class BoardWidget : public QWidget, public IGameSignalListener {
 	Q_OBJECT
@@ -44,4 +44,4 @@ private:
 	BoardRenderer m_boardRenderer;
 };
 
-} // namespace go::ui
+} // namespace go::gui

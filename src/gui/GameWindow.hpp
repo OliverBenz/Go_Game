@@ -5,13 +5,13 @@
 
 #include <QCloseEvent>
 #include <QLabel>
-#include <QMainWindow>
 #include <QPushButton>
 #include <QTabWidget>
+#include <QWidget>
 
-namespace go::ui {
+namespace go::gui {
 
-class GameWindow : public QMainWindow, public IGameSignalListener {
+class GameWindow : public QWidget, public IGameSignalListener {
 	Q_OBJECT
 
 public:
@@ -20,9 +20,6 @@ public:
 
 	//! Called by the game thread. Ensure not blocking.
 	void onGameEvent(GameSignal signal) override;
-
-protected:
-	void closeEvent(QCloseEvent* event) override;
 
 private:
 	//! Initial setup constructing the layout of the window.
@@ -34,7 +31,6 @@ private:
 private: // Slots
 	void onPassClicked();
 	void onResignClicked();
-	void openConnectDialog();
 
 private:
 	Game& m_game;
@@ -49,4 +45,4 @@ private:
 	QPushButton* m_resignButton = nullptr;
 };
 
-} // namespace go::ui
+} // namespace go::gui

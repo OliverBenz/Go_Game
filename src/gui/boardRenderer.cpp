@@ -8,7 +8,7 @@
 #include <cmath>
 #include <format>
 
-namespace go::ui {
+namespace go::gui {
 
 BoardRenderer::BoardRenderer(const unsigned nodes) : m_nodes(nodes) {
 	m_ready = m_nodes > 0;
@@ -139,4 +139,4 @@ bool BoardRenderer::pixelToCoord(const int px, unsigned& coord) const {
 	return true;
 }
 
-} // namespace go::ui
+} // namespace go::gui

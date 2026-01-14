@@ -14,7 +14,7 @@
 #include <algorithm>
 #include <cstdint>
 
-namespace go::ui {
+namespace go::gui {
 
 BoardWidget::BoardWidget(Game& game, QWidget* parent) : QWidget(parent), m_game(game), m_boardRenderer(static_cast<unsigned>(game.board().size())) {
 	setFocusPolicy(Qt::StrongFocus); // Required to get key events.
@@ -145,4 +145,4 @@ QPoint BoardWidget::boardOffset(unsigned boardSize) const {
 	return {dx, dy};
 }
 
-} // namespace go::ui
+} // namespace go::gui

@@ -5,10 +5,11 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
 add_executable(${targetName}
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/boardRenderer.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MainWindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/GameWindow.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ConnectDialog.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BoardWidget.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/boardRenderer.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ConnectDialog.cpp
     ${CMAKE_CURRENT_LIST_DIR}/Logging.cpp
 )
 
@@ -17,6 +18,7 @@ target_link_libraries(${targetName} PRIVATE
     Logger::Logger
     Qt6::Widgets
 )
+
 set_target_properties(${targetName} PROPERTIES AUTOMOC ON) # Auto handling of QT Meta-Object Compiler
 target_compile_definitions(${targetName} PRIVATE TEXTURE_BLACK="${CMAKE_SOURCE_DIR}/assets/anime_black.png")
 target_compile_definitions(${targetName} PRIVATE TEXTURE_WHITE="${CMAKE_SOURCE_DIR}/assets/anime_white.png")

@@ -6,7 +6,7 @@
 #include <QImage>
 #include <QPainter>
 
-namespace go::ui {
+namespace go::gui {
 
 class BoardRenderer {
 public:
@@ -48,4 +48,4 @@ private:
 	bool m_ready = false; //!< Textures have been loaded.
 };
 
-} // namespace go::ui
+} // namespace go::gui

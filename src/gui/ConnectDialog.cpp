@@ -7,7 +7,7 @@
 #include <QRegularExpressionValidator>
 #include <QVBoxLayout>
 
-namespace go::ui {
+namespace go::gui {
 
 ConnectDialog::ConnectDialog(QWidget* parent) : QDialog(parent) {
 	setWindowTitle("Connect to Server");
@@ -45,4 +45,4 @@ QString ConnectDialog::ipAddress() const {
 	return ipEdit->text();
 }
 
-} // namespace go::ui
+} // namespace go::gui

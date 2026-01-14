@@ -9,7 +9,7 @@
 #include <iostream>
 #include <mutex>
 
-namespace go::ui {
+namespace go::gui {
 
 static Logging::LogConfig config;
 
@@ -41,4 +41,4 @@ Logging::Logger Logger() {
 	return Logging::Logger(config);
 }
 
-} // namespace go::ui
+} // namespace go::gui
