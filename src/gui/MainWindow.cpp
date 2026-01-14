@@ -1,29 +1,30 @@
 #include "MainWindow.hpp"
 
 #include "ConnectDialog.hpp"
+#include "GameWidget.hpp"
 
 #include <QMenuBar>
 
 namespace go::gui {
 
-MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
+MainWindow::MainWindow(Game& game, QWidget* parent) : QMainWindow(parent) {
 	// Setup Window
 	setWindowTitle("Go Game");
-	buildLayout();
+	buildLayout(game);
 }
 
 MainWindow::~MainWindow() = default;
 
-void MainWindow::buildLayout() {
+void MainWindow::buildLayout(Game& game) {
 	// Menu Bar
 	auto* menu          = menuBar()->addMenu(tr("&Menu"));
 	auto* connectAction = new QAction("&Connect to Server", this);
 	menu->addAction(connectAction);
 	connect(connectAction, &QAction::triggered, this, &MainWindow::openConnectDialog);
 
-	// setCentralWidget(central);
+	m_gameWidget = new GameWidget(game);
+	setCentralWidget(m_gameWidget);
 }
-
 
 void MainWindow::openConnectDialog() {
 	ConnectDialog dialog(this);
