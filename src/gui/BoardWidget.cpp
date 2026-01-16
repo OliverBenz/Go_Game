@@ -21,7 +21,7 @@ BoardWidget::BoardWidget(SessionManager& game, QWidget* parent) : QWidget(parent
 	setMouseTracking(false);
 
 	if (!m_listenerRegistered) {
-		m_game.subscribe(this, GS_BoardChange);
+		m_game.subscribe(this, AS_BoardChange);
 		m_listenerRegistered = true;
 	}
 }
@@ -80,9 +80,9 @@ void BoardWidget::keyReleaseEvent(QKeyEvent* event) {
 	}
 }
 
-void BoardWidget::onGameEvent(GameSignal signal) {
+void BoardWidget::onAppEvent(AppSignal signal) {
 	switch (signal) {
-	case GS_BoardChange:
+	case AS_BoardChange:
 		queueRender(); // Async queue.
 		break;
 	default:

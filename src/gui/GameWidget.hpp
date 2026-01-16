@@ -11,7 +11,7 @@
 
 namespace go::gui {
 
-class GameWidget : public QWidget, public IGameSignalListener {
+class GameWidget : public QWidget, public IAppSignalListener {
 	Q_OBJECT
 
 public:
@@ -19,7 +19,7 @@ public:
 	~GameWidget() override;
 
 	//! Called by the game thread. Ensure not blocking.
-	void onGameEvent(GameSignal signal) override;
+	void onAppEvent(AppSignal signal) override;
 
 private:
 	//! Initial setup constructing the layout of the window.

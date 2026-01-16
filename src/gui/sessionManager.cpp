@@ -11,11 +11,11 @@ SessionManager::~SessionManager() {
 	disconnect();
 }
 
-void SessionManager::subscribe(IGameSignalListener* listener, uint64_t signalMask) {
+void SessionManager::subscribe(IAppSignalListener* listener, uint64_t signalMask) {
 	m_eventHub.subscribe(listener, signalMask);
 }
 
-void SessionManager::unsubscribe(IGameSignalListener* listener) {
+void SessionManager::unsubscribe(IAppSignalListener* listener) {
 	m_eventHub.unsubscribe(listener);
 }
 
@@ -35,9 +35,9 @@ void SessionManager::disconnect() {
 		m_position  = Position{};
 		m_gameReady = false;
 	}
-	m_eventHub.signal(GS_BoardChange);
-	m_eventHub.signal(GS_PlayerChange);
-	m_eventHub.signal(GS_StateChange);
+	m_eventHub.signal(AS_BoardChange);
+	m_eventHub.signal(AS_PlayerChange);
+	m_eventHub.signal(AS_StateChange);
 }
 
 
@@ -94,17 +94,17 @@ void SessionManager::onGameUpdate(const gameNet::ServerDelta& event) {
 	// Signal listeners
 	switch (event.action) {
 	case gameNet::ServerAction::Place:
-		m_eventHub.signal(GS_BoardChange);
-		m_eventHub.signal(GS_PlayerChange);
+		m_eventHub.signal(AS_BoardChange);
+		m_eventHub.signal(AS_PlayerChange);
 		break;
 	case gameNet::ServerAction::Pass:
-		m_eventHub.signal(GS_PlayerChange);
+		m_eventHub.signal(AS_PlayerChange);
 		if (event.status != gameNet::GameStatus::Active) {
-			m_eventHub.signal(GS_StateChange);
+			m_eventHub.signal(AS_StateChange);
 		}
 		break;
 	case gameNet::ServerAction::Resign:
-		m_eventHub.signal(GS_StateChange);
+		m_eventHub.signal(AS_StateChange);
 		break;
 	case gameNet::ServerAction::Count:
 		break;
@@ -112,8 +112,8 @@ void SessionManager::onGameUpdate(const gameNet::ServerDelta& event) {
 	};
 }
 void SessionManager::onChatMessage(const gameNet::ServerChat& event) {
-	// Do not store here. Has to be stored in GUI anyways.
-	// This class is for important stuff. Fuck chat.
+	m_chatHistory.push_back(event.message);
+	m_eventHub.signal(AS_NewChat);
 }
 void SessionManager::onDisconnected() {
 	{
@@ -121,9 +121,9 @@ void SessionManager::onDisconnected() {
 		m_position  = Position{};
 		m_gameReady = false;
 	}
-	m_eventHub.signal(GS_BoardChange);
-	m_eventHub.signal(GS_PlayerChange);
-	m_eventHub.signal(GS_StateChange);
+	m_eventHub.signal(AS_BoardChange);
+	m_eventHub.signal(AS_PlayerChange);
+	m_eventHub.signal(AS_StateChange);
 }
 
 
