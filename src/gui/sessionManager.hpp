@@ -23,6 +23,7 @@ struct Position {
 //! SessionManager is the local source of truth about the game state, GUI is just dumb renderer of this state.
 class SessionManager : public gameNet::IClientHandler {
 public:
+	SessionManager();
 	~SessionManager();
 
 	void subscribe(IGameSignalListener* listener, uint64_t signalMask);
