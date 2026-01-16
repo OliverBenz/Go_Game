@@ -1,6 +1,8 @@
 #pragma once
 
 #include "core/game.hpp"
+#include "sessionManager.hpp"
+
 #include <QMainWindow>
 
 namespace go::gui {
@@ -21,6 +23,8 @@ private: // Slots
 	void closeEvent(QCloseEvent* event);
 
 private:
+	SessionManager m_game;
+
 	QWidget* m_menuWidget;
 	QWidget* m_gameWidget;
 };

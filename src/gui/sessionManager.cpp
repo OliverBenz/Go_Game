@@ -1,5 +1,7 @@
 #include "sessionManager.hpp"
 
+#include "Logging.hpp"
+
 namespace go::gui {
 
 SessionManager::~SessionManager() {
@@ -14,6 +16,10 @@ void SessionManager::unsubscribe(IGameSignalListener* listener) {
 	m_eventHub.unsubscribe(listener);
 }
 
+
+void SessionManager::connect(const std::string& hostIp) {
+	m_network.connect(hostIp);
+}
 void SessionManager::disconnect() {
 	m_network.disconnect();
 }
@@ -32,15 +38,17 @@ void SessionManager::chat(const std::string& message) {
 	m_network.send(gameNet::ClientChat{message});
 }
 
-
+bool SessionManager::isReady() const {
+	return m_gameReady;
+}
+bool SessionManager::isActive() const {
+	return m_position.gameActive;
+}
 const Board& SessionManager::board() const {
 	return m_position.board;
 }
 Player SessionManager::currentPlayer() const {
 	return m_position.currentPlayer;
-}
-bool SessionManager::isActive() const {
-	return m_position.gameActive;
 }
 
 
