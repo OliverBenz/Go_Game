@@ -18,7 +18,7 @@ public:
 	Implementation();
 
 public:
-	void connect(std::string host, std::uint16_t port);
+	bool connect(std::string host, std::uint16_t port);
 	void disconnect();
 	bool isConnected() const;
 
@@ -39,14 +39,20 @@ private:
 TcpClient::Implementation::Implementation() : m_resolver(m_ioContext), m_socket(m_ioContext) {
 }
 
-void TcpClient::Implementation::connect(std::string host, std::uint16_t port) {
+bool TcpClient::Implementation::connect(std::string host, std::uint16_t port) {
 	if (m_isConnected) {
-		return;
+		return false;
 	}
 
 	const auto endpoints = m_resolver.resolve(host, std::to_string(port));
-	asio::connect(m_socket, endpoints);
+	asio::error_code ec;
+	asio::connect(m_socket, endpoints, ec);
+	if (ec) {
+		return false;
+	}
+
 	m_isConnected = true;
+	return true;
 }
 
 void TcpClient::Implementation::disconnect() {
@@ -118,8 +124,8 @@ TcpClient::~TcpClient() {
 	disconnect();
 }
 
-void TcpClient::connect(std::string host, std::uint16_t port) {
-	m_pimpl->connect(host, port);
+bool TcpClient::connect(std::string host, std::uint16_t port) {
+	return m_pimpl->connect(host, port);
 }
 
 void TcpClient::disconnect() {

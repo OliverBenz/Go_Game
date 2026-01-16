@@ -20,7 +20,7 @@ public:
 	TcpClient(TcpClient&&)                 = delete;
 	TcpClient& operator=(TcpClient&&)      = delete;
 
-	void connect(std::string host, std::uint16_t port = DEFAULT_PORT);
+	bool connect(std::string host, std::uint16_t port = DEFAULT_PORT);
 	bool isConnected() const;
 	void disconnect();
 
