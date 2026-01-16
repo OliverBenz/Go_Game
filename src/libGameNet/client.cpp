@@ -15,7 +15,7 @@ public:
 
 	bool registerHandler(IClientHandler* handler);
 
-	void connect(const std::string& host, std::uint16_t port);
+	bool connect(const std::string& host, std::uint16_t port);
 	void disconnect();
 	bool isConnected() const;
 
@@ -50,13 +50,16 @@ bool Client::Implementation::registerHandler(IClientHandler* handler) {
 	return true;
 }
 
-void Client::Implementation::connect(const std::string& host, std::uint16_t port) {
+bool Client::Implementation::connect(const std::string& host, std::uint16_t port) {
 	if (m_client.isConnected()) {
-		return;
+		return false;
 	}
 
-	m_client.connect(host, port);
-	startReadLoop();
+	if (m_client.connect(host, port)) {
+		startReadLoop();
+		return true;
+	}
+	return false;
 }
 
 void Client::Implementation::disconnect() {
@@ -147,12 +150,12 @@ bool Client::registerHandler(IClientHandler* handler) {
 	return m_pimpl->registerHandler(handler);
 }
 
-void Client::connect(const std::string& host) {
-	m_pimpl->connect(host, network::DEFAULT_PORT);
+bool Client::connect(const std::string& host) {
+	return m_pimpl->connect(host, network::DEFAULT_PORT);
 }
 
-void Client::connect(const std::string& host, std::uint16_t port) {
-	m_pimpl->connect(host, port);
+bool Client::connect(const std::string& host, std::uint16_t port) {
+	return m_pimpl->connect(host, port);
 }
 
 void Client::disconnect() {

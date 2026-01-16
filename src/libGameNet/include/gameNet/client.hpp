@@ -30,8 +30,8 @@ public:
 
 	bool registerHandler(IClientHandler* handler);
 
-	void connect(const std::string& host);
-	void connect(const std::string& host, std::uint16_t port);
+	bool connect(const std::string& host);
+	bool connect(const std::string& host, std::uint16_t port);
 	void disconnect();
 	bool isConnected() const;
 
