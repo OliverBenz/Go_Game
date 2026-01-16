@@ -4,13 +4,13 @@
 
 namespace go::gui {
 
-void EventHub::subscribe(IGameSignalListener* listener, uint64_t signalMask) {
+void EventHub::subscribe(IAppSignalListener* listener, uint64_t signalMask) {
 	std::lock_guard<std::mutex> lock(m_listenerMutex);
 
 	m_signalListeners.push_back({listener, signalMask});
 }
 
-void EventHub::unsubscribe(IGameSignalListener* listener) {
+void EventHub::unsubscribe(IAppSignalListener* listener) {
 	std::lock_guard<std::mutex> lock(m_listenerMutex);
 
 	m_signalListeners.erase(
@@ -18,12 +18,12 @@ void EventHub::unsubscribe(IGameSignalListener* listener) {
 	        m_signalListeners.end());
 }
 
-void EventHub::signal(GameSignal signal) {
+void EventHub::signal(AppSignal signal) {
 	std::lock_guard<std::mutex> lock(m_listenerMutex);
 
 	for (const auto& [listener, signalMask]: m_signalListeners) {
 		if (signalMask & signal) {
-			listener->onGameEvent(signal);
+			listener->onAppEvent(signal);
 		}
 	}
 }

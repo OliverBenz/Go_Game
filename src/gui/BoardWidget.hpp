@@ -1,14 +1,13 @@
 #pragma once
 
 #include "boardRenderer.hpp"
-#include "core/IGameSignalListener.hpp"
 #include "core/game.hpp"
 #include "sessionManager.hpp"
 #include <QWidget>
 
 namespace go::gui {
 
-class BoardWidget : public QWidget, public IGameSignalListener {
+class BoardWidget : public QWidget, public IAppSignalListener {
 	Q_OBJECT
 
 public:
@@ -16,7 +15,7 @@ public:
 	~BoardWidget() override;
 
 	//! Called by the game thread. Ensure not blocking.
-	void onGameEvent(GameSignal signal) override;
+	void onAppEvent(AppSignal signal) override;
 
 protected:
 	void showEvent(QShowEvent* event) override;

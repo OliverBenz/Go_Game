@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IGameSignalListener.hpp"
+#include "IAppSignalListener.hpp"
 
 #include <mutex>
 #include <vector>
@@ -10,14 +10,14 @@ namespace go::gui {
 //! Allows external components to be updated on internal game events.
 class EventHub {
 	struct SignalListenerEntry {
-		IGameSignalListener* listener; //!< Pointer to the listener.
-		uint64_t signalMask;           //!< What events the listener cares about.
+		IAppSignalListener* listener; //!< Pointer to the listener.
+		uint64_t signalMask;          //!< What events the listener cares about.
 	};
 
 public:
-	void subscribe(IGameSignalListener* listener, uint64_t signalMask);
-	void unsubscribe(IGameSignalListener* listener);
-	void signal(GameSignal signal); //!< Signal a game event.
+	void subscribe(IAppSignalListener* listener, uint64_t signalMask);
+	void unsubscribe(IAppSignalListener* listener);
+	void signal(AppSignal signal); //!< Signal a game event.
 
 private:
 	std::mutex m_listenerMutex;

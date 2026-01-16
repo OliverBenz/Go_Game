@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IGameSignalListener.hpp"
+#include "IAppSignalListener.hpp"
 #include "core/board.hpp"
 #include "eventHub.hpp"
 #include "gameNet/client.hpp"
@@ -27,8 +27,8 @@ public:
 	SessionManager();
 	~SessionManager();
 
-	void subscribe(IGameSignalListener* listener, uint64_t signalMask);
-	void unsubscribe(IGameSignalListener* listener);
+	void subscribe(IAppSignalListener* listener, uint64_t signalMask);
+	void unsubscribe(IAppSignalListener* listener);
 
 	void connect(const std::string& hostIp);
 	void disconnect();
@@ -59,6 +59,8 @@ private:
 	gameNet::Client m_network;
 	EventHub m_eventHub;
 	Position m_position{};
+
+	std::vector<std::string> m_chatHistory;
 	mutable std::mutex m_stateMutex;
 };
 
