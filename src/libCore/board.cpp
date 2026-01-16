@@ -24,6 +24,11 @@ Board::Value Board::getAt(const Coord c) const {
 
 	return m_board[c.y * m_size + c.x];
 }
+void Board::remAt(const Coord c) {
+	assert(c.x < m_size && c.y < m_size);
+
+	m_board[c.y * m_size + c.x] = Board::Value::Empty;
+}
 
 bool Board::isFree(const Coord c) const {
 	return getAt(c) == Value::Empty;

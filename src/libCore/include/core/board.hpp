@@ -20,6 +20,7 @@ public:
 	//! \note Game coordinates origin is at bottom left of board and start at 0. Column: A->0, B->1, etc
 	void setAt(Coord c, Value value);
 	Value getAt(Coord c) const;
+	void remAt(Coord c);
 
 	//! Returns whether a certain board coordinate is free or occupied.
 	bool isFree(Coord c) const;
