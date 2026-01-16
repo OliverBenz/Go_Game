@@ -4,6 +4,9 @@
 
 namespace go::gui {
 
+SessionManager::SessionManager() {
+	m_network.registerHandler(this);
+}
 SessionManager::~SessionManager() {
 	disconnect();
 }
