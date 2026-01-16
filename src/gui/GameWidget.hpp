@@ -15,7 +15,7 @@ class GameWidget : public QWidget, public IGameSignalListener {
 	Q_OBJECT
 
 public:
-	explicit GameWidget(QWidget* parent = nullptr);
+	explicit GameWidget(SessionManager& game, QWidget* parent = nullptr);
 	~GameWidget() override;
 
 	//! Called by the game thread. Ensure not blocking.
@@ -33,7 +33,7 @@ private: // Slots
 	void onResignClicked();
 
 private:
-	SessionManager m_game;
+	SessionManager& m_game;
 
 	BoardWidget* m_boardWidget = nullptr;
 	QTabWidget* m_sideTabs     = nullptr;

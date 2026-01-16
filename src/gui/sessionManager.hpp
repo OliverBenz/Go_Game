@@ -1,10 +1,11 @@
 #pragma once
 
 #include "IGameSignalListener.hpp"
-#include "Logging.hpp"
 #include "core/board.hpp"
 #include "eventHub.hpp"
 #include "gameNet/client.hpp"
+
+#include <string>
 
 namespace go::gui {
 
@@ -26,6 +27,8 @@ public:
 
 	void subscribe(IGameSignalListener* listener, uint64_t signalMask);
 	void unsubscribe(IGameSignalListener* listener);
+
+	void connect(const std::string& hostIp);
 	void disconnect();
 
 	// Setters
@@ -35,9 +38,10 @@ public:
 	void chat(const std::string& message);
 
 	// Getters
+	bool isReady() const;
+	bool isActive() const;
 	const Board& board() const;
 	Player currentPlayer() const;
-	bool isActive() const;
 
 public: // Client listener handlers
 	void onGameUpdate(const gameNet::ServerDelta& event) override;
@@ -48,6 +52,8 @@ private:
 	void updateGameState(const gameNet::ServerDelta& event);
 
 private:
+	bool m_gameReady{false}; //!< Ready to start a game.
+
 	gameNet::Client m_network;
 	EventHub m_eventHub;
 	Position m_position{};

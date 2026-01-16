@@ -7,7 +7,7 @@
 
 namespace go::gui {
 
-GameWidget::GameWidget(QWidget* parent) : QWidget(parent) {
+GameWidget::GameWidget(SessionManager& game, QWidget* parent) : m_game{game}, QWidget(parent) {
 	// Setup Window
 	setWindowTitle("Go Game");
 	buildNetworkLayout();

@@ -22,7 +22,7 @@ void MainWindow::buildLayout() {
 	menu->addAction(connectAction);
 	connect(connectAction, &QAction::triggered, this, &MainWindow::openConnectDialog);
 
-	m_gameWidget = new GameWidget();
+	m_gameWidget = new GameWidget(m_game);
 	setCentralWidget(m_gameWidget);
 }
 
@@ -31,6 +31,7 @@ void MainWindow::openConnectDialog() {
 
 	if (dialog.exec() == QDialog::Accepted) {
 		const auto ip = dialog.ipAddress().toStdString();
+		m_game.connect(ip);
 	}
 }
 
