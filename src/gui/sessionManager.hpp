@@ -5,6 +5,7 @@
 #include "eventHub.hpp"
 #include "gameNet/client.hpp"
 
+#include <mutex>
 #include <string>
 
 namespace go::gui {
@@ -41,7 +42,7 @@ public:
 	// Getters
 	bool isReady() const;
 	bool isActive() const;
-	const Board& board() const;
+	Board board() const;
 	Player currentPlayer() const;
 
 public: // Client listener handlers
@@ -58,6 +59,7 @@ private:
 	gameNet::Client m_network;
 	EventHub m_eventHub;
 	Position m_position{};
+	mutable std::mutex m_stateMutex;
 };
 
 } // namespace go::gui

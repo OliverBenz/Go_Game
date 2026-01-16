@@ -1,6 +1,7 @@
 #include "GameWidget.hpp"
 
 #include <QHBoxLayout>
+#include <QMetaObject>
 #include <QTabWidget>
 #include <QVBoxLayout>
 #include <format>
@@ -27,14 +28,12 @@ GameWidget::~GameWidget() {
 }
 
 void GameWidget::onGameEvent(const GameSignal signal) {
-	// TODO: This is called by core game thread
-	//  Game thread should not update stuff on the UI but push notifications and let the UI handle it.
 	switch (signal) {
 	case GS_PlayerChange:
-		setCurrentPlayerText();
+		QMetaObject::invokeMethod(this, [this]() { setCurrentPlayerText(); }, Qt::QueuedConnection);
 		break;
 	case GS_StateChange:
-		setGameStateText();
+		QMetaObject::invokeMethod(this, [this]() { setGameStateText(); }, Qt::QueuedConnection);
 		break;
 	default:
 		break;
