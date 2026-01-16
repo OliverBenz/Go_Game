@@ -12,6 +12,10 @@
 
 namespace go::server {
 
+static constexpr char LOG_REC_PUT[]    = "[GameServer] Received Event 'Put'    from player {} at ({}, {}).";
+static constexpr char LOG_REC_PASS[]   = "[GameServer] Received Event 'Pass'   from Player {}.";
+static constexpr char LOG_REC_RESIGN[] = "[GameServer] Received Event 'Resign' from Player {}.";
+
 GameServer::GameServer() {
 }
 GameServer::~GameServer() {
@@ -58,7 +62,6 @@ void GameServer::onClientDisconnected(gameNet::SessionId sessionId) {
 }
 
 void GameServer::onNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientEvent& event) {
-	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Received event from client '{}'.", sessionId));
 	std::visit(
 	        [&](const auto& e) {
 		        const auto seat = m_server.getSeat(sessionId);
@@ -119,10 +122,8 @@ void GameServer::handleNetworkEvent(Player player, const gameNet::ClientPutStone
 
 	// Push into the core game loop; legality (ko, captures, etc.) is still enforced there.
 	const auto move = Coord{event.c.x, event.c.y};
-	Logger().Log(Logging::LogLevel::Info,
-	             std::format("[GameServer] Forwarding PutStone from player {} at ({}, {}).", static_cast<int>(player), move.x, move.y));
-
 	m_game.pushEvent(PutStoneEvent{player, move});
+	Logger().Log(Logging::LogLevel::Info, std::format(LOG_REC_PUT, static_cast<int>(player), move.x, move.y));
 }
 
 void GameServer::handleNetworkEvent(Player player, const gameNet::ClientPass&) {
@@ -132,7 +133,7 @@ void GameServer::handleNetworkEvent(Player player, const gameNet::ClientPass&) {
 	}
 
 	m_game.pushEvent(PassEvent{player});
-	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Player {} passed.", static_cast<int>(player)));
+	Logger().Log(Logging::LogLevel::Info, std::format(LOG_REC_PASS, static_cast<int>(player)));
 }
 
 void GameServer::handleNetworkEvent(Player player, const gameNet::ClientResign&) {
@@ -142,7 +143,7 @@ void GameServer::handleNetworkEvent(Player player, const gameNet::ClientResign&)
 	}
 
 	m_game.pushEvent(ResignEvent{});
-	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Player {} resigned.", static_cast<int>(player)));
+	Logger().Log(Logging::LogLevel::Info, std::format(LOG_REC_RESIGN, static_cast<int>(player)));
 }
 
 void GameServer::handleNetworkEvent(Player player, const gameNet::ClientChat& event) {
