@@ -102,12 +102,19 @@ bool Server::Implementation::send(SessionId sessionId, const ServerEvent& event)
 	if (!connectionId) {
 		return false;
 	}
-	return m_network.send(connectionId, toMessage(event));
+	const auto message = toMessage(event);
+	if (message.empty()) {
+		return false;
+	}
+	return m_network.send(connectionId, message);
 }
 
 bool Server::Implementation::broadcast(const ServerEvent& event) {
 	const auto message = toMessage(event);
-	bool anySent       = false;
+	if (message.empty()) {
+		return false;
+	}
+	bool anySent = false;
 
 	m_sessionManager.forEachSession([&](const SessionContext& context) {
 		if (!context.isActive || context.seat == Seat::None) {
