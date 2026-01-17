@@ -43,11 +43,12 @@ void Connection::send(const Message& msg) {
 		return;
 	}
 
-	asio::post(m_strand, [this, msg] {
-		bool idle = m_writeQueue.empty();
-		m_writeQueue.push_back(msg);
-		if (idle && !m_writeInProgress) {
-			startWrite();
+	auto self = shared_from_this();
+	asio::post(m_strand, [self, msg] {
+		bool idle = self->m_writeQueue.empty();
+		self->m_writeQueue.push_back(msg);
+		if (idle && !self->m_writeInProgress) {
+			self->startWrite();
 		}
 	});
 }
@@ -70,17 +71,18 @@ void Connection::startWrite() {
 	std::array<asio::const_buffer, 2> buffers = {asio::buffer(header.get(), sizeof(BasicMessageHeader)),
 	                                             asio::buffer(m_writeQueue.front().data(), m_writeQueue.front().size())};
 
-	asio::async_write(m_socket, buffers, asio::bind_executor(m_strand, [this, header](asio::error_code ec, std::size_t) {
-		                  if (ec || !m_running) {
-			                  doDisconnect();
+	auto self = shared_from_this();
+	asio::async_write(m_socket, buffers, asio::bind_executor(m_strand, [self, header](asio::error_code ec, std::size_t) {
+		                  if (ec || !self->m_running) {
+			                  self->doDisconnect();
 			                  return;
 		                  }
 
-		                  m_writeQueue.pop_front();
-		                  if (!m_writeQueue.empty()) {
-			                  startWrite();
+		                  self->m_writeQueue.pop_front();
+		                  if (!self->m_writeQueue.empty()) {
+			                  self->startWrite();
 		                  } else {
-			                  m_writeInProgress = false;
+			                  self->m_writeInProgress = false;
 		                  }
 	                  }));
 }
@@ -88,39 +90,40 @@ void Connection::startWrite() {
 void Connection::startRead() {
 	auto header = std::make_shared<BasicMessageHeader>();
 
+	auto self = shared_from_this();
 	asio::async_read(m_socket, asio::buffer(header.get(), sizeof(BasicMessageHeader)),
-	                 asio::bind_executor(m_strand, [this, header](asio::error_code ec, std::size_t) {
-		                 if (ec || !m_running) {
-			                 doDisconnect();
+	                 asio::bind_executor(m_strand, [self, header](asio::error_code ec, std::size_t) {
+		                 if (ec || !self->m_running) {
+			                 self->doDisconnect();
 			                 return;
 		                 }
 
 		                 const auto payloadSize = from_network_u32(header->payload_size);
 		                 if (payloadSize > MAX_PAYLOAD_BYTES) {
-			                 doDisconnect();
+			                 self->doDisconnect();
 			                 return;
 		                 }
 
 		                 if (payloadSize == 0) {
-			                 if (m_callbacks.onMessage) {
-				                 m_callbacks.onMessage(*this, Message{});
+			                 if (self->m_callbacks.onMessage) {
+				                 self->m_callbacks.onMessage(*self, Message{});
 			                 }
-			                 startRead();
+			                 self->startRead();
 			                 return;
 		                 }
 
 		                 auto payload = std::make_shared<Message>(payloadSize, '\0');
-		                 asio::async_read(m_socket, asio::buffer(payload->data(), payload->size()),
-		                                  asio::bind_executor(m_strand, [this, payload](asio::error_code ec1, std::size_t) {
-			                                  if (ec1 || !m_running) {
-				                                  doDisconnect();
+		                 asio::async_read(self->m_socket, asio::buffer(payload->data(), payload->size()),
+		                                  asio::bind_executor(self->m_strand, [self, payload](asio::error_code ec1, std::size_t) {
+			                                  if (ec1 || !self->m_running) {
+				                                  self->doDisconnect();
 				                                  return;
 			                                  }
 
-			                                  if (m_callbacks.onMessage) {
-				                                  m_callbacks.onMessage(*this, *payload);
+			                                  if (self->m_callbacks.onMessage) {
+				                                  self->m_callbacks.onMessage(*self, *payload);
 			                                  }
-			                                  startRead();
+			                                  self->startRead();
 		                                  }));
 	                 }));
 }

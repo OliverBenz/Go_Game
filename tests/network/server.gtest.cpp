@@ -1,7 +1,9 @@
+#include "gameNet/server.hpp"
 #include "gameNet/client.hpp"
 #include "gameNet/nwEvents.hpp"
 #include "gameNet/types.hpp"
 
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <gtest/gtest.h>
@@ -48,7 +50,59 @@ private:
 	bool m_disconnected{false};
 };
 
+class TestServerHandler final : public gameNet::IServerHandler {
+public:
+	explicit TestServerHandler(gameNet::Server& server) : m_server(server) {}
+
+	void onClientConnected(gameNet::SessionId, gameNet::Seat) override {
+	}
+
+	void onClientDisconnected(gameNet::SessionId) override {
+	}
+
+	void onNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientEvent& event) override {
+		std::visit([&](const auto& e) { handleEvent(sessionId, e); }, event);
+	}
+
+private:
+	void handleEvent(gameNet::SessionId sessionId, const gameNet::ClientPutStone& event) {
+		const auto seat = m_server.getSeat(sessionId);
+		if (!gameNet::isPlayer(seat)) {
+			return;
+		}
+
+		const auto moveId = ++m_turn;
+		const auto next   = seat == gameNet::Seat::Black ? gameNet::Seat::White : gameNet::Seat::Black;
+
+		gameNet::ServerDelta delta{
+		        .turn     = moveId,
+		        .seat     = seat,
+		        .action   = gameNet::ServerAction::Place,
+		        .coord    = gameNet::Coord{event.c.x, event.c.y},
+		        .captures = {},
+		        .next     = next,
+		        .status   = gameNet::GameStatus::Active,
+		};
+
+		m_server.broadcast(delta);
+	}
+
+	template <typename T>
+	void handleEvent(gameNet::SessionId, const T&) {
+	}
+
+	gameNet::Server& m_server;
+	std::atomic<unsigned> m_turn{0};
+};
+
 TEST(Networking, ServerDeltaFromPutStone) {
+	constexpr std::uint16_t kPort = 12346;
+
+	gameNet::Server server{kPort};
+	TestServerHandler serverHandler(server);
+	ASSERT_TRUE(server.registerHandler(&serverHandler));
+	server.start();
+
 	gameNet::Client client1;
 	gameNet::Client client2;
 	TestClientHandler handler1;
@@ -57,8 +111,8 @@ TEST(Networking, ServerDeltaFromPutStone) {
 	ASSERT_TRUE(client1.registerHandler(&handler1));
 	ASSERT_TRUE(client2.registerHandler(&handler2));
 
-	client1.connect("127.0.0.1");
-	client2.connect("127.0.0.1");
+	client1.connect("127.0.0.1", kPort);
+	client2.connect("127.0.0.1", kPort);
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
@@ -81,6 +135,7 @@ TEST(Networking, ServerDeltaFromPutStone) {
 
 	client1.disconnect();
 	client2.disconnect();
+	server.stop();
 }
 
 } // namespace go::gtest
