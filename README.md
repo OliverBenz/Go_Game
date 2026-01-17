@@ -46,6 +46,7 @@ GTest  | Google unit testing library.
 
 ## Technical Documentation
 - [libNetwork](src/libNetwork/README.md) — Network layer design and implementation details
+- [libGameNet](src/libGameNet/README.md) — Protocol, client/server wrappers, and session mapping
 
 ## License
 Licensed under the GNU Affero General Public License v3.0 (AGPL-3.0-or-later). See `LICENSE`.

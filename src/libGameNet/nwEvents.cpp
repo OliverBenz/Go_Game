@@ -106,6 +106,7 @@ static std::string toMessage(const ServerDelta& e) {
 	j["next"]   = static_cast<unsigned>(e.next);
 	j["status"] = static_cast<unsigned>(e.status);
 
+	// For Place moves we require a coord; otherwise the message is invalid.
 	if (e.action == ServerAction::Place) {
 		if (!e.coord.has_value()) {
 			assert(false && "ServerDelta::Place requires coord");
@@ -172,6 +173,7 @@ static std::optional<ServerEvent> fromServerDeltaMessage(const json& j) {
 	delta.next           = static_cast<Seat>(nextValue);
 	delta.status         = static_cast<GameStatus>(statusValue);
 
+	// Only real player seats are allowed for deltas.
 	if (!isPlayer(delta.seat) || !isPlayer(delta.next)) {
 		return {};
 	}

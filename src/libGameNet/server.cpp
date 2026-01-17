@@ -67,6 +67,7 @@ void Server::Implementation::start() {
 		return;
 	}
 
+	// Network runs on its own IO thread; serverLoop drains the queue on its own thread.
 	m_network.start();
 	m_serverThread = std::thread([this] { serverLoop(); });
 }
@@ -209,6 +210,7 @@ void Server::Implementation::processClientMessage(const ServerQueueEvent& event)
 		return;
 	}
 
+	// Forward client intent to the game/app layer.
 	if (m_handler) {
 		m_handler->onNetworkEvent(sessionId, *networkEvent);
 	}

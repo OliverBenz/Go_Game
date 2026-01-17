@@ -9,7 +9,7 @@
 
 namespace go::gameNet {
 
-// Client Network Events
+// Client Network Events (client -> server)
 struct ClientPutStone {
 	Coord c;
 };
@@ -19,12 +19,12 @@ struct ClientChat {
 	std::string message;
 };
 
-// Server Events
+// Server Events (server -> client)
 struct ServerSessionAssign {
 	SessionId sessionId; //!< Session Id assigned to player.
 };
 
-//! Board update event with relevant data so the client to apply the delta.
+//! Board update event with relevant data so the client can apply the delta.
 struct ServerDelta {
 	unsigned turn;               //!< Move number of game.
 	Seat seat;                   //!< Player who made move.
@@ -44,10 +44,12 @@ struct ServerChat {
 using ClientEvent = std::variant<ClientPutStone, ClientPass, ClientResign, ClientChat>;
 using ServerEvent = std::variant<ServerSessionAssign, ServerDelta, ServerChat>;
 
-std::string toMessage(ClientEvent event); //!< Client network event to message string.
-std::string toMessage(ServerEvent event); //!< Server network event to message string.
+// Serialize typed events to JSON messages.
+std::string toMessage(ClientEvent event);
+std::string toMessage(ServerEvent event);
 
-std::optional<ClientEvent> fromClientMessage(const std::string& message); //!< Message string to client network event.
-std::optional<ServerEvent> fromServerMessage(const std::string& message); //!< Message string to server network event.
+// Parse JSON messages into typed events. Returns empty on invalid input.
+std::optional<ClientEvent> fromClientMessage(const std::string& message);
+std::optional<ServerEvent> fromServerMessage(const std::string& message);
 
 } // namespace go::gameNet
