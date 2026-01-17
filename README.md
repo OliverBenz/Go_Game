@@ -38,6 +38,15 @@ Logger | Library for logging functionality.
 Asio   | Library for networking support.
 GTest  | Google unit testing library.
 
+## General Documentation
+- [General](docs/Documentation.md) — entry point and general notes
+- [Core](Core.md) — core rules/logic overview
+- [GUI](docs/GUI.md) — GUI architecture and rendering notes
+- [Networking](docs/Networking.md) — higher-level networking notes
+
+## Technical Documentation
+- [libNetwork](src/libNetwork/README.md) — Network layer design and implementation details
+
 ## License
 Licensed under the GNU Affero General Public License v3.0 (AGPL-3.0-or-later). See `LICENSE`.
 
