@@ -41,7 +41,6 @@ private:
 private:
 	Game m_game{9u};
 	std::thread m_gameThread; //!< Runs the game loop.
-	bool m_gameReady{false};  //!< Two players connected and assigned a seat.
 
 	std::unordered_map<Player, gameNet::SessionId> m_players;
 
