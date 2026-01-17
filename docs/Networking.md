@@ -1,97 +1,60 @@
 # Networking
 
-## Planning
-We want a TCP server that accepts two clients. Player Black and White.
-The server is authoritative keeping track of the core game and accepting/rejecting moves and acting as a single source of truth on the game state.
+## Current Architecture (what actually exists)
 
-Components: 
-- 1 Server    (Central game controller)
-- 2 Clients   (Black / White)
-- N Observers (Spectators)
+We split networking into two layers:
 
-Clients send intent, Server sends facts
+- **libNetwork**: pure transport (TCP, framing, connection management).
+- **libGameNet**: application protocol (game events, server/client roles, session IDs).
 
-Advantages:
-- No desyncs
-- Observers are trivial
-- Clean rule enforcement
-- Deterministic
-- Easy to debug
+The server is authoritative. Clients send intent; server sends facts.
 
-The Clients are effectively view to the server state.
-Clients do not enforce events, their signals to the server are only attempts:
-- AttemptPutStone { Coord c; }
-- AttemptPass {}
-- AttemptResign {}
+### Components
 
-Messaging in normal game:
-- Client A tries to send single event to server
-- Server confirms event for A
-- Server sends game update event to B and all N observers
-- Client A applies server confirmed event
-- Client B and Observers apply game update event
+- **Server**: `gameNet::Server` running in the server executable. Forwards client events to the game loop and broadcasts deltas/updates to clients.
+- **Clients**: `gameNet::Client` used by the GUI. Sends move intents and applies server updates.
+- **Observers**: same client type, just a different seat.
 
+### Data Flow (happy path)
 
-Messaging in failure recovery/join/reconnct events:
-- Clients get full game state (player active, player client, full board, time left, move number, hash, etc.)
+1) Client sends an intent (`ClientPutStone`, `ClientPass`, `ClientResign`).
+2) Server forwards the intent to the core game loop.
+3) Game validates and emits an update (`GameDelta`).
+4) Server turns that into a `ServerDelta` and broadcasts to all clients.
+5) Clients apply the delta locally and update UI.
 
-Low overhead messaging
-- Ideally fixed length messages for game events
-- Variable length messages for chat, spectators, reconnect snapshots, etc.
+This structure enforces a clear separation between layers and responsibilities.
 
+### Layers in code
 
-## Implementation Phases
-Phase 1: TCP Implementation (turn-based Go)
-- single connection per client
-- length-prefixed messages
-- server authoritative state
-- per-connection read buffer + frame parser
-- heartbeat + timeout
+**libNetwork**
+- `TcpServer` owns the accept loop and active `Connection` objects.
+- `Connection` does async read/write with a size‑prefixed frame.
+- `TcpClient` is the synchronous client used by the GUI and tests.
 
-Phase 2: Async server with many clients
-- async_accept
-- async_read into a ring buffer / vector
-- per-client session objects
-- message queue into game thread
+**libGameNet**
+- `Client` and `Server` wrap the transport with a small protocol in `nwEvents`.
+- `SessionManager` (server‑side) maps connections to seats and handles disconnects.
+- `ServerDelta` is the core update payload; clients treat it as the single source of truth.
 
+### Message framing
 
-## Code ideas
-``` c++
-enum class NetMsgType : uint8_t {
-    AttemptPutStone,
-    Pass,
-    Resign,
-    StateSync,
-    // ...
-};
+Messages are length‑prefixed in `libNetwork`:
 
-struct PutStonePayload {
-    uint16_t x;
-    uint16_t y;
-};
+1) `BasicMessageHeader` contains payload size (network byte order).
+2) Then `payload_size` bytes of payload.
 
-struct PassPayload {
-    uint8_t dummy;
-};
+`libGameNet` serializes/deserializes the payload into typed events.
 
-struct ResignPayload {
-    uint8_t dummy;
-};
+### Notes
 
-struct StateSyncPayload {
-    uint16_t moveCount;
-    // or an index into a separate transfer
-};
+- The server does not trust clients. Clients only *request* moves.
+- Clients keep a local shadow state for rendering, but server data wins.
+- Observers are just clients with an observer seat.
 
-struct NetMessage {
-    NetMsgType type;
-    uint8_t    player;   // optional, depending on direction
+### Where to look
 
-    union {
-        PutStonePayload putStone;
-        PassPayload     pass;
-        ResignPayload   resign;
-        StateSyncPayload sync;
-    } payload;
-};
-```
+- Transport: `src/libNetwork/README.md`
+- Protocol: `src/libGameNet/include/gameNet/nwEvents.hpp`
+- Server wiring: `src/libGameNet/server.cpp`, `src/server/gameServer.cpp`
+- Client wiring: `src/libGameNet/client.cpp`, `src/gui/sessionManager.cpp`
