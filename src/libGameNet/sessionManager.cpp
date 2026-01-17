@@ -7,6 +7,16 @@ namespace go::gameNet {
 static SessionId nextSessionId{1};
 
 SessionId SessionManager::add(network::ConnectionId connectionId) {
+	const auto existing = m_connectionToSession.find(connectionId);
+	if (existing != m_connectionToSession.end()) {
+		const auto it = m_sessions.find(existing->second);
+		if (it != m_sessions.end()) {
+			it->second.isActive = true;
+			return it->second.sessionId;
+		}
+		m_connectionToSession.erase(existing);
+	}
+
 	const auto sessionId = generateSessionId();
 	SessionContext context{
 	        .connectionId = connectionId,
