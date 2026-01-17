@@ -44,6 +44,7 @@ bool TcpClient::Implementation::connect(std::string host, std::uint16_t port) {
 		return false;
 	}
 
+	// Use error_code overloads to avoid exceptions. Catch-all is a last-resort safety net.
 	try {
 		asio::error_code ec;
 		const auto endpoints = m_resolver.resolve(host, std::to_string(port), ec);

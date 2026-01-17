@@ -13,6 +13,8 @@
 namespace go::network {
 
 //! Transportation primitive. Handles read/write from a single client connection.
+//! \note Internals are async and run on the server IO thread.
+//!       We use shared_from_this() so any in-flight async op keeps the Connection alive.
 class Connection : public std::enable_shared_from_this<Connection> {
 public:
 	struct Callbacks {
@@ -24,9 +26,9 @@ public:
 	Connection(asio::ip::tcp::socket socket, ConnectionId connectionId, Callbacks callbacks);
 	~Connection();
 
-	void start();                  //!< Start connection.
-	void stop();                   //!< Stop connection.
-	void send(const Message& msg); //!< Send message to client.
+	void start();                  //!< Start connection: begins async read loop and triggers onConnect.
+	void stop();                   //!< Stop connection: closes the socket and cancels IO (best-effort).
+	void send(const Message& msg); //!< Send message to client. Safe to call from any thread.
 
 	ConnectionId connectionId() const; //!< Get the identifier of this connection.
 
