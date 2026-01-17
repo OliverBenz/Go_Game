@@ -8,7 +8,8 @@
 
 namespace go::gameNet {
 
-// Callback interface invoked on the server's processing thread.
+//! Callback interface invoked on the server's processing thread.
+//! \note Keep handlers lightweight.
 class IServerHandler {
 public:
 	virtual ~IServerHandler()                                                  = default;
@@ -30,12 +31,13 @@ public:
 
 	void start();
 	void stop();
-	bool registerHandler(IServerHandler* handler);
 
-	bool send(SessionId sessionId, const ServerEvent& event); //!< Send event to client with given sessionId.
-	bool broadcast(const ServerEvent& event);                 //!< Send event to all connected clients.
+	bool registerHandler(IServerHandler* handler); //!< Register a single handler. Returns false if already registered.
 
-	Seat getSeat(SessionId sessionId) const; //!< Get the seat connection with a sessionId.
+	bool send(SessionId sessionId, const ServerEvent& event); //!< Send event to client with given sessionId. Returns false on failure.
+	bool broadcast(const ServerEvent& event);                 //!< Send event to all connected clients. Returns true if any send succeeded.
+
+	Seat getSeat(SessionId sessionId) const; //!< Seat lookup for a session. Returns Seat::None if unknown.
 
 private:
 	class Implementation;

@@ -38,6 +38,7 @@ private:
 	SessionId generateSessionId() const; //!< Generate unique sessionId.
 
 private:
+	// Note: This manager is used from the server processing thread only.
 	std::unordered_map<SessionId, SessionContext> m_sessions;
 	std::unordered_map<network::ConnectionId, SessionId> m_connectionToSession;
 };

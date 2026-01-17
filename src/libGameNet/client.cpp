@@ -55,6 +55,7 @@ bool Client::Implementation::connect(const std::string& host, std::uint16_t port
 		return false;
 	}
 
+	// Start the blocking read loop only after a successful connect.
 	if (m_client.connect(host, port)) {
 		startReadLoop();
 		return true;
@@ -104,6 +105,7 @@ void Client::Implementation::readLoop() {
 			break;
 		}
 
+		// TcpClient::read is blocking; this loop lives on its own thread.
 		try {
 			const auto message = m_client.read();
 			const auto event   = fromServerMessage(message);
