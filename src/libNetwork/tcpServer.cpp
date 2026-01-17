@@ -49,6 +49,7 @@ private:
 
 
 TcpServer::Implementation::Implementation(std::uint16_t port) : m_acceptor(m_ioContext) {
+	// Do a manual open/bind/listen so we can stay in error_code land and avoid throws.
 	asio::error_code ec;
 	m_acceptor.open(asio::ip::tcp::v4(), ec);
 	if (ec) {
@@ -73,6 +74,7 @@ void TcpServer::Implementation::start() {
 	if (m_running.exchange(true)) {
 		return;
 	}
+	// If acceptor init failed during construction, don't start a dead server.
 	if (!m_acceptorReady) {
 		m_running = false;
 		return;

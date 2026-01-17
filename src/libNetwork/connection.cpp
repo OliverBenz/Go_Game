@@ -43,6 +43,8 @@ void Connection::send(const Message& msg) {
 		return;
 	}
 
+	// Post into the strand so write queue access stays serialized.
+	// Capture shared_ptr to keep this Connection alive until the queued work runs.
 	auto self = shared_from_this();
 	asio::post(m_strand, [self, msg] {
 		bool idle = self->m_writeQueue.empty();
@@ -65,6 +67,7 @@ void Connection::startWrite() {
 
 	m_writeInProgress = true;
 
+	// Header needs stable storage for the duration of async_write.
 	auto header          = std::make_shared<BasicMessageHeader>();
 	header->payload_size = to_network_u32(static_cast<std::uint32_t>(m_writeQueue.front().size()));
 
@@ -72,6 +75,7 @@ void Connection::startWrite() {
 	                                             asio::buffer(m_writeQueue.front().data(), m_writeQueue.front().size())};
 
 	auto self = shared_from_this();
+	// Capture self so the connection isn't destroyed while the write is in flight.
 	asio::async_write(m_socket, buffers, asio::bind_executor(m_strand, [self, header](asio::error_code ec, std::size_t) {
 		                  if (ec || !self->m_running) {
 			                  self->doDisconnect();
@@ -88,8 +92,10 @@ void Connection::startWrite() {
 }
 
 void Connection::startRead() {
+	// Header lives until we finish reading it.
 	auto header = std::make_shared<BasicMessageHeader>();
 
+	// Capture self so the connection isn't destroyed while the read is in flight.
 	auto self = shared_from_this();
 	asio::async_read(m_socket, asio::buffer(header.get(), sizeof(BasicMessageHeader)),
 	                 asio::bind_executor(m_strand, [self, header](asio::error_code ec, std::size_t) {
@@ -112,6 +118,7 @@ void Connection::startRead() {
 			                 return;
 		                 }
 
+		                 // Payload owns the buffer for the async read.
 		                 auto payload = std::make_shared<Message>(payloadSize, '\0');
 		                 asio::async_read(self->m_socket, asio::buffer(payload->data(), payload->size()),
 		                                  asio::bind_executor(self->m_strand, [self, payload](asio::error_code ec1, std::size_t) {
