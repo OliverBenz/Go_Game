@@ -2,7 +2,6 @@
 
 #include "Logging.hpp"
 #include "core/game.hpp"
-#include "network/protocol.hpp"
 
 #include <cassert>
 #include <format>
