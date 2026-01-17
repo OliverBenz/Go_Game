@@ -7,7 +7,7 @@
 #include <asio/write.hpp>
 
 #include <array>
-#include <stdexcept>
+#include <optional>
 #include <utility>
 
 namespace go {
@@ -26,8 +26,8 @@ public:
 	Message read();
 
 private:
-	BasicMessageHeader read_header();
-	Message read_payload(std::uint32_t expected_bytes);
+	std::optional<BasicMessageHeader> read_header();
+	std::optional<Message> read_payload(std::uint32_t expected_bytes);
 
 	asio::io_context m_ioContext{};
 	asio::ip::tcp::resolver m_resolver;
@@ -44,12 +44,17 @@ bool TcpClient::Implementation::connect(std::string host, std::uint16_t port) {
 		return false;
 	}
 
-	const auto endpoints = m_resolver.resolve(host, std::to_string(port));
-	asio::error_code ec;
-	asio::connect(m_socket, endpoints, ec);
-	if (ec) {
-		return false;
-	}
+	try {
+		asio::error_code ec;
+		const auto endpoints = m_resolver.resolve(host, std::to_string(port), ec);
+		if (ec) {
+			return false;
+		}
+		asio::connect(m_socket, endpoints, ec);
+		if (ec) {
+			return false;
+		}
+	} catch (...) { return false; }
 
 	m_isConnected = true;
 	return true;
@@ -82,37 +87,74 @@ bool TcpClient::Implementation::send(const Message& message) {
 	std::array<asio::const_buffer, 2> buffers = {asio::buffer(&header, sizeof(header)), asio::buffer(message.data(), message.size())};
 
 	// For fixed-size packets, emit exactly FIXED_PACKET_PAYLOAD_BYTES here and drop the header.
-	asio::write(m_socket, buffers);
+	try {
+		asio::error_code ec;
+		asio::write(m_socket, buffers, ec);
+		if (ec) {
+			m_isConnected = false;
+			return false;
+		}
+	} catch (...) {
+		m_isConnected = false;
+		return false;
+	}
 	return true;
 }
 
 Message TcpClient::Implementation::read() {
-	const auto header       = read_header();
-	const auto payload_size = from_network_u32(header.payload_size);
+	try {
+		const auto header = read_header();
+		if (!header) {
+			return {};
+		}
+		const auto payload_size = from_network_u32(header->payload_size);
 
-	if (payload_size > MAX_PAYLOAD_BYTES) {
-		throw std::runtime_error("Networking: incoming payload too large");
+		if (payload_size > MAX_PAYLOAD_BYTES) {
+			m_isConnected = false;
+			return {};
+		}
+
+		// For fixed-size packets, swap this for a straight read of FIXED_PACKET_PAYLOAD_BYTES bytes.
+		const auto payload = read_payload(payload_size);
+		if (!payload) {
+			return {};
+		}
+		return *payload;
+	} catch (...) {
+		m_isConnected = false;
+		return {};
 	}
-
-	// For fixed-size packets, swap this for a straight read of FIXED_PACKET_PAYLOAD_BYTES bytes.
-	auto payload = read_payload(payload_size);
-
-	return payload;
 }
 
-BasicMessageHeader TcpClient::Implementation::read_header() {
+std::optional<BasicMessageHeader> TcpClient::Implementation::read_header() {
 	BasicMessageHeader header{};
-	asio::read(m_socket, asio::buffer(&header, sizeof(header)));
+	asio::error_code ec;
+	asio::read(m_socket, asio::buffer(&header, sizeof(header)), ec);
+	if (ec) {
+		m_isConnected = false;
+		return std::nullopt;
+	}
 	return header;
 }
 
-Message TcpClient::Implementation::read_payload(std::uint32_t expected_bytes) {
+std::optional<Message> TcpClient::Implementation::read_payload(std::uint32_t expected_bytes) {
 	if (expected_bytes == 0) {
-		return {};
+		return Message{};
 	}
 
-	Message payload(expected_bytes, '\0');
-	asio::read(m_socket, asio::buffer(payload.data(), payload.size()));
+	Message payload;
+	try {
+		payload.assign(expected_bytes, '\0');
+	} catch (...) {
+		m_isConnected = false;
+		return std::nullopt;
+	}
+	asio::error_code ec;
+	asio::read(m_socket, asio::buffer(payload.data(), payload.size()), ec);
+	if (ec) {
+		m_isConnected = false;
+		return std::nullopt;
+	}
 	return payload;
 }
 

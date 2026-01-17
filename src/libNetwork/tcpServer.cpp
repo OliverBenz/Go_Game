@@ -6,6 +6,7 @@
 
 #include <atomic>
 #include <cassert>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <thread>
@@ -35,22 +36,45 @@ private:
 	asio::io_context m_ioContext{};
 	asio::ip::tcp::acceptor m_acceptor;
 	std::optional<asio::executor_work_guard<asio::io_context::executor_type>> m_workGuard;
+	bool m_acceptorReady{false};
 
 	std::thread m_ioThread;             //!< IO context thread.
 	std::atomic<bool> m_running{false}; //!< TCP Server running.
 
 	Callbacks m_callbacks; //!< Callback functions to signal events.
 
-	std::unordered_map<ConnectionId, Connection> m_connections; //!< Active connections.
-	std::mutex m_connectionsMutex;                              //!< Handle concurrency.
+	std::unordered_map<ConnectionId, std::shared_ptr<Connection>> m_connections; //!< Active connections.
+	std::mutex m_connectionsMutex;                                               //!< Handle concurrency.
 };
 
 
-TcpServer::Implementation::Implementation(std::uint16_t port) : m_acceptor(m_ioContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)) {
+TcpServer::Implementation::Implementation(std::uint16_t port) : m_acceptor(m_ioContext) {
+	asio::error_code ec;
+	m_acceptor.open(asio::ip::tcp::v4(), ec);
+	if (ec) {
+		return;
+	}
+	m_acceptor.set_option(asio::ip::tcp::acceptor::reuse_address(true), ec);
+	if (ec) {
+		return;
+	}
+	m_acceptor.bind(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port), ec);
+	if (ec) {
+		return;
+	}
+	m_acceptor.listen(asio::socket_base::max_listen_connections, ec);
+	if (ec) {
+		return;
+	}
+	m_acceptorReady = true;
 }
 
 void TcpServer::Implementation::start() {
 	if (m_running.exchange(true)) {
+		return;
+	}
+	if (!m_acceptorReady) {
+		m_running = false;
 		return;
 	}
 
@@ -79,13 +103,13 @@ void TcpServer::Implementation::stop() {
 	}
 	m_ioContext.stop();
 
-	std::unordered_map<ConnectionId, Connection> connections;
+	std::unordered_map<ConnectionId, std::shared_ptr<Connection>> connections;
 	{
 		std::lock_guard<std::mutex> lock(m_connectionsMutex);
 		connections.swap(m_connections);
 	}
 	for (auto& [id, conn]: connections) {
-		conn.stop();
+		conn->stop();
 	}
 
 	if (m_ioThread.joinable()) {
@@ -97,7 +121,7 @@ bool TcpServer::Implementation::send(ConnectionId connectionId, const Message& m
 	std::lock_guard<std::mutex> lock(m_connectionsMutex);
 
 	if (m_connections.contains(connectionId)) {
-		m_connections.at(connectionId).send(msg);
+		m_connections.at(connectionId)->send(msg);
 		return true;
 	}
 
@@ -108,7 +132,7 @@ void TcpServer::Implementation::reject(ConnectionId connectionId) {
 	std::lock_guard<std::mutex> lock(m_connectionsMutex);
 
 	if (m_connections.contains(connectionId)) {
-		m_connections.at(connectionId).stop();
+		m_connections.at(connectionId)->stop();
 		m_connections.erase(connectionId);
 	}
 }
@@ -123,7 +147,7 @@ void TcpServer::Implementation::doAccept() {
 			const auto connectionId = CONN_ID++;
 			if (createConnection(std::move(socket), connectionId)) {
 				assert(m_connections.contains(connectionId));
-				m_connections.at(connectionId).start();
+				m_connections.at(connectionId)->start();
 			}
 		}
 
@@ -162,8 +186,11 @@ bool TcpServer::Implementation::createConnection(asio::ip::tcp::socket socket, C
 		}
 	};
 
-	const auto [it, inserted] = m_connections.try_emplace(connectionId, std::move(socket), connectionId, std::move(callbacks));
-	return inserted;
+	try {
+		auto connection           = std::make_shared<Connection>(std::move(socket), connectionId, std::move(callbacks));
+		const auto [it, inserted] = m_connections.try_emplace(connectionId, std::move(connection));
+		return inserted;
+	} catch (...) { return false; }
 }
 
 

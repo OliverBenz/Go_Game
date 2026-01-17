@@ -13,7 +13,7 @@
 namespace go::network {
 
 //! Transportation primitive. Handles read/write from a single client connection.
-class Connection {
+class Connection : public std::enable_shared_from_this<Connection> {
 public:
 	struct Callbacks {
 		std::function<void(Connection&)> onConnect;
