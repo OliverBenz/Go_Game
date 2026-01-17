@@ -22,7 +22,10 @@ GameServer::~GameServer() {
 }
 
 void GameServer::start() {
-	m_server.registerHandler(this);
+	if (!m_server.registerHandler(this)) {
+		Logger().Log(Logging::LogLevel::Warning, "[GameServer] Server handler already registered. Start ignored.");
+		return;
+	}
 	m_game.subscribeState(this);
 	m_server.start();
 }
@@ -32,6 +35,7 @@ void GameServer::stop() {
 	m_game.unsubscribeState(this);
 
 	if (m_gameThread.joinable()) {
+		m_game.pushEvent(ShutdownEvent{});
 		m_gameThread.join();
 	}
 }
@@ -49,15 +53,20 @@ void GameServer::onClientConnected(gameNet::SessionId sessionId, gameNet::Seat s
 
 	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Client '{}' connected.", sessionId));
 
-	if (m_players.size() == 2) // TODO: Better check
-	{
-		m_gameThread = std::thread([&] { m_game.run(); });
+	if (m_players.size() == 2 && !m_gameThread.joinable()) {
+		m_gameThread = std::thread([this] { m_game.run(); });
 	}
 }
 
 void GameServer::onClientDisconnected(gameNet::SessionId sessionId) {
 	// Not handled for now. No timing in game.
 	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Client '{}' disconnected.", sessionId));
+	for (auto it = m_players.begin(); it != m_players.end(); ++it) {
+		if (it->second == sessionId) {
+			m_players.erase(it);
+			break;
+		}
+	}
 }
 
 void GameServer::onNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientEvent& event) {
