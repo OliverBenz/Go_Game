@@ -92,11 +92,11 @@ bool TcpClient::Implementation::send(const Message& message) {
 		asio::error_code ec;
 		asio::write(m_socket, buffers, ec);
 		if (ec) {
-			m_isConnected = false;
+			disconnect();
 			return false;
 		}
 	} catch (...) {
-		m_isConnected = false;
+		disconnect();
 		return false;
 	}
 	return true;
@@ -111,7 +111,7 @@ Message TcpClient::Implementation::read() {
 		const auto payload_size = from_network_u32(header->payload_size);
 
 		if (payload_size > MAX_PAYLOAD_BYTES) {
-			m_isConnected = false;
+			disconnect();
 			return {};
 		}
 
@@ -122,7 +122,7 @@ Message TcpClient::Implementation::read() {
 		}
 		return *payload;
 	} catch (...) {
-		m_isConnected = false;
+		disconnect();
 		return {};
 	}
 }
@@ -132,7 +132,7 @@ std::optional<BasicMessageHeader> TcpClient::Implementation::read_header() {
 	asio::error_code ec;
 	asio::read(m_socket, asio::buffer(&header, sizeof(header)), ec);
 	if (ec) {
-		m_isConnected = false;
+		disconnect();
 		return std::nullopt;
 	}
 	return header;
@@ -143,17 +143,11 @@ std::optional<Message> TcpClient::Implementation::read_payload(std::uint32_t exp
 		return Message{};
 	}
 
-	Message payload;
-	try {
-		payload.assign(expected_bytes, '\0');
-	} catch (...) {
-		m_isConnected = false;
-		return std::nullopt;
-	}
+	Message payload(expected_bytes, '\0');
 	asio::error_code ec;
 	asio::read(m_socket, asio::buffer(payload.data(), payload.size()), ec);
 	if (ec) {
-		m_isConnected = false;
+		disconnect();
 		return std::nullopt;
 	}
 	return payload;
