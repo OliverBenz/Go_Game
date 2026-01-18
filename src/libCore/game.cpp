@@ -28,21 +28,13 @@ void Game::pushEvent(GameEvent event) {
 }
 
 void Game::run() {
+	// Blocking loop: intended to live on its own thread.
 	m_gameActive = true;
 
 	while (m_gameActive) {
 		const auto event = m_eventQueue.Pop();
 		std::visit([&](auto&& ev) { handleEvent(ev); }, event);
 	}
-}
-
-const Board& Game::board() const {
-	// TODO: No other threads ever read this? We should work with the board deltas (GameStateListener)
-	return m_position.board;
-}
-
-Player Game::currentPlayer() const {
-	return m_position.currentPlayer;
 }
 
 bool Game::isActive() const {

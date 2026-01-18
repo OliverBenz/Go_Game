@@ -138,7 +138,7 @@ void SessionManager::updateGameState(const gameNet::ServerDelta& event) {
 		if (event.coord) {
 			m_position.board.setAt(Coord{event.coord->x, event.coord->y}, event.seat == gameNet::Seat::Black ? Board::Value::Black : Board::Value::White);
 			for (const auto c: event.captures) {
-				m_position.board.remAt({c.x, c.y});
+				m_position.board.setAt({c.x, c.y}, Board::Value::Empty);
 			}
 		} else {
 			Logger().Log(Logging::LogLevel::Warning, "Game delta missing place coordinate; skipping board update.");

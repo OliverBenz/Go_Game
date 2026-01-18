@@ -6,6 +6,7 @@
 namespace go {
 
 // TODO: This should be optimized to use 2Bits per site on the field. (B, W, None, ...)
+//! \note Game coordinates origin is at bottom left of board and start at 0. Column: A->0, B->1, etc
 class Board {
 public:
 	//! Possible ownership values of fields on the board.
@@ -16,14 +17,9 @@ public:
 
 	std::size_t size() const;
 
-	//! With x,y \in [0, size-1]
-	//! \note Game coordinates origin is at bottom left of board and start at 0. Column: A->0, B->1, etc
-	void setAt(Coord c, Value value);
-	Value getAt(Coord c) const;
-	void remAt(Coord c);
-
-	//! Returns whether a certain board coordinate is free or occupied.
-	bool isFree(Coord c) const;
+	void setAt(Coord c, Value value); //!< Set at given coordinate (x,y) \in [0, size-1]
+	Value getAt(Coord c) const;       //!< Get value at given coordinate (x,y) \in [0, size-1]
+	bool isFree(Coord c) const;       //!< Returns whether a certain board coordinate is free or occupied.
 
 private:
 	std::size_t m_size;           //!< Board size

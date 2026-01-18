@@ -14,17 +14,15 @@ namespace go {
 using EventQueue = SafeQueue<GameEvent>;
 
 //! Core game setup.
+//! This owns the rules loop and emits deltas; external code should only push events and listen.
 class Game {
 public:
 	//! Setup a game of certain board size without starting the game loop.
 	Game(std::size_t boardSize);
 
-	void run();                      //!< Run the main game loop/start handling the event loop.
+	void run();                      //!< Run the main game loop/start handling the event loop (blocking).
 	void pushEvent(GameEvent event); //!< Push an event to the event queue.
-
-	const Board& board() const;   //!< Get board data for rendering.
-	Player currentPlayer() const; //!< Returns the currently active player.
-	bool isActive() const;        //!< Return if the game is active or not.
+	bool isActive() const;           //!< Return if the game is active or not.
 
 public:
 	void subscribeSignals(IGameSignalListener* listener, uint64_t signalMask);

@@ -10,6 +10,7 @@
 namespace go {
 
 //! Allows external components to be updated on internal game events.
+//! \note Signals are synchronous and run on the caller thread.
 class EventHub {
 	struct SignalListenerEntry {
 		IGameSignalListener* listener; //!< Pointer to the listener.

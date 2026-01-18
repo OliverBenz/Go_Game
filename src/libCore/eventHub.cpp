@@ -37,8 +37,7 @@ void EventHub::signal(GameSignal signal) {
 
 	for (const auto& [listener, signalMask]: m_signalListeners) {
 		if (signalMask & signal) {
-			// TODO: How to ensure these listener side functions are not heavy.
-			//       Else they might block the game thread.
+			// Listener callbacks run on the caller thread; keep them light.
 			listener->onGameEvent(signal);
 		}
 	}
