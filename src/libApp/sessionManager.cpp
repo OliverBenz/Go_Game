@@ -26,6 +26,7 @@ void SessionManager::connect(const std::string& hostIp) {
 		std::lock_guard<std::mutex> lock(m_stateMutex);
 		m_position  = Position{};
 		m_gameReady = false;
+		m_chatHistory.clear();
 	}
 	m_localServer.reset();
 	m_network.connect(hostIp);
@@ -41,6 +42,7 @@ void SessionManager::host(unsigned boardSize) {
 		m_position.gameActive    = false;
 		m_position.currentPlayer = Player::Black;
 		m_gameReady              = false;
+		m_chatHistory.clear();
 	}
 	m_eventHub.signal(AS_BoardChange);
 
@@ -59,6 +61,7 @@ void SessionManager::disconnect() {
 		std::lock_guard<std::mutex> lock(m_stateMutex);
 		m_position  = Position{};
 		m_gameReady = false;
+		m_chatHistory.clear();
 	}
 	m_eventHub.signal(AS_BoardChange);
 	m_eventHub.signal(AS_PlayerChange);
@@ -137,7 +140,10 @@ void SessionManager::onGameUpdate(const gameNet::ServerDelta& event) {
 	};
 }
 void SessionManager::onChatMessage(const gameNet::ServerChat& event) {
-	m_chatHistory.push_back(event.message);
+	{
+		std::lock_guard<std::mutex> lock(m_stateMutex);
+		m_chatHistory.push_back(event.message);
+	}
 	m_eventHub.signal(AS_NewChat);
 }
 void SessionManager::onDisconnected() {
@@ -145,6 +151,7 @@ void SessionManager::onDisconnected() {
 		std::lock_guard<std::mutex> lock(m_stateMutex);
 		m_position  = Position{};
 		m_gameReady = false;
+		m_chatHistory.clear();
 	}
 	m_eventHub.signal(AS_BoardChange);
 	m_eventHub.signal(AS_PlayerChange);
