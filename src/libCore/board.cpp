@@ -13,7 +13,6 @@ std::size_t Board::size() const {
 }
 
 void Board::setAt(const Coord c, Value value) {
-	assert(value != Board::Value::Empty);
 	assert(c.x < m_size && c.y < m_size); // Game should heck isValidMove trying to set
 
 	m_board[c.y * m_size + c.x] = value;
