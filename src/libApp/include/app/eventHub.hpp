@@ -5,7 +5,7 @@
 #include <mutex>
 #include <vector>
 
-namespace go::gui {
+namespace go::app {
 
 //! Allows external components to be updated on internal game events.
 class EventHub {
@@ -24,4 +24,4 @@ private:
 	std::vector<SignalListenerEntry> m_signalListeners;
 };
 
-} // namespace go::gui
+} // namespace go::app

@@ -16,12 +16,13 @@
 
 namespace go::gui {
 
-BoardWidget::BoardWidget(SessionManager& game, QWidget* parent) : QWidget(parent), m_game(game), m_boardRenderer(static_cast<unsigned>(game.board().size())) {
+BoardWidget::BoardWidget(app::SessionManager& game, QWidget* parent)
+    : QWidget(parent), m_game(game), m_boardRenderer(static_cast<unsigned>(game.board().size())) {
 	setFocusPolicy(Qt::StrongFocus); // Required to get key events.
 	setMouseTracking(false);
 
 	if (!m_listenerRegistered) {
-		m_game.subscribe(this, AS_BoardChange);
+		m_game.subscribe(this, app::AS_BoardChange);
 		m_listenerRegistered = true;
 	}
 }
@@ -80,9 +81,9 @@ void BoardWidget::keyReleaseEvent(QKeyEvent* event) {
 	}
 }
 
-void BoardWidget::onAppEvent(AppSignal signal) {
+void BoardWidget::onAppEvent(app::AppSignal signal) {
 	switch (signal) {
-	case AS_BoardChange:
+	case app::AS_BoardChange:
 		queueRender(); // Async queue.
 		break;
 	default:
@@ -124,7 +125,12 @@ void BoardWidget::renderBoard() {
 		return;
 	}
 
-	const auto offset = boardOffset(size);
+	const auto offset    = boardOffset(size);
+	const auto boardSize = static_cast<unsigned>(m_game.board().size());
+	if (m_boardRenderer.nodes() != boardSize) {
+		m_boardRenderer.setNodes(boardSize);
+		m_boardRenderer.setBoardSizePx(size);
+	}
 	QPainter painter(this);
 	painter.fillRect(rect(), QColor(20, 20, 20));
 	painter.save();

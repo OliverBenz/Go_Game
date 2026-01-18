@@ -28,7 +28,24 @@ BoardRenderer::BoardRenderer(const unsigned nodes) : m_nodes(nodes) {
 	loadTexture(TEXTURE_WHITE, m_textureWhite);
 }
 
+unsigned BoardRenderer::nodes() const {
+	return m_nodes;
+}
+
+void BoardRenderer::setNodes(unsigned nodes) {
+	if (nodes == m_nodes) {
+		return;
+	}
+	m_nodes = nodes;
+	m_ready = m_nodes > 0 && !m_textureBlack.isNull() && !m_textureWhite.isNull();
+	if (m_boardSizePxRequested > 0 && m_nodes > 0) {
+		updateMetrics(m_boardSizePxRequested);
+		updateStoneTextures();
+	}
+}
+
 void BoardRenderer::setBoardSizePx(const unsigned boardSizePx) {
+	m_boardSizePxRequested = boardSizePx;
 	if (boardSizePx == 0 || m_nodes == 0) {
 		return;
 	}

@@ -9,7 +9,7 @@
 #include <iostream>
 #include <mutex>
 
-namespace go::server {
+namespace go::app {
 
 static Logging::LogConfig config;
 
@@ -19,7 +19,7 @@ static void InitializeLogger() {
 	config.SetMinLogLevel(Logging::LogLevel::Any);
 
 	// Get and create default logging dir
-	const auto logPath = Logging::GetDefaultLogDir("GoGame/Server");
+	const auto logPath = Logging::GetDefaultLogDir("GoGame/AppLibrary");
 
 	std::error_code ec{};
 	std::filesystem::create_directories(logPath, ec);
@@ -41,4 +41,4 @@ Logging::Logger Logger() {
 	return Logging::Logger(config);
 }
 
-} // namespace go::server
+} // namespace go::app

@@ -1,8 +1,9 @@
-#include "sessionManager.hpp"
+#include "app/sessionManager.hpp"
 
 #include "Logging.hpp"
+#include "app/gameServer.hpp"
 
-namespace go::gui {
+namespace go::app {
 
 SessionManager::SessionManager() {
 	m_network.registerHandler(this);
@@ -26,10 +27,34 @@ void SessionManager::connect(const std::string& hostIp) {
 		m_position  = Position{};
 		m_gameReady = false;
 	}
+	m_localServer.reset();
 	m_network.connect(hostIp);
 }
+
+void SessionManager::host(unsigned boardSize) {
+	disconnect();
+
+	{
+		std::lock_guard<std::mutex> lock(m_stateMutex);
+		m_position.board         = Board{boardSize};
+		m_position.moveId        = 0u;
+		m_position.gameActive    = false;
+		m_position.currentPlayer = Player::Black;
+		m_gameReady              = false;
+	}
+	m_eventHub.signal(AS_BoardChange);
+
+	m_localServer = std::make_unique<GameServer>(boardSize);
+	m_localServer->start();
+	m_network.connect("127.0.0.1");
+}
+
 void SessionManager::disconnect() {
 	m_network.disconnect();
+	if (m_localServer) {
+		m_localServer->stop();
+		m_localServer.reset();
+	}
 	{
 		std::lock_guard<std::mutex> lock(m_stateMutex);
 		m_position  = Position{};
@@ -147,4 +172,4 @@ void SessionManager::updateGameState(const gameNet::ServerDelta& event) {
 	// TODO: status...
 }
 
-} // namespace go::gui
+} // namespace go::app

@@ -10,16 +10,16 @@ add_executable(${targetName}
     ${CMAKE_CURRENT_LIST_DIR}/BoardWidget.cpp
     ${CMAKE_CURRENT_LIST_DIR}/boardRenderer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ConnectDialog.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/sessionManager.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/eventHub.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/HostDialog.cpp
     ${CMAKE_CURRENT_LIST_DIR}/Logging.cpp
 )
 
-target_link_libraries(${targetName} PRIVATE
-    go::core
-    go::gameNet
-    Logger::Logger
-    Qt6::Widgets
+target_link_libraries(${targetName} 
+    PRIVATE
+        go::app
+        go::core
+        Logger::Logger
+        Qt6::Widgets
 )
 
 set_target_properties(${targetName} PROPERTIES AUTOMOC ON) # Auto handling of QT Meta-Object Compiler
