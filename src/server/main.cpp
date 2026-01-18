@@ -1,11 +1,9 @@
-#include "core/game.hpp"
-
-#include "gameServer.hpp"
+#include "app/gameServer.hpp"
 
 #include <iostream>
 
 int main(int, char**) {
-	go::server::GameServer server;
+	go::app::GameServer server;
 	server.start();
 
 	// NOTE: Can extend to allow more commands

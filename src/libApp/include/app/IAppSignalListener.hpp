@@ -2,7 +2,7 @@
 
 #include "core/gameEvent.hpp"
 
-namespace go::gui {
+namespace go::app {
 
 //! Types of signals.
 enum AppSignal : uint64_t {
@@ -19,4 +19,4 @@ public:
 	virtual void onAppEvent(AppSignal signal) = 0;
 };
 
-} // namespace go::gui
+} // namespace go::app

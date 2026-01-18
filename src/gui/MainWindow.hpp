@@ -1,7 +1,6 @@
 #pragma once
 
-#include "core/game.hpp"
-#include "sessionManager.hpp"
+#include "app/sessionManager.hpp"
 
 #include <QMainWindow>
 
@@ -20,10 +19,11 @@ private:
 
 private: // Slots
 	void openConnectDialog();
+	void openHostDialog();
 	void closeEvent(QCloseEvent* event);
 
 private:
-	SessionManager m_game;
+	app::SessionManager m_game;
 
 	QWidget* m_menuWidget;
 	QWidget* m_gameWidget;

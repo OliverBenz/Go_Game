@@ -1,8 +1,8 @@
 #pragma once
 
 #include "BoardWidget.hpp"
+#include "app/sessionManager.hpp"
 #include "core/game.hpp"
-#include "sessionManager.hpp"
 #include <QCloseEvent>
 #include <QLabel>
 #include <QPushButton>
@@ -11,15 +11,15 @@
 
 namespace go::gui {
 
-class GameWidget : public QWidget, public IAppSignalListener {
+class GameWidget : public QWidget, public app::IAppSignalListener {
 	Q_OBJECT
 
 public:
-	explicit GameWidget(SessionManager& game, QWidget* parent = nullptr);
+	explicit GameWidget(app::SessionManager& game, QWidget* parent = nullptr);
 	~GameWidget() override;
 
 	//! Called by the game thread. Ensure not blocking.
-	void onAppEvent(AppSignal signal) override;
+	void onAppEvent(app::AppSignal signal) override;
 
 private:
 	//! Initial setup constructing the layout of the window.
@@ -33,7 +33,7 @@ private: // Slots
 	void onResignClicked();
 
 private:
-	SessionManager& m_game;
+	app::SessionManager& m_game;
 
 	BoardWidget* m_boardWidget = nullptr;
 	QTabWidget* m_sideTabs     = nullptr;

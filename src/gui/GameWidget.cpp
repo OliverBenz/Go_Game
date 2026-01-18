@@ -8,7 +8,7 @@
 
 namespace go::gui {
 
-GameWidget::GameWidget(SessionManager& game, QWidget* parent) : QWidget(parent), m_game{game} {
+GameWidget::GameWidget(app::SessionManager& game, QWidget* parent) : QWidget(parent), m_game{game} {
 	// Setup Window
 	setWindowTitle("Go Game");
 	buildNetworkLayout();
@@ -20,19 +20,19 @@ GameWidget::GameWidget(SessionManager& game, QWidget* parent) : QWidget(parent),
 	// Setup Game Stuff
 	setCurrentPlayerText();
 	setGameStateText();
-	m_game.subscribe(this, AS_PlayerChange | AS_StateChange);
+	m_game.subscribe(this, app::AS_PlayerChange | app::AS_StateChange);
 }
 
 GameWidget::~GameWidget() {
 	m_game.unsubscribe(this);
 }
 
-void GameWidget::onAppEvent(const AppSignal signal) {
+void GameWidget::onAppEvent(const app::AppSignal signal) {
 	switch (signal) {
-	case AS_PlayerChange:
+	case app::AS_PlayerChange:
 		QMetaObject::invokeMethod(this, [this]() { setCurrentPlayerText(); }, Qt::QueuedConnection);
 		break;
-	case AS_StateChange:
+	case app::AS_StateChange:
 		QMetaObject::invokeMethod(this, [this]() { setGameStateText(); }, Qt::QueuedConnection);
 		break;
 	default:

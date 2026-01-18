@@ -5,10 +5,14 @@
 #include "eventHub.hpp"
 #include "gameNet/client.hpp"
 
+#include <memory>
 #include <mutex>
 #include <string>
+#include <vector>
 
-namespace go::gui {
+namespace go::app {
+
+class GameServer;
 
 struct Position {
 	unsigned moveId{0}; //!< Last move id in game.
@@ -31,6 +35,7 @@ public:
 	void unsubscribe(IAppSignalListener* listener);
 
 	void connect(const std::string& hostIp);
+	void host(unsigned boardSize);
 	void disconnect();
 
 	// Setters
@@ -61,7 +66,8 @@ private:
 	Position m_position{};
 
 	std::vector<std::string> m_chatHistory;
+	std::unique_ptr<GameServer> m_localServer;
 	mutable std::mutex m_stateMutex;
 };
 
-} // namespace go::gui
+} // namespace go::app

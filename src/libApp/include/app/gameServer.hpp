@@ -13,11 +13,11 @@
 #include <unordered_map>
 
 namespace go {
-namespace server {
+namespace app {
 
 class GameServer : public gameNet::IServerHandler, public IGameStateListener {
 public:
-	explicit GameServer();
+	explicit GameServer(std::size_t boardSize = 9u);
 	~GameServer();
 
 	void start(); //!< Boot the network listener and the server event loop.
@@ -39,7 +39,7 @@ private:
 	void handleNetworkEvent(Player player, const gameNet::ClientChat& event);
 
 private:
-	Game m_game{9u};
+	Game m_game;
 	std::thread m_gameThread; //!< Runs the game loop.
 
 	std::unordered_map<Player, gameNet::SessionId> m_players;
@@ -47,5 +47,5 @@ private:
 	gameNet::Server m_server{};
 };
 
-} // namespace server
+} // namespace app
 } // namespace go

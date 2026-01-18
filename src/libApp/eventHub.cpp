@@ -1,8 +1,8 @@
-#include "eventHub.hpp"
+#include "app/eventHub.hpp"
 
 #include <algorithm>
 
-namespace go::gui {
+namespace go::app {
 
 void EventHub::subscribe(IAppSignalListener* listener, uint64_t signalMask) {
 	std::lock_guard<std::mutex> lock(m_listenerMutex);
@@ -28,4 +28,4 @@ void EventHub::signal(AppSignal signal) {
 	}
 }
 
-} // namespace go::gui
+} // namespace go::app

@@ -1,21 +1,21 @@
 #pragma once
 
+#include "app/sessionManager.hpp"
 #include "boardRenderer.hpp"
 #include "core/game.hpp"
-#include "sessionManager.hpp"
 #include <QWidget>
 
 namespace go::gui {
 
-class BoardWidget : public QWidget, public IAppSignalListener {
+class BoardWidget : public QWidget, public app::IAppSignalListener {
 	Q_OBJECT
 
 public:
-	explicit BoardWidget(SessionManager& game, QWidget* parent = nullptr);
+	explicit BoardWidget(app::SessionManager& game, QWidget* parent = nullptr);
 	~BoardWidget() override;
 
 	//! Called by the game thread. Ensure not blocking.
-	void onAppEvent(AppSignal signal) override;
+	void onAppEvent(app::AppSignal signal) override;
 
 protected:
 	void showEvent(QShowEvent* event) override;
@@ -37,7 +37,7 @@ private:
 	QPoint boardOffset(unsigned boardSize) const;
 
 private:
-	SessionManager& m_game;
+	app::SessionManager& m_game;
 
 	bool m_listenerRegistered = false;
 	BoardRenderer m_boardRenderer;
