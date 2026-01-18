@@ -108,8 +108,12 @@ void GameWidget::setCurrentPlayerText() {
 }
 
 void GameWidget::setGameStateText() {
-	const auto text = std::format("Game: {}", m_game.isActive() ? "Active" : "Finished");
-	m_statusLabel->setText(QString::fromStdString(text));
+	static const std::map<app::GameStatus, std::string> message{{app::GameStatus::Idle, "Idle"},
+	                                                            {app::GameStatus::Waiting, "Waiting for Player"},
+	                                                            {app::GameStatus::Active, "Active"},
+	                                                            {app::GameStatus::Done, "Game Finished"}};
+	assert(message.contains(m_game.status()));
+	m_statusLabel->setText(QString::fromStdString(message.at(m_game.status())));
 }
 
 void GameWidget::onPassClicked() {

@@ -3,9 +3,11 @@
 #include "Logging.hpp"
 #include "app/gameServer.hpp"
 
+#include <cassert>
+
 namespace go::app {
 
-SessionManager::SessionManager() {
+SessionManager::SessionManager() : m_position{m_eventHub} {
 	m_network.registerHandler(this);
 }
 SessionManager::~SessionManager() {
@@ -24,8 +26,8 @@ void SessionManager::unsubscribe(IAppSignalListener* listener) {
 void SessionManager::connect(const std::string& hostIp) {
 	{
 		std::lock_guard<std::mutex> lock(m_stateMutex);
-		m_position  = Position{};
-		m_gameReady = false;
+		m_position.reset(9u);
+		m_position.setStatus(GameStatus::Waiting);
 		m_chatHistory.clear();
 	}
 	m_localServer.reset();
@@ -37,14 +39,10 @@ void SessionManager::host(unsigned boardSize) {
 
 	{
 		std::lock_guard<std::mutex> lock(m_stateMutex);
-		m_position.board         = Board{boardSize};
-		m_position.moveId        = 0u;
-		m_position.gameActive    = false;
-		m_position.currentPlayer = Player::Black;
-		m_gameReady              = false;
+		m_position.reset(boardSize);
+		m_position.setStatus(GameStatus::Waiting);
 		m_chatHistory.clear();
 	}
-	m_eventHub.signal(AS_BoardChange);
 
 	m_localServer = std::make_unique<GameServer>(boardSize);
 	m_localServer->start();
@@ -57,15 +55,10 @@ void SessionManager::disconnect() {
 		m_localServer->stop();
 		m_localServer.reset();
 	}
-	{
-		std::lock_guard<std::mutex> lock(m_stateMutex);
-		m_position  = Position{};
-		m_gameReady = false;
-		m_chatHistory.clear();
-	}
-	m_eventHub.signal(AS_BoardChange);
-	m_eventHub.signal(AS_PlayerChange);
-	m_eventHub.signal(AS_StateChange);
+
+	std::lock_guard<std::mutex> lock(m_stateMutex);
+	m_position.reset(9u);
+	m_chatHistory.clear();
 }
 
 
@@ -82,114 +75,36 @@ void SessionManager::chat(const std::string& message) {
 	m_network.send(gameNet::ClientChat{message});
 }
 
-bool SessionManager::isReady() const {
+GameStatus SessionManager::status() const {
 	std::lock_guard<std::mutex> lock(m_stateMutex);
-	return m_gameReady;
-}
-bool SessionManager::isActive() const {
-	std::lock_guard<std::mutex> lock(m_stateMutex);
-	return m_position.gameActive;
+	return m_position.getStatus();
 }
 Board SessionManager::board() const {
 	std::lock_guard<std::mutex> lock(m_stateMutex);
-	return m_position.board;
+	return m_position.getBoard();
 }
 Player SessionManager::currentPlayer() const {
 	std::lock_guard<std::mutex> lock(m_stateMutex);
-	return m_position.currentPlayer;
+	return m_position.getPlayer();
 }
-
 
 void SessionManager::onGameUpdate(const gameNet::ServerDelta& event) {
-	unsigned lastMoveId = 0u;
-	{
-		std::lock_guard<std::mutex> lock(m_stateMutex);
-		lastMoveId = m_position.moveId;
-	}
-
-	if (event.turn <= lastMoveId) {
-		// Should never happen. Got update twice.
-		Logger().Log(Logging::LogLevel::Error, "Game delta sent to client twice.");
-		return;
-	} else if (event.turn > lastMoveId + 1) {
-		// We are missing updates; keep going with best-effort so the game stays playable.
-		Logger().Log(Logging::LogLevel::Warning, "Game delta missing updates; applying latest update only.");
-	}
-
-	// Update game state
-	updateGameState(event);
-
-	// Signal listeners
-	switch (event.action) {
-	case gameNet::ServerAction::Place:
-		m_eventHub.signal(AS_BoardChange);
-		m_eventHub.signal(AS_PlayerChange);
-		break;
-	case gameNet::ServerAction::Pass:
-		m_eventHub.signal(AS_PlayerChange);
-		if (event.status != gameNet::GameStatus::Active) {
-			m_eventHub.signal(AS_StateChange);
-		}
-		break;
-	case gameNet::ServerAction::Resign:
-		m_eventHub.signal(AS_StateChange);
-		break;
-	case gameNet::ServerAction::Count:
-		break;
-		// TODO: Log
-	};
+	std::lock_guard<std::mutex> lock(m_stateMutex);
+	m_position.apply(event);
 }
-
 void SessionManager::onGameConfig(const gameNet::ServerGameConfig& event) {
-	{
-		std::lock_guard<std::mutex> lock(m_stateMutex);
-		if (m_position.gameActive) {
-			return;
-		}
-		// TODO: Komi and timer not yet implemented.
-		m_position.board  = Board{event.boardSize};
-		m_position.moveId = 0u;
-	}
-	m_eventHub.signal(AS_BoardChange);
+	std::lock_guard<std::mutex> lock(m_stateMutex);
+	m_position.init(event);
 }
 void SessionManager::onChatMessage(const gameNet::ServerChat& event) {
-	{
-		std::lock_guard<std::mutex> lock(m_stateMutex);
-		m_chatHistory.push_back(event.message);
-	}
+	std::lock_guard<std::mutex> lock(m_stateMutex);
+	m_chatHistory.push_back(event.message);
 	m_eventHub.signal(AS_NewChat);
 }
 void SessionManager::onDisconnected() {
-	{
-		std::lock_guard<std::mutex> lock(m_stateMutex);
-		m_position  = Position{};
-		m_gameReady = false;
-		m_chatHistory.clear();
-	}
-	m_eventHub.signal(AS_BoardChange);
-	m_eventHub.signal(AS_PlayerChange);
-	m_eventHub.signal(AS_StateChange);
-}
-
-
-void SessionManager::updateGameState(const gameNet::ServerDelta& event) {
 	std::lock_guard<std::mutex> lock(m_stateMutex);
-	m_position.moveId        = event.turn; // TODO: Align this naming stuff (core, server, gui, etc)
-	m_position.gameActive    = event.status == gameNet::GameStatus::Active;
-	m_position.currentPlayer = event.next == gameNet::Seat::Black ? Player::Black : Player::White; // TODO: Assert seat is player.
-	m_gameReady              = true;
-
-	if (event.action == gameNet::ServerAction::Place) {
-		if (event.coord) {
-			m_position.board.setAt(Coord{event.coord->x, event.coord->y}, event.seat == gameNet::Seat::Black ? Board::Value::Black : Board::Value::White);
-			for (const auto c: event.captures) {
-				m_position.board.setAt({c.x, c.y}, Board::Value::Empty);
-			}
-		} else {
-			Logger().Log(Logging::LogLevel::Warning, "Game delta missing place coordinate; skipping board update.");
-		}
-	}
-	// TODO: status...
+	m_position.reset(9u);
+	m_chatHistory.clear();
 }
 
 } // namespace go::app
