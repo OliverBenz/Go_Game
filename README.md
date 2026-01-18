@@ -45,6 +45,7 @@ GTest  | Google unit testing library.
 - [Networking](docs/Networking.md) — higher-level networking notes
 
 ## Technical Documentation
+- [libCore](src/libCore/README.md) — Core rules, game loop, deltas, and move validation
 - [libNetwork](src/libNetwork/README.md) — Network layer design and implementation details
 - [libGameNet](src/libGameNet/README.md) — Protocol, client/server wrappers, and session mapping
 
