@@ -1,8 +1,8 @@
 #pragma once
 
-#include "IAppSignalListener.hpp"
-#include "core/board.hpp"
-#include "eventHub.hpp"
+#include "app/IAppSignalListener.hpp"
+#include "app/eventHub.hpp"
+#include "app/position.hpp"
 #include "gameNet/client.hpp"
 
 #include <memory>
@@ -11,16 +11,7 @@
 #include <vector>
 
 namespace go::app {
-
 class GameServer;
-
-struct Position {
-	unsigned moveId{0}; //!< Last move id in game.
-	bool gameActive{false};
-	Player currentPlayer{Player::Black};
-
-	Board board{9u};
-};
 
 //! Gets game stat delta and constructs a local representation of the game.
 //! Listeners can subscribe to certain signals, get notification when happens.
@@ -44,9 +35,12 @@ public:
 	void tryPass();
 	void chat(const std::string& message);
 
+	// TODO: Maybe the UI elements should have a const reference to 'Position'. (Position is data layer; SessionManager is application layer)
+	//       Then position only has public getters and SessionManager is a friend so it can update.
+	//       Then we could remove these getters.
+	//       SessionManager updates Position. Position emits signals. Listeners query position for new data.
 	// Getters
-	bool isReady() const;
-	bool isActive() const;
+	GameStatus status() const;
 	Board board() const;
 	Player currentPlayer() const;
 
@@ -57,14 +51,9 @@ public: // Client listener handlers
 	void onDisconnected() override;
 
 private:
-	void updateGameState(const gameNet::ServerDelta& event);
-
-private:
-	bool m_gameReady{false}; //!< Ready to start a game.
-
 	gameNet::Client m_network;
 	EventHub m_eventHub;
-	Position m_position{};
+	Position m_position;
 
 	std::vector<std::string> m_chatHistory;
 	std::unique_ptr<GameServer> m_localServer;
