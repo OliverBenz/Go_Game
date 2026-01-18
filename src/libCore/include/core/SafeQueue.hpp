@@ -66,7 +66,7 @@ Entry SafeQueue<Entry>::Pop() {
 
 template <class Entry>
 bool SafeQueue<Entry>::Empty() const {
-	// TODO: Lock?
+	std::lock_guard<std::mutex> lock(m_mutex);
 	return m_queue.empty();
 }
 
