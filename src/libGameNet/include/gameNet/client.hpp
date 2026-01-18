@@ -13,10 +13,11 @@ namespace go::gameNet {
 //! \note Keep handlers lightweight.
 class IClientHandler {
 public:
-	virtual ~IClientHandler()                           = default;
-	virtual void onGameUpdate(const ServerDelta& event) = 0;
-	virtual void onChatMessage(const ServerChat& event) = 0;
-	virtual void onDisconnected()                       = 0;
+	virtual ~IClientHandler()                                = default;
+	virtual void onGameConfig(const ServerGameConfig& event) = 0;
+	virtual void onGameUpdate(const ServerDelta& event)      = 0;
+	virtual void onChatMessage(const ServerChat& event)      = 0;
+	virtual void onDisconnected()                            = 0;
 };
 
 class Client {

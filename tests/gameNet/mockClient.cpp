@@ -55,6 +55,10 @@ void MockClient::onGameUpdate(const gameNet::ServerDelta& event) {
 	}
 }
 
+void MockClient::onGameConfig(const gameNet::ServerGameConfig& event) {
+	std::cout << std::format("[Client] Received config: board={}, komi={}, time={}\n", event.boardSize, event.komi, event.timeSeconds);
+}
+
 void MockClient::onChatMessage(const gameNet::ServerChat& event) {
 	std::cout << std::format("[Client] Received message from '{}':{}\n", toString(event.seat), event.message);
 }

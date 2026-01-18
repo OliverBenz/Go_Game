@@ -41,6 +41,10 @@ bool Game::isActive() const {
 	return m_gameActive;
 }
 
+std::size_t Game::boardSize() const {
+	return m_position.board.size();
+}
+
 void Game::handleEvent(const PutStoneEvent& event) {
 	assert(m_hasher);
 

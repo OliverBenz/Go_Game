@@ -41,7 +41,17 @@ void GameServer::stop() {
 }
 
 void GameServer::onClientConnected(gameNet::SessionId sessionId, gameNet::Seat seat) {
-	assert(gameNet::isPlayer(seat));
+	// TODO: Komi and timer not yet implemented.
+	m_server.send(sessionId, gameNet::ServerGameConfig{
+	                                 .boardSize   = static_cast<unsigned>(m_game.boardSize()),
+	                                 .komi        = 6.5,
+	                                 .timeSeconds = 0u,
+	                         });
+
+	if (!gameNet::isPlayer(seat)) {
+		return;
+	}
+
 	const auto player = seat == gameNet::Seat::Black ? Player::Black : Player::White;
 	if (m_game.isActive()) {
 		return; // TODO: Reconnect?

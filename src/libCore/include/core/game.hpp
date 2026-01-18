@@ -24,6 +24,8 @@ public:
 	void pushEvent(GameEvent event); //!< Push an event to the event queue.
 	bool isActive() const;           //!< Return if the game is active or not.
 
+	std::size_t boardSize() const;
+
 public:
 	void subscribeSignals(IGameSignalListener* listener, uint64_t signalMask);
 	void unsubscribeSignals(IGameSignalListener* listener);

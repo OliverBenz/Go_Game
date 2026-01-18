@@ -97,6 +97,14 @@ static std::string toMessage(const ServerSessionAssign& e) {
 	j["sessionId"] = e.sessionId;
 	return j.dump();
 }
+static std::string toMessage(const ServerGameConfig& e) {
+	json j;
+	j["type"]      = "config";
+	j["boardSize"] = e.boardSize;
+	j["komi"]      = e.komi;
+	j["time"]      = e.timeSeconds;
+	return j.dump();
+}
 static std::string toMessage(const ServerDelta& e) {
 	json j;
 	j["type"]   = "delta";
@@ -214,6 +222,13 @@ std::optional<ServerEvent> fromServerMessage(const std::string& message) {
 			return {};
 		}
 		return ServerSessionAssign{.sessionId = j["sessionId"].get<SessionId>()};
+	}
+	if (type == "config") {
+		if (!j.contains("boardSize") || !j["boardSize"].is_number_unsigned() || !j.contains("komi") || !j["komi"].is_number() || !j.contains("time") ||
+		    !j["time"].is_number_unsigned()) {
+			return {};
+		}
+		return ServerGameConfig{.boardSize = j["boardSize"].get<unsigned>(), .komi = j["komi"].get<double>(), .timeSeconds = j["time"].get<unsigned>()};
 	}
 	if (type == "delta") {
 		return fromServerDeltaMessage(j);

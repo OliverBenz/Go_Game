@@ -51,6 +51,9 @@ TEST(GameNetMessages, ServerToMessage) {
 
 	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ServerSessionAssign{1u})), json({{"type", "session"}, {"sessionId", 1u}}));
 
+	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ServerGameConfig{.boardSize = 19u, .komi = 6.5, .timeSeconds = 0u})),
+	          json({{"type", "config"}, {"boardSize", 19u}, {"komi", 6.5}, {"time", 0u}}));
+
 	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ServerDelta{
 	                  .turn     = 42u,
 	                  .seat     = gameNet::Seat::Black,
@@ -144,10 +147,21 @@ TEST(GameNetMessages, ServerFromMessageValid) {
 	const auto chatEvent = std::get<gameNet::ServerChat>(*chat);
 	EXPECT_EQ(chatEvent.seat, gameNet::Seat::Black);
 	EXPECT_EQ(chatEvent.message, "hello,world");
+
+	const auto config = gameNet::fromServerMessage(R"({"type":"config","boardSize":13,"komi":6.5,"time":300})");
+	ASSERT_TRUE(config.has_value());
+	ASSERT_TRUE(std::holds_alternative<gameNet::ServerGameConfig>(*config));
+	const auto configEvent = std::get<gameNet::ServerGameConfig>(*config);
+	EXPECT_EQ(configEvent.boardSize, 13u);
+	EXPECT_DOUBLE_EQ(configEvent.komi, 6.5);
+	EXPECT_EQ(configEvent.timeSeconds, 300u);
 }
 
 TEST(GameNetMessages, ServerFromMessageInvalid) {
 	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"session"})").has_value());
+	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"config","boardSize":9,"komi":"bad","time":0})").has_value());
+	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"config","boardSize":9,"komi":6.5})").has_value());
+	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"config","komi":6.5,"time":0})").has_value());
 	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":0,"next":4,"status":0})").has_value());
 	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":0,"x":1,"y":"2","next":4,"status":0})").has_value());
 	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":99,"next":4,"status":0})").has_value());

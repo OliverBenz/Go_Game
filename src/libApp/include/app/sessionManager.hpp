@@ -19,7 +19,7 @@ struct Position {
 	bool gameActive{false};
 	Player currentPlayer{Player::Black};
 
-	Board board{13u};
+	Board board{9u};
 };
 
 //! Gets game stat delta and constructs a local representation of the game.
@@ -52,6 +52,7 @@ public:
 
 public: // Client listener handlers
 	void onGameUpdate(const gameNet::ServerDelta& event) override;
+	void onGameConfig(const gameNet::ServerGameConfig& event) override;
 	void onChatMessage(const gameNet::ServerChat& event) override;
 	void onDisconnected() override;
 
