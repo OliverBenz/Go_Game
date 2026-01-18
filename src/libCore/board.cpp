@@ -5,7 +5,7 @@
 namespace go {
 
 Board::Board(const std::size_t size) : m_size(size), m_board(size * size, Value::Empty) {
-	assert(size == 9 || size == 13 || size == 19);
+	assert(size == 9 || size == 13 || size == 19); // Core only supports standard board sizes; invalid sizes are a programmer error.
 };
 
 std::size_t Board::size() const {
@@ -23,11 +23,6 @@ Board::Value Board::getAt(const Coord c) const {
 	assert(c.x < m_size && c.y < m_size);
 
 	return m_board[c.y * m_size + c.x];
-}
-void Board::remAt(const Coord c) {
-	assert(c.x < m_size && c.y < m_size);
-
-	m_board[c.y * m_size + c.x] = Board::Value::Empty;
 }
 
 bool Board::isFree(const Coord c) const {

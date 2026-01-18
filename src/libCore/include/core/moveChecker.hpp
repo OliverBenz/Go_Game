@@ -19,6 +19,7 @@ std::size_t computeGroupLiberties(const Board& board, Coord startCoord, Player p
 bool isSuicide(const Board& board, Player player, Coord c);
 
 //! Full legality check (bounds, occupancy, suicide) without superko.
+//!\note This is a local rule check; superko lives in isNextPositionLegal.
 bool isValidMove(const Board& board, Player player, Coord c);
 
 //! Compute resulting position if the move is legal (including superko via history). Returns false when illegal.

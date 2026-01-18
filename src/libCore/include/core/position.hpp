@@ -16,12 +16,8 @@ struct Position {
 public:
 	Position(std::size_t boardSize);
 
-	//! Current player puts a stone.
-	//! \note Assumes the move is legal.
-	void putStone(Coord c, IZobristHash& hasher);
-
-	//! Current player passes his turn.
-	void pass(IZobristHash& hasher);
+	void putStone(Coord c, IZobristHash& hasher); //!< Current player puts a stone (assumes legal move).
+	void pass(IZobristHash& hasher);              //!< Current player passes his turn.
 };
 
 } // namespace go
