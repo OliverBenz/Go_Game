@@ -11,6 +11,7 @@ MockServer::~MockServer() {
 }
 void MockServer::onClientConnected(gameNet::SessionId sessionId, gameNet::Seat seat) {
 	std::cout << std::format("[Server] Client {} connected to seat: {}\n", sessionId, static_cast<int>(seat));
+	m_network.send(sessionId, gameNet::ServerGameConfig{.boardSize = 9u, .komi = 6.5, .timeSeconds = 0u});
 }
 
 void MockServer::onClientDisconnected(gameNet::SessionId sessionId) {

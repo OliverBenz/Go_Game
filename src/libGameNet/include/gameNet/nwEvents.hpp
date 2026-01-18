@@ -24,6 +24,13 @@ struct ServerSessionAssign {
 	SessionId sessionId; //!< Session Id assigned to player.
 };
 
+// Game configuration sent by server to clients.
+struct ServerGameConfig {
+	unsigned boardSize;
+	double komi;
+	unsigned timeSeconds;
+};
+
 //! Board update event with relevant data so the client can apply the delta.
 struct ServerDelta {
 	unsigned turn;               //!< Move number of game.
@@ -42,7 +49,7 @@ struct ServerChat {
 
 
 using ClientEvent = std::variant<ClientPutStone, ClientPass, ClientResign, ClientChat>;
-using ServerEvent = std::variant<ServerSessionAssign, ServerDelta, ServerChat>;
+using ServerEvent = std::variant<ServerSessionAssign, ServerGameConfig, ServerDelta, ServerChat>;
 
 // Serialize typed events to JSON messages.
 std::string toMessage(ClientEvent event);

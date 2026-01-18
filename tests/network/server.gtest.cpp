@@ -22,6 +22,9 @@ public:
 		m_cv.notify_all();
 	}
 
+	void onGameConfig(const gameNet::ServerGameConfig&) override {
+	}
+
 	void onChatMessage(const gameNet::ServerChat&) override {
 	}
 
@@ -52,7 +55,8 @@ private:
 
 class TestServerHandler final : public gameNet::IServerHandler {
 public:
-	explicit TestServerHandler(gameNet::Server& server) : m_server(server) {}
+	explicit TestServerHandler(gameNet::Server& server) : m_server(server) {
+	}
 
 	void onClientConnected(gameNet::SessionId, gameNet::Seat) override {
 	}

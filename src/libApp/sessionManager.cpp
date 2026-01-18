@@ -139,6 +139,19 @@ void SessionManager::onGameUpdate(const gameNet::ServerDelta& event) {
 		// TODO: Log
 	};
 }
+
+void SessionManager::onGameConfig(const gameNet::ServerGameConfig& event) {
+	{
+		std::lock_guard<std::mutex> lock(m_stateMutex);
+		if (m_position.gameActive) {
+			return;
+		}
+		// TODO: Komi and timer not yet implemented.
+		m_position.board  = Board{event.boardSize};
+		m_position.moveId = 0u;
+	}
+	m_eventHub.signal(AS_BoardChange);
+}
 void SessionManager::onChatMessage(const gameNet::ServerChat& event) {
 	{
 		std::lock_guard<std::mutex> lock(m_stateMutex);

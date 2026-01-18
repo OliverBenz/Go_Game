@@ -15,6 +15,7 @@ public:
 
 public:
 	void onGameUpdate(const gameNet::ServerDelta& event) override;
+	void onGameConfig(const gameNet::ServerGameConfig& event) override;
 	void onChatMessage(const gameNet::ServerChat& event) override;
 	void onDisconnected() override;
 

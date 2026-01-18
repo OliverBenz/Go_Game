@@ -188,7 +188,7 @@ void Server::Implementation::processClientConnect(const ServerQueueEvent& event)
 	m_sessionManager.setSeat(sessionId, seat);
 	send(sessionId, ServerSessionAssign{.sessionId = sessionId});
 
-	if (m_handler && isPlayer(seat)) {
+	if (m_handler) {
 		m_handler->onClientConnected(sessionId, seat);
 	}
 }

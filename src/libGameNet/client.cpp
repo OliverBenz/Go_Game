@@ -30,6 +30,7 @@ private:
 
 private:
 	void handleNetworkEvent(const ServerSessionAssign& event);
+	void handleNetworkEvent(const ServerGameConfig& event);
 	void handleNetworkEvent(const ServerDelta& event);
 	void handleNetworkEvent(const ServerChat& event);
 
@@ -126,6 +127,12 @@ void Client::Implementation::handleNetworkEvent(const ServerSessionAssign& event
 		// TODO: Update to handle reconnect
 	}
 	m_sessionId = event.sessionId;
+}
+
+void Client::Implementation::handleNetworkEvent(const ServerGameConfig& event) {
+	if (m_handler) {
+		m_handler->onGameConfig(event);
+	}
 }
 
 void Client::Implementation::handleNetworkEvent(const ServerDelta& event) {
