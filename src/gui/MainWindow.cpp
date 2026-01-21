@@ -11,6 +11,7 @@ namespace go::gui {
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 	// Setup Window
 	setWindowTitle("Go Game");
+	setWindowFlags(windowFlags() | Qt::Tool | Qt::WindowStaysOnTopHint);
 	buildLayout();
 }
 
