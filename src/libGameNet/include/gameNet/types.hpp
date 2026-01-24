@@ -21,11 +21,6 @@ enum class GameStatus : std::uint8_t {
 	Count //!< Used in serialisation to check when enum changes.
 };
 
-struct Coord {
-	unsigned x;
-	unsigned y;
-};
-
 //! The role in the game.
 enum class Seat : std::uint8_t {
 	None     = 0,      //!< Just connected.

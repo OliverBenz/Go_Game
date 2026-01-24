@@ -1,5 +1,6 @@
 #pragma once
 
+#include "data/coordinate.hpp"
 #include "gameNet/types.hpp"
 
 #include <optional>

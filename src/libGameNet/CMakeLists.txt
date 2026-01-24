@@ -30,6 +30,8 @@ target_include_directories(${targetName}
 )
 
 target_link_libraries(${targetName}
+    PUBLIC
+        go::data
     PRIVATE
         go::network
         nlohmann_json::nlohmann_json
