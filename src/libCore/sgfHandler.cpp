@@ -3,7 +3,7 @@
 namespace go {
 
 Coord fromSGF(const std::string& s) {
-	return {static_cast<Id>(s[0u] - 'a'), static_cast<Id>(s[1u] - 'a')};
+	return {static_cast<unsigned>(s[0u] - 'a'), static_cast<unsigned>(s[1u] - 'a')};
 }
 
 std::string toSGF(const Coord c) {

@@ -104,7 +104,7 @@ void BoardRenderer::drawBackground(QPainter& painter) const {
 	painter.restore();
 }
 
-void BoardRenderer::drawStone(QPainter& painter, Id x, Id y, const Board::Value player) const {
+void BoardRenderer::drawStone(QPainter& painter, unsigned x, unsigned y, const Board::Stone player) const {
 	if (!isReady()) {
 		return;
 	}
@@ -113,22 +113,22 @@ void BoardRenderer::drawStone(QPainter& painter, Id x, Id y, const Board::Value 
 	const int drawY = static_cast<int>((m_coordStart - m_drawStepPx) + y * m_stoneSize);
 	const QRect dest{drawX, drawY, static_cast<int>(m_stoneSize), static_cast<int>(m_stoneSize)};
 
-	const auto& texture = (player == Board::Value::Black) ? m_scaledBlack : m_scaledWhite;
+	const auto& texture = (player == Board::Stone::Black) ? m_scaledBlack : m_scaledWhite;
 	painter.drawImage(dest, texture);
 }
 
 void BoardRenderer::drawStones(QPainter& painter, const Board& board) const {
-	for (Id i = 0; i != board.size(); ++i) {
-		for (Id j = 0; j != board.size(); ++j) {
-			if (board.getAt({i, j}) != Board::Value::Empty) {
-				drawStone(painter, i, j, board.getAt({i, j}));
+	for (unsigned i = 0; i != board.size(); ++i) {
+		for (unsigned j = 0; j != board.size(); ++j) {
+			if (board.get({i, j}) != Board::Stone::Empty) {
+				drawStone(painter, i, j, board.get({i, j}));
 			}
 		}
 	}
 }
 
 bool BoardRenderer::pixelToCoord(int pX, int pY, Coord& coord) const {
-	Id x, y;
+	unsigned x, y;
 	if (pixelToCoord(pX, x) && pixelToCoord(pY, y)) {
 		coord = {x, y};
 		return true;

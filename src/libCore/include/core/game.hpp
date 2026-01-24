@@ -5,7 +5,7 @@
 #include "core/eventHub.hpp"
 #include "core/gameEvent.hpp"
 #include "core/position.hpp"
-#include "core/types.hpp"
+#include "data/player.hpp"
 
 #include <unordered_set>
 

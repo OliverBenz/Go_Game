@@ -1,7 +1,7 @@
 #pragma once
 
-#include "core/board.hpp"
-#include "core/types.hpp"
+#include "data/board.hpp"
+#include "data/player.hpp"
 
 #include <QImage>
 #include <QPainter>
@@ -28,7 +28,7 @@ private:
 	//! Draw all stones given a board.
 	void drawStones(QPainter& painter, const Board& board) const;
 	//! Draw a single stone at a given index.
-	void drawStone(QPainter& painter, Id x, Id y, Board::Value player) const;
+	void drawStone(QPainter& painter, unsigned x, unsigned y, Board::Stone player) const;
 
 	//! Transforms pixel value to board coordinate.
 	bool pixelToCoord(int px, unsigned& coord) const;

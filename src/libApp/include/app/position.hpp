@@ -1,8 +1,8 @@
 #pragma once
 
 #include "app/eventHub.hpp"
-#include "core/board.hpp"
-#include "core/types.hpp"
+#include "data/board.hpp"
+#include "data/player.hpp"
 #include "gameNet/nwEvents.hpp"
 
 namespace go::app {
