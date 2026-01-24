@@ -1,3 +1,4 @@
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/libData/)     # Library:     Core data layer
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/libCore/)     # Library:     Core game logic
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/libNetwork/)  # Library:     Network layer networking
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/libGameNet/)  # Library:     Application layer networking
