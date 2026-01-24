@@ -1,7 +1,9 @@
 #pragma once
 
-#include "core/types.hpp"
+#include "data/board.hpp"
+#include "data/player.hpp"
 
+#include <cstdint>
 #include <optional>
 #include <variant>
 #include <vector>
@@ -21,7 +23,7 @@ using GameEvent = std::variant<PutStoneEvent, PassEvent, ResignEvent, ShutdownEv
 
 
 //! Types of signals.
-enum GameSignal : uint64_t {
+enum GameSignal : std::uint64_t {
 	GS_None         = 0,
 	GS_BoardChange  = 1 << 0, //!< Board was modified.
 	GS_PlayerChange = 1 << 1, //!< Active player changed.

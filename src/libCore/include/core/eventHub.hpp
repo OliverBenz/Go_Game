@@ -2,7 +2,6 @@
 
 #include "core/IGameSignalListener.hpp"
 #include "core/IGameStateListener.hpp"
-#include "core/types.hpp"
 
 #include <mutex>
 #include <vector>

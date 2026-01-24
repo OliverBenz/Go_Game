@@ -6,7 +6,7 @@ Position::Position(std::size_t boardSize) : board{boardSize} {
 }
 
 void Position::putStone(Coord c, IZobristHash& hasher) {
-	board.setAt(c, toBoardValue(currentPlayer));
+	board.place(c, toStone(currentPlayer));
 	hash ^= hasher.stone(c, currentPlayer);
 
 	currentPlayer = opponent(currentPlayer);

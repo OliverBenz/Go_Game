@@ -1,6 +1,8 @@
 #pragma once
 
-#include "core/types.hpp"
+#include "data/board.hpp"
+#include "data/player.hpp"
+
 #include <cstdint>
 
 namespace go {

@@ -22,7 +22,7 @@ static std::size_t groupAnalysis(const Board& board, const Coord startCoord, con
 	auto isPlayerStone = [&](Coord c) {
 		if (pretendStone && pretendStone->x == c.x && pretendStone->y == c.y)
 			return true;
-		return board.getAt(c) == toBoardValue(player);
+		return board.get(c) == toStone(player);
 	};
 
 	std::vector<std::vector<bool>> visited(boardSize, std::vector<bool>(boardSize, false));
@@ -50,7 +50,7 @@ static std::size_t groupAnalysis(const Board& board, const Coord startCoord, con
 			if (nx < 0 || ny < 0 || nx >= static_cast<int>(boardSize) || ny >= static_cast<int>(boardSize))
 				continue;
 
-			const Coord neighbor{static_cast<Id>(nx), static_cast<Id>(ny)};
+			const Coord neighbor{static_cast<unsigned>(nx), static_cast<unsigned>(ny)};
 			if (isPlayerStone(neighbor)) {
 				if (!visited[neighbor.x][neighbor.y]) {
 					stack.push_back(neighbor);
@@ -59,7 +59,7 @@ static std::size_t groupAnalysis(const Board& board, const Coord startCoord, con
 				continue;
 			}
 
-			if (board.getAt(neighbor) == Board::Value::Empty && (!blockedLiberty || (blockedLiberty->x != neighbor.x || blockedLiberty->y != neighbor.y)) &&
+			if (board.get(neighbor) == Board::Stone::Empty && (!blockedLiberty || (blockedLiberty->x != neighbor.x || blockedLiberty->y != neighbor.y)) &&
 			    !libertyVisited[neighbor.x][neighbor.y]) {
 				libertyVisited[neighbor.x][neighbor.y] = true;
 				++liberties;
@@ -90,8 +90,8 @@ static bool wouldCapture(const Board& board, Coord c, Player player) {
 		if (nx < 0 || ny < 0 || nx >= static_cast<int>(boardSize) || ny >= static_cast<int>(boardSize))
 			continue;
 
-		const Coord neighbor{static_cast<Id>(nx), static_cast<Id>(ny)};
-		if (board.getAt(neighbor) != toBoardValue(enemy) || visited[neighbor.x][neighbor.y])
+		const Coord neighbor{static_cast<unsigned>(nx), static_cast<unsigned>(ny)};
+		if (board.get(neighbor) != toStone(enemy) || visited[neighbor.x][neighbor.y])
 			continue;
 
 		group.clear();
@@ -120,7 +120,7 @@ bool isSuicide(const Board& board, Player player, Coord c) {
 //! Simulate the position after a move
 //! \param [out] outCaptures List of stones captured by a move.
 static Position simulatePosition(const Position& start, Coord move, Player player, IZobristHash& hasher, std::vector<Coord>& outCaptures) {
-	assert(start.board.isFree(move));
+	assert(start.board.isEmpty(move));
 
 	const auto boardSize = start.board.size();
 	const auto enemy     = opponent(player);
@@ -135,8 +135,8 @@ static Position simulatePosition(const Position& start, Coord move, Player playe
 		if (nx < 0 || ny < 0 || nx >= static_cast<int>(boardSize) || ny >= static_cast<int>(boardSize))
 			continue;
 
-		const Coord neighbor{static_cast<Id>(nx), static_cast<Id>(ny)};
-		if (start.board.getAt(neighbor) != toBoardValue(enemy) || visited[neighbor.x][neighbor.y])
+		const Coord neighbor{static_cast<unsigned>(nx), static_cast<unsigned>(ny)};
+		if (start.board.get(neighbor) != toStone(enemy) || visited[neighbor.x][neighbor.y])
 			continue;
 
 		group.clear();
@@ -152,23 +152,23 @@ static Position simulatePosition(const Position& start, Coord move, Player playe
 	}
 
 	Board nextBoard{boardSize};
-	for (Id x = 0; x < boardSize; ++x) {
-		for (Id y = 0; y < boardSize; ++y) {
+	for (unsigned x = 0; x < boardSize; ++x) {
+		for (unsigned y = 0; y < boardSize; ++y) {
 			const Coord pos{x, y};
 			if (captured[x][y] || (pos.x == move.x && pos.y == move.y))
 				continue;
 
-			const auto value = start.board.getAt(pos);
-			if (value != Board::Value::Empty) {
-				nextBoard.setAt(pos, value);
+			const auto value = start.board.get(pos);
+			if (value != Board::Stone::Empty) {
+				nextBoard.place(pos, value);
 			}
 		}
 	}
-	nextBoard.setAt(move, toBoardValue(player));
+	nextBoard.place(move, toStone(player));
 
 	outCaptures.clear();
-	for (Id x = 0; x < boardSize; ++x) {
-		for (Id y = 0; y < boardSize; ++y) {
+	for (unsigned x = 0; x < boardSize; ++x) {
+		for (unsigned y = 0; y < boardSize; ++y) {
 			if (captured[x][y]) {
 				outCaptures.push_back(Coord{x, y});
 			}
@@ -191,7 +191,7 @@ static Position simulatePosition(const Position& start, Coord move, Player playe
 }
 
 bool isValidMove(const Board& board, Player player, Coord c) {
-	if (!inBounds(board, c) || board.getAt(c) != Board::Value::Empty)
+	if (!inBounds(board, c) || board.get(c) != Board::Stone::Empty)
 		return false;
 
 	return !isSuicide(board, player, c);

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "core/IZobristHash.hpp"
-#include "core/board.hpp"
 #include "core/position.hpp"
-#include "core/types.hpp"
+#include "data/board.hpp"
+#include "data/player.hpp"
 
 #include <cstdint>
 #include <optional>

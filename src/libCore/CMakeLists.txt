@@ -3,8 +3,6 @@ set(targetName libCore)
 
 # Get files to build
 set(headers
-    ${CMAKE_CURRENT_LIST_DIR}/include/core/types.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/include/core/board.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/core/game.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/core/position.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/core/gameEvent.hpp
@@ -17,7 +15,6 @@ set(headers
     ${CMAKE_CURRENT_LIST_DIR}/zobristHash.hpp
 )
 set(sources
-    ${CMAKE_CURRENT_LIST_DIR}/board.cpp
     ${CMAKE_CURRENT_LIST_DIR}/position.cpp
     ${CMAKE_CURRENT_LIST_DIR}/game.cpp
     ${CMAKE_CURRENT_LIST_DIR}/sgfHandler.cpp
@@ -35,6 +32,10 @@ add_library(go::core ALIAS ${targetName})
 target_include_directories(${targetName}
     PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
+)
+target_link_libraries(${targetName} 
+    PUBLIC
+        go::data    
 )
 
 # Setup project settings

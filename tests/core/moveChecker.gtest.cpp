@@ -1,6 +1,6 @@
 #include "core/moveChecker.hpp"
-#include "core/board.hpp"
 #include "core/game.hpp"
+#include "data/board.hpp"
 #//include "core/zobristHash.hpp"
 
 #include <gtest/gtest.h>
@@ -17,17 +17,17 @@ TEST(MoveChecker, ComputeConnectedLiberties_Single) {
 	EXPECT_EQ(computeGroupLiberties(board, {0u, 8u}, Player::Black), 2u);
 	EXPECT_EQ(computeGroupLiberties(board, {8u, 0u}, Player::Black), 2u);
 	// At border
-	for (Id i = 1; i != 8; ++i) {
+	for (unsigned i = 1; i != 8; ++i) {
 		EXPECT_EQ(computeGroupLiberties(board, {i, 0u}, Player::Black), 3u);
 		EXPECT_EQ(computeGroupLiberties(board, {i, 8u}, Player::Black), 3u);
 	}
-	for (Id j = 1; j != 8; ++j) {
+	for (unsigned j = 1; j != 8; ++j) {
 		EXPECT_EQ(computeGroupLiberties(board, {0u, j}, Player::Black), 3u);
 		EXPECT_EQ(computeGroupLiberties(board, {8u, j}, Player::Black), 3u);
 	}
 	// No borders
-	for (Id i = 1; i != 8; ++i) {
-		for (Id j = 1; j != 8; ++j) {
+	for (unsigned i = 1; i != 8; ++i) {
+		for (unsigned j = 1; j != 8; ++j) {
 			EXPECT_EQ(computeGroupLiberties(board, {i, j}, Player::Black), 4u);
 		}
 	}
@@ -38,8 +38,8 @@ TEST(MoveChecker, ComputeConnectedLiberties_Center) {
 	{
 		Board board(9u);
 
-		board.setAt({4u, 3u}, Board::Value::Black);
-		board.setAt({4u, 4u}, Board::Value::Black);
+		board.place({4u, 3u}, Board::Stone::Black);
+		board.place({4u, 4u}, Board::Stone::Black);
 
 		// Check liberties for each stone to check that full chain is found.
 		EXPECT_EQ(computeGroupLiberties(board, {4u, 3u}, Player::Black), 6u);
@@ -48,9 +48,9 @@ TEST(MoveChecker, ComputeConnectedLiberties_Center) {
 	{
 		Board board(9u);
 
-		board.setAt({4u, 3u}, Board::Value::Black);
-		board.setAt({4u, 4u}, Board::Value::Black);
-		board.setAt({4u, 5u}, Board::Value::Black);
+		board.place({4u, 3u}, Board::Stone::Black);
+		board.place({4u, 4u}, Board::Stone::Black);
+		board.place({4u, 5u}, Board::Stone::Black);
 
 		// Check liberties for each stone to check that full chain is found.
 		EXPECT_EQ(computeGroupLiberties(board, {4u, 3u}, Player::Black), 8u);
@@ -60,9 +60,9 @@ TEST(MoveChecker, ComputeConnectedLiberties_Center) {
 	{
 		Board board(9u);
 
-		board.setAt({4u, 3u}, Board::Value::Black);
-		board.setAt({4u, 4u}, Board::Value::Black);
-		board.setAt({5u, 4u}, Board::Value::Black);
+		board.place({4u, 3u}, Board::Stone::Black);
+		board.place({4u, 4u}, Board::Stone::Black);
+		board.place({5u, 4u}, Board::Stone::Black);
 
 		// Check liberties for each stone to check that full chain is found.
 		EXPECT_EQ(computeGroupLiberties(board, {4u, 3u}, Player::Black), 7u);
@@ -72,10 +72,10 @@ TEST(MoveChecker, ComputeConnectedLiberties_Center) {
 	{
 		Board board(9u);
 
-		board.setAt({4u, 3u}, Board::Value::Black);
-		board.setAt({4u, 4u}, Board::Value::Black);
-		board.setAt({4u, 5u}, Board::Value::Black);
-		board.setAt({5u, 5u}, Board::Value::Black);
+		board.place({4u, 3u}, Board::Stone::Black);
+		board.place({4u, 4u}, Board::Stone::Black);
+		board.place({4u, 5u}, Board::Stone::Black);
+		board.place({5u, 5u}, Board::Stone::Black);
 
 		// Check liberties for each stone to check that full chain is found.
 		EXPECT_EQ(computeGroupLiberties(board, {4u, 3u}, Player::Black), 9u);
@@ -86,17 +86,17 @@ TEST(MoveChecker, ComputeConnectedLiberties_Center) {
 	{
 		Board board(9u);
 
-		board.setAt({4u, 3u}, Board::Value::Black);
-		board.setAt({4u, 4u}, Board::Value::Black);
-		board.setAt({4u, 5u}, Board::Value::Black);
+		board.place({4u, 3u}, Board::Stone::Black);
+		board.place({4u, 4u}, Board::Stone::Black);
+		board.place({4u, 5u}, Board::Stone::Black);
 
-		board.setAt({5u, 3u}, Board::Value::Black);
-		board.setAt({5u, 5u}, Board::Value::Black);
+		board.place({5u, 3u}, Board::Stone::Black);
+		board.place({5u, 5u}, Board::Stone::Black);
 
-		board.setAt({6u, 4u}, Board::Value::Black);
-		board.setAt({6u, 5u}, Board::Value::Black);
+		board.place({6u, 4u}, Board::Stone::Black);
+		board.place({6u, 5u}, Board::Stone::Black);
 
-		board.setAt({7u, 4u}, Board::Value::Black);
+		board.place({7u, 4u}, Board::Stone::Black);
 
 		// Check liberties for each stone to check that full chain is found.
 		EXPECT_EQ(computeGroupLiberties(board, {4u, 3u}, Player::Black), 13u);
@@ -118,11 +118,11 @@ TEST(MoveChecker, ComputeConnectedLiberties_Borders) {
 	{
 		Board board(9u);
 
-		board.setAt({0u, 0u}, Board::Value::Black);
-		board.setAt({0u, 1u}, Board::Value::Black);
-		board.setAt({0u, 2u}, Board::Value::Black);
+		board.place({0u, 0u}, Board::Stone::Black);
+		board.place({0u, 1u}, Board::Stone::Black);
+		board.place({0u, 2u}, Board::Stone::Black);
 
-		board.setAt({1u, 1u}, Board::Value::Black);
+		board.place({1u, 1u}, Board::Stone::Black);
 
 		// Check liberties for each stone to check that full chain is found.
 		EXPECT_EQ(computeGroupLiberties(board, {0u, 0u}, Player::Black), 4u);
@@ -134,15 +134,15 @@ TEST(MoveChecker, ComputeConnectedLiberties_Borders) {
 	{
 		Board board(9u);
 
-		board.setAt({0u, 0u}, Board::Value::Black);
-		board.setAt({0u, 1u}, Board::Value::Black);
-		board.setAt({0u, 2u}, Board::Value::Black);
+		board.place({0u, 0u}, Board::Stone::Black);
+		board.place({0u, 1u}, Board::Stone::Black);
+		board.place({0u, 2u}, Board::Stone::Black);
 
-		board.setAt({1u, 1u}, Board::Value::Black);
+		board.place({1u, 1u}, Board::Stone::Black);
 
-		board.setAt({2u, 0u}, Board::Value::Black);
-		board.setAt({2u, 1u}, Board::Value::Black);
-		board.setAt({2u, 2u}, Board::Value::Black);
+		board.place({2u, 0u}, Board::Stone::Black);
+		board.place({2u, 1u}, Board::Stone::Black);
+		board.place({2u, 2u}, Board::Stone::Black);
 
 		// Check liberties for each stone to check that full chain is found.
 		EXPECT_EQ(computeGroupLiberties(board, {0u, 0u}, Player::Black), 7u);
@@ -158,16 +158,16 @@ TEST(MoveChecker, ComputeConnectedLiberties_Borders) {
 	{
 		Board board(9u);
 
-		board.setAt({0u, 0u}, Board::Value::Black);
-		board.setAt({0u, 1u}, Board::Value::Black);
-		board.setAt({0u, 2u}, Board::Value::Black);
+		board.place({0u, 0u}, Board::Stone::Black);
+		board.place({0u, 1u}, Board::Stone::Black);
+		board.place({0u, 2u}, Board::Stone::Black);
 
-		board.setAt({1u, 0u}, Board::Value::Black);
-		board.setAt({1u, 2u}, Board::Value::Black);
+		board.place({1u, 0u}, Board::Stone::Black);
+		board.place({1u, 2u}, Board::Stone::Black);
 
-		board.setAt({2u, 0u}, Board::Value::Black);
-		board.setAt({2u, 1u}, Board::Value::Black);
-		board.setAt({2u, 2u}, Board::Value::Black);
+		board.place({2u, 0u}, Board::Stone::Black);
+		board.place({2u, 1u}, Board::Stone::Black);
+		board.place({2u, 2u}, Board::Stone::Black);
 
 		// Check liberties for each stone to check that full chain is found.
 		EXPECT_EQ(computeGroupLiberties(board, {0u, 0u}, Player::Black), 7u);
@@ -184,18 +184,18 @@ TEST(MoveChecker, ComputeConnectedLiberties_Borders) {
 	{
 		Board board(9u);
 
-		board.setAt({0u, 0u}, Board::Value::Black);
-		board.setAt({1u, 0u}, Board::Value::Black);
-		board.setAt({2u, 0u}, Board::Value::Black);
-		board.setAt({3u, 0u}, Board::Value::Black);
+		board.place({0u, 0u}, Board::Stone::Black);
+		board.place({1u, 0u}, Board::Stone::Black);
+		board.place({2u, 0u}, Board::Stone::Black);
+		board.place({3u, 0u}, Board::Stone::Black);
 
-		board.setAt({0u, 1u}, Board::Value::Black);
-		board.setAt({3u, 1u}, Board::Value::Black);
+		board.place({0u, 1u}, Board::Stone::Black);
+		board.place({3u, 1u}, Board::Stone::Black);
 
-		board.setAt({0u, 2u}, Board::Value::Black);
-		board.setAt({1u, 2u}, Board::Value::Black);
-		board.setAt({2u, 2u}, Board::Value::Black);
-		board.setAt({3u, 2u}, Board::Value::Black);
+		board.place({0u, 2u}, Board::Stone::Black);
+		board.place({1u, 2u}, Board::Stone::Black);
+		board.place({2u, 2u}, Board::Stone::Black);
+		board.place({3u, 2u}, Board::Stone::Black);
 
 		EXPECT_EQ(computeGroupLiberties(board, {0u, 0u}, Player::Black), 9u);
 		EXPECT_EQ(computeGroupLiberties(board, {1u, 0u}, Player::Black), 9u);
@@ -220,9 +220,9 @@ TEST(MoveChecker, Suicide) {
 	{
 		Board board(9u);
 
-		board.setAt({0u, 1u}, Board::Value::Black);
-		board.setAt({1u, 0u}, Board::Value::Black);
-		board.setAt({1u, 2u}, Board::Value::Black);
+		board.place({0u, 1u}, Board::Stone::Black);
+		board.place({1u, 0u}, Board::Stone::Black);
+		board.place({1u, 2u}, Board::Stone::Black);
 
 		// Legal move
 		EXPECT_TRUE(isValidMove(board, Player::Black, {1u, 1u}));
@@ -232,10 +232,10 @@ TEST(MoveChecker, Suicide) {
 	{
 		Board board(9u);
 
-		board.setAt({0u, 1u}, Board::Value::Black);
-		board.setAt({1u, 0u}, Board::Value::Black);
-		board.setAt({1u, 2u}, Board::Value::Black);
-		board.setAt({2u, 1u}, Board::Value::Black);
+		board.place({0u, 1u}, Board::Stone::Black);
+		board.place({1u, 0u}, Board::Stone::Black);
+		board.place({1u, 2u}, Board::Stone::Black);
+		board.place({2u, 1u}, Board::Stone::Black);
 
 		// Suicide -> invalid move
 		EXPECT_FALSE(isValidMove(board, Player::White, {1u, 1u}));
@@ -244,24 +244,24 @@ TEST(MoveChecker, Suicide) {
 	{
 		Board board(9u);
 
-		board.setAt({0u, 1u}, Board::Value::Black);
-		board.setAt({0u, 2u}, Board::Value::Black);
-		board.setAt({0u, 3u}, Board::Value::Black);
+		board.place({0u, 1u}, Board::Stone::Black);
+		board.place({0u, 2u}, Board::Stone::Black);
+		board.place({0u, 3u}, Board::Stone::Black);
 
-		board.setAt({1u, 0u}, Board::Value::Black);
-		board.setAt({1u, 1u}, Board::Value::White);
-		board.setAt({1u, 2u}, Board::Value::White);
-		board.setAt({1u, 3u}, Board::Value::Black);
+		board.place({1u, 0u}, Board::Stone::Black);
+		board.place({1u, 1u}, Board::Stone::White);
+		board.place({1u, 2u}, Board::Stone::White);
+		board.place({1u, 3u}, Board::Stone::Black);
 
-		board.setAt({2u, 0u}, Board::Value::Black);
-		board.setAt({2u, 1u}, Board::Value::White);
-		board.setAt({2u, 2u}, Board::Value::Black);
-		board.setAt({2u, 3u}, Board::Value::Black);
+		board.place({2u, 0u}, Board::Stone::Black);
+		board.place({2u, 1u}, Board::Stone::White);
+		board.place({2u, 2u}, Board::Stone::Black);
+		board.place({2u, 3u}, Board::Stone::Black);
 
-		board.setAt({3u, 0u}, Board::Value::Black);
-		board.setAt({3u, 2u}, Board::Value::Black);
+		board.place({3u, 0u}, Board::Stone::Black);
+		board.place({3u, 2u}, Board::Stone::Black);
 
-		board.setAt({4u, 1u}, Board::Value::Black);
+		board.place({4u, 1u}, Board::Stone::Black);
 
 		// Suicide -> invalid move
 		EXPECT_FALSE(isValidMove(board, Player::White, {3u, 1u}));
@@ -269,9 +269,9 @@ TEST(MoveChecker, Suicide) {
 
 		// Now add white stones which would allow the same move to be a capture
 		// Surround the rightmost black stone.
-		board.setAt({4u, 0u}, Board::Value::White);
-		board.setAt({4u, 2u}, Board::Value::White);
-		board.setAt({5u, 1u}, Board::Value::White);
+		board.place({4u, 0u}, Board::Stone::White);
+		board.place({4u, 2u}, Board::Stone::White);
+		board.place({5u, 1u}, Board::Stone::White);
 
 		// Now we capture -> Move valid
 		EXPECT_TRUE(isValidMove(board, Player::White, {3u, 1u}));
@@ -281,16 +281,16 @@ TEST(MoveChecker, Suicide) {
 	{
 		Board board(9u);
 
-		board.setAt({0u, 1u}, Board::Value::Black);
+		board.place({0u, 1u}, Board::Stone::Black);
 
-		board.setAt({1u, 0u}, Board::Value::Black);
-		board.setAt({1u, 2u}, Board::Value::Black);
+		board.place({1u, 0u}, Board::Stone::Black);
+		board.place({1u, 2u}, Board::Stone::Black);
 
-		board.setAt({2u, 0u}, Board::Value::White);
-		board.setAt({2u, 1u}, Board::Value::Black);
-		board.setAt({2u, 2u}, Board::Value::White);
+		board.place({2u, 0u}, Board::Stone::White);
+		board.place({2u, 1u}, Board::Stone::Black);
+		board.place({2u, 2u}, Board::Stone::White);
 
-		board.setAt({3u, 1u}, Board::Value::White);
+		board.place({3u, 1u}, Board::Stone::White);
 
 		// Captures -> valid move
 		EXPECT_TRUE(isValidMove(board, Player::White, {1u, 1u}));
@@ -302,19 +302,19 @@ TEST(MoveChecker, Kill) {
 	{
 		Board board(9u);
 
-		board.setAt({0u, 0u}, Board::Value::White);
-		board.setAt({0u, 1u}, Board::Value::Black);
-		board.setAt({0u, 2u}, Board::Value::White);
+		board.place({0u, 0u}, Board::Stone::White);
+		board.place({0u, 1u}, Board::Stone::Black);
+		board.place({0u, 2u}, Board::Stone::White);
 
-		board.setAt({1u, 0u}, Board::Value::Black);
-		board.setAt({1u, 2u}, Board::Value::Black);
-		board.setAt({1u, 3u}, Board::Value::White);
+		board.place({1u, 0u}, Board::Stone::Black);
+		board.place({1u, 2u}, Board::Stone::Black);
+		board.place({1u, 3u}, Board::Stone::White);
 
-		board.setAt({2u, 0u}, Board::Value::White);
-		board.setAt({2u, 1u}, Board::Value::Black);
-		board.setAt({2u, 2u}, Board::Value::White);
+		board.place({2u, 0u}, Board::Stone::White);
+		board.place({2u, 1u}, Board::Stone::Black);
+		board.place({2u, 2u}, Board::Stone::White);
 
-		board.setAt({3u, 1u}, Board::Value::White);
+		board.place({3u, 1u}, Board::Stone::White);
 
 		EXPECT_TRUE(isValidMove(board, Player::White, {1u, 1u}));
 	}
@@ -336,11 +336,11 @@ TEST(MoveChecker, Kill) {
 
 // TEST(MoveChecker, SuperkoAllowsNewHashes) {
 // 	Board board(9u);
-// 	board.setAt({0u, 1u}, Board::Value::White);
-// 	board.setAt({1u, 0u}, Board::Value::White);
-// 	board.setAt({1u, 2u}, Board::Value::White);
+// 	board.place({0u, 1u}, Board::Stone::White);
+// 	board.place({1u, 0u}, Board::Stone::White);
+// 	board.place({1u, 2u}, Board::Stone::White);
 
-// 	board.setAt({2u, 1u}, Board::Value::Black);
+// 	board.place({2u, 1u}, Board::Stone::Black);
 
 // 	Position pos{9u};
 // 	pos.board = board;
@@ -352,8 +352,8 @@ TEST(MoveChecker, Kill) {
 // 		for (Id y = 0; y < board.size(); ++y) {
 // 			const Coord c{x, y};
 // 			const auto v = board.getAt(c);
-// 			if (v != Board::Value::Empty)
-// 				h ^= hasher.stone(c, v == Board::Value::White ? Player::White : Player::Black);
+// 			if (v != Board::Stone::Empty)
+// 				h ^= hasher.stone(c, v == Board::Stone::White ? Player::White : Player::Black);
 // 		}
 // 	h ^= hasher.togglePlayer(); // White to move
 // 	pos.hash = h;
