@@ -42,7 +42,7 @@ private:
 	bool m_gameActive;
 	unsigned m_consecutivePasses{0}; //!< Two consequtive passes ends game.
 
-	Position m_position;
+	GamePosition m_position;
 	EventQueue m_eventQueue; //!< Queue of internal game events we have to handle.
 	EventHub m_eventHub;     //!< Hub to signal updates of the game state to external components.
 

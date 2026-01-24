@@ -3,16 +3,10 @@
 #include "app/eventHub.hpp"
 #include "data/board.hpp"
 #include "data/player.hpp"
+#include "data/position.hpp"
 #include "gameNet/nwEvents.hpp"
 
 namespace go::app {
-
-enum class GameStatus {
-	Idle,    //!< Nothing happening
-	Waiting, //!< Waiting for players to connect.
-	Active,  //!< Game being played.
-	Done     //!< Game over.
-};
 
 class Position {
 public:

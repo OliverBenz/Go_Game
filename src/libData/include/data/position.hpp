@@ -1,7 +1,6 @@
 #pragma once
 
 #include "data/board.hpp"
-#include "data/clock.hpp"
 #include "data/player.hpp"
 
 namespace go {
@@ -17,6 +16,6 @@ enum class GameStatus {
 struct Position {
 	Player toMove; //!< Current player to make a move.
 	Board board;   //!< Go Board.
-}
+};
 
 } // namespace go
