@@ -119,7 +119,7 @@ bool isSuicide(const Board& board, Player player, Coord c) {
 
 //! Simulate the position after a move
 //! \param [out] outCaptures List of stones captured by a move.
-static Position simulatePosition(const Position& start, Coord move, Player player, IZobristHash& hasher, std::vector<Coord>& outCaptures) {
+static GamePosition simulatePosition(const GamePosition& start, Coord move, Player player, IZobristHash& hasher, std::vector<Coord>& outCaptures) {
 	assert(start.board.isEmpty(move));
 
 	const auto boardSize = start.board.size();
@@ -182,7 +182,7 @@ static Position simulatePosition(const Position& start, Coord move, Player playe
 	}
 	nextHash ^= hasher.togglePlayer();
 
-	Position next      = start;
+	GamePosition next  = start;
 	next.board         = std::move(nextBoard);
 	next.currentPlayer = opponent(player);
 	next.hash          = nextHash;
@@ -197,12 +197,12 @@ bool isValidMove(const Board& board, Player player, Coord c) {
 	return !isSuicide(board, player, c);
 }
 
-bool isNextPositionLegal(const Position& current, Player player, Coord c, IZobristHash& hasher, const std::unordered_set<uint64_t>& history, Position& out,
-                         std::vector<Coord>& outCaptures) {
+bool isNextPositionLegal(const GamePosition& current, Player player, Coord c, IZobristHash& hasher, const std::unordered_set<uint64_t>& history,
+                         GamePosition& out, std::vector<Coord>& outCaptures) {
 	if (!isValidMove(current.board, player, c))
 		return false;
 
-	Position simulated = simulatePosition(current, c, player, hasher, outCaptures);
+	GamePosition simulated = simulatePosition(current, c, player, hasher, outCaptures);
 	if (history.contains(simulated.hash))
 		return false;
 

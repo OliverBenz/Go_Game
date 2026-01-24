@@ -2,10 +2,10 @@
 
 namespace go {
 
-Position::Position(std::size_t boardSize) : board{boardSize} {
+GamePosition::GamePosition(std::size_t boardSize) : board{boardSize} {
 }
 
-void Position::putStone(Coord c, IZobristHash& hasher) {
+void GamePosition::putStone(Coord c, IZobristHash& hasher) {
 	board.place(c, toStone(currentPlayer));
 	hash ^= hasher.stone(c, currentPlayer);
 
@@ -15,7 +15,7 @@ void Position::putStone(Coord c, IZobristHash& hasher) {
 	++moveId;
 }
 
-void Position::pass(IZobristHash& hasher) {
+void GamePosition::pass(IZobristHash& hasher) {
 	currentPlayer = opponent(currentPlayer);
 	hash ^= hasher.togglePlayer();
 

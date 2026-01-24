@@ -27,7 +27,7 @@ void SessionManager::connect(const std::string& hostIp) {
 	{
 		std::lock_guard<std::mutex> lock(m_stateMutex);
 		m_position.reset(9u);
-		m_position.setStatus(GameStatus::Waiting);
+		m_position.setStatus(GameStatus::Ready);
 		m_chatHistory.clear();
 	}
 	m_localServer.reset();
@@ -40,7 +40,7 @@ void SessionManager::host(unsigned boardSize) {
 	{
 		std::lock_guard<std::mutex> lock(m_stateMutex);
 		m_position.reset(boardSize);
-		m_position.setStatus(GameStatus::Waiting);
+		m_position.setStatus(GameStatus::Ready);
 		m_chatHistory.clear();
 	}
 

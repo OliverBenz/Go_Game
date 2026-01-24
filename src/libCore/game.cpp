@@ -52,7 +52,7 @@ void Game::handleEvent(const PutStoneEvent& event) {
 		return;
 	}
 
-	Position next{m_position.board.size()};
+	GamePosition next{m_position.board.size()};
 	std::vector<Coord> captures{};
 	if (isNextPositionLegal(m_position, m_position.currentPlayer, event.c, *m_hasher, m_seenHashes, next, captures)) {
 		m_consecutivePasses = 0;
@@ -97,7 +97,7 @@ void Game::handleEvent(const PassEvent& event) {
 		return;
 	}
 
-	Position next = m_position;
+	GamePosition next = m_position;
 	next.pass(*m_hasher);
 
 	if (m_seenHashes.contains(next.hash)) {

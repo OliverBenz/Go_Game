@@ -108,10 +108,10 @@ void GameWidget::setCurrentPlayerText() {
 }
 
 void GameWidget::setGameStateText() {
-	static const std::map<app::GameStatus, std::string> message{{app::GameStatus::Idle, "Idle"},
-	                                                            {app::GameStatus::Waiting, "Waiting for Player"},
-	                                                            {app::GameStatus::Active, "Active"},
-	                                                            {app::GameStatus::Done, "Game Finished"}};
+	static const std::map<GameStatus, std::string> message{{GameStatus::Idle, "Idle"},
+	                                                       {GameStatus::Ready, "Waiting for Player"},
+	                                                       {GameStatus::Active, "Active"},
+	                                                       {GameStatus::Done, "Game Finished"}};
 	assert(message.contains(m_game.status()));
 	m_statusLabel->setText(QString::fromStdString(message.at(m_game.status())));
 }
