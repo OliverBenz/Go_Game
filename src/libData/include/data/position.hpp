@@ -13,16 +13,16 @@ enum class GameStatus {
 	Done    //!< Game over.
 };
 
-//! Current game position. 
+//! Current game position.
 struct Position {
-    Player toMove; //!< Current player to make a move.
-    Board board;   //!< Go Board.
+	Player toMove; //!< Current player to make a move.
+	Board board;   //!< Go Board.
 }
 
 //! Current match state.
 struct MatchState {
-    Position position; //!< Current game position.
-    Clock clock;       //!< Game Clock.
+	Position position; //!< Current game position.
+	Clock clock;       //!< Game Clock.
 }
 
-}
+} // namespace go
