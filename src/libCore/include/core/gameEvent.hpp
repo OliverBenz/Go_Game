@@ -33,6 +33,7 @@ enum GameSignal : std::uint64_t {
 
 //! Type of move.
 enum class GameAction { Place, Pass, Resign };
+
 //! Symbolises the game state change after one move.
 struct GameDelta {
 	unsigned moveId;             //!< Move number.

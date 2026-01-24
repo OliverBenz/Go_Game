@@ -4,8 +4,9 @@ set(targetName libData)
 # Get files to build
 set(headers
     ${CMAKE_CURRENT_LIST_DIR}/include/data/player.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/data/coordinate.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/data/board.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/include/data/position.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/data/gameStatus.hpp
 )
 set(sources
     ${CMAKE_CURRENT_LIST_DIR}/board.cpp

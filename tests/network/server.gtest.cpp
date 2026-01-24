@@ -82,7 +82,7 @@ private:
 		        .turn     = moveId,
 		        .seat     = seat,
 		        .action   = gameNet::ServerAction::Place,
-		        .coord    = gameNet::Coord{event.c.x, event.c.y},
+		        .coord    = event.c,
 		        .captures = {},
 		        .next     = next,
 		        .status   = gameNet::GameStatus::Active,

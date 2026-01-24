@@ -95,16 +95,6 @@ void GameServer::onNetworkEvent(gameNet::SessionId sessionId, const gameNet::Cli
 }
 
 void GameServer::onGameDelta(const GameDelta& delta) {
-	const auto toGameNetCoord  = [](Coord c) -> gameNet::Coord { return gameNet::Coord{c.x, c.y}; };
-	const auto toGameNetCoords = [](const std::vector<Coord>& coords) -> std::vector<gameNet::Coord> {
-		std::vector<gameNet::Coord> res;
-		res.reserve(coords.size());
-		for (const auto& c: coords) {
-			res.emplace_back(gameNet::Coord{c.x, c.y});
-		}
-		return res;
-	};
-
 	gameNet::ServerAction action = gameNet::ServerAction::Pass;
 	switch (delta.action) {
 	case GameAction::Place:
@@ -123,8 +113,8 @@ void GameServer::onGameDelta(const GameDelta& delta) {
 	        .turn     = delta.moveId,
 	        .seat     = delta.player == Player::Black ? gameNet::Seat::Black : gameNet::Seat::White,
 	        .action   = action,
-	        .coord    = delta.coord.has_value() ? std::optional<gameNet::Coord>(toGameNetCoord(*delta.coord)) : std::nullopt,
-	        .captures = toGameNetCoords(delta.captures),
+	        .coord    = delta.coord,
+	        .captures = delta.captures,
 	        .next     = delta.nextPlayer == Player::Black ? gameNet::Seat::Black : gameNet::Seat::White,
 	        .status   = delta.gameActive ? gameNet::GameStatus::Active : gameNet::GameStatus::Draw,
 	};

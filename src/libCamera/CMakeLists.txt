@@ -29,4 +29,3 @@ set_output_directory(${targetName})  # Set the output directory of the library
 target_compile_definitions(${targetName} PUBLIC VERSION_MAJOR=0)
 target_compile_definitions(${targetName} PUBLIC VERSION_MINOR=0)
 target_compile_definitions(${targetName} PUBLIC VERSION_PATCH=1)
-

@@ -2,8 +2,8 @@
 
 #include "app/eventHub.hpp"
 #include "data/board.hpp"
+#include "data/gameStatus.hpp"
 #include "data/player.hpp"
-#include "data/position.hpp"
 #include "gameNet/nwEvents.hpp"
 
 namespace go::app {
