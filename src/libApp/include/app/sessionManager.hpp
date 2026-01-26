@@ -19,6 +19,11 @@ class GameServer;
 //! SessionManager is the local source of truth about the game state, GUI is just dumb renderer of this state.
 class SessionManager : public gameNet::IClientHandler {
 public:
+	struct ChatEntry {
+		gameNet::Seat seat;
+		std::string message;
+	};
+
 	SessionManager();
 	~SessionManager();
 
@@ -34,6 +39,7 @@ public:
 	void tryResign();
 	void tryPass();
 	void chat(const std::string& message);
+	std::vector<ChatEntry> chatHistory() const;
 
 	// TODO: Maybe the UI elements should have a const reference to 'Position'. (Position is data layer; SessionManager is application layer)
 	//       Then position only has public getters and SessionManager is a friend so it can update.
@@ -55,7 +61,7 @@ private:
 	EventHub m_eventHub;
 	Position m_position;
 
-	std::vector<std::string> m_chatHistory;
+	std::vector<ChatEntry> m_chatHistory;
 	std::unique_ptr<GameServer> m_localServer;
 	mutable std::mutex m_stateMutex;
 };

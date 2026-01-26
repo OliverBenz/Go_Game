@@ -75,6 +75,11 @@ void SessionManager::chat(const std::string& message) {
 	m_network.send(gameNet::ClientChat{message});
 }
 
+std::vector<SessionManager::ChatEntry> SessionManager::chatHistory() const {
+	std::lock_guard<std::mutex> lock(m_stateMutex);
+	return m_chatHistory;
+}
+
 GameStatus SessionManager::status() const {
 	std::lock_guard<std::mutex> lock(m_stateMutex);
 	return m_position.getStatus();
@@ -98,7 +103,7 @@ void SessionManager::onGameConfig(const gameNet::ServerGameConfig& event) {
 }
 void SessionManager::onChatMessage(const gameNet::ServerChat& event) {
 	std::lock_guard<std::mutex> lock(m_stateMutex);
-	m_chatHistory.push_back(event.message);
+	m_chatHistory.push_back(ChatEntry{.seat = event.seat, .message = event.message});
 	m_eventHub.signal(AS_NewChat);
 }
 void SessionManager::onDisconnected() {

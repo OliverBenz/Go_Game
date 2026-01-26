@@ -5,6 +5,8 @@
 #include "core/game.hpp"
 #include <QCloseEvent>
 #include <QLabel>
+#include <QLineEdit>
+#include <QListWidget>
 #include <QPushButton>
 #include <QTabWidget>
 #include <QWidget>
@@ -27,10 +29,12 @@ private:
 
 	void setCurrentPlayerText(); //!< Get current player from game and update the label.
 	void setGameStateText();     //!< Get game state from game and update the label.
+	void appendChatMessages();
 
 private: // Slots
 	void onPassClicked();
 	void onResignClicked();
+	void onSendChat();
 
 private:
 	app::SessionManager& m_game;
@@ -43,6 +47,11 @@ private:
 
 	QPushButton* m_passButton   = nullptr;
 	QPushButton* m_resignButton = nullptr;
+
+	QListWidget* m_chatList = nullptr;
+	QLineEdit* m_chatInput  = nullptr;
+	QPushButton* m_chatSend = nullptr;
+	std::size_t m_chatCount = 0;
 };
 
 } // namespace go::gui

@@ -1,6 +1,8 @@
 #include "GameWidget.hpp"
 
 #include <QHBoxLayout>
+#include <QLineEdit>
+#include <QListWidget>
 #include <QMetaObject>
 #include <QTabWidget>
 #include <QVBoxLayout>
@@ -20,7 +22,8 @@ GameWidget::GameWidget(app::SessionManager& game, QWidget* parent) : QWidget(par
 	// Setup Game Stuff
 	setCurrentPlayerText();
 	setGameStateText();
-	m_game.subscribe(this, app::AS_PlayerChange | app::AS_StateChange);
+	m_game.subscribe(this, app::AS_PlayerChange | app::AS_StateChange | app::AS_NewChat);
+	appendChatMessages();
 }
 
 GameWidget::~GameWidget() {
@@ -34,6 +37,9 @@ void GameWidget::onAppEvent(const app::AppSignal signal) {
 		break;
 	case app::AS_StateChange:
 		QMetaObject::invokeMethod(this, [this]() { setGameStateText(); }, Qt::QueuedConnection);
+		break;
+	case app::AS_NewChat:
+		QMetaObject::invokeMethod(this, [this]() { appendChatMessages(); }, Qt::QueuedConnection);
 		break;
 	default:
 		break;
@@ -74,8 +80,22 @@ void GameWidget::buildNetworkLayout() {
 	// Chat
 	auto* chatTab    = new QWidget(m_sideTabs);
 	auto* chatLayout = new QVBoxLayout(chatTab); // Title and content below
-	chatLayout->addWidget(new QLabel("Chat placeholder.", chatTab));
-	chatLayout->addStretch(); // Fill space below Label
+	m_chatList       = new QListWidget(chatTab);
+	m_chatList->setSelectionMode(QAbstractItemView::NoSelection);
+	m_chatList->setFocusPolicy(Qt::NoFocus);
+	chatLayout->addWidget(m_chatList, 1);
+
+	auto* chatInputRow    = new QWidget(chatTab);
+	auto* chatInputLayout = new QHBoxLayout(chatInputRow);
+	chatInputLayout->setContentsMargins(0, 0, 0, 0);
+	m_chatInput = new QLineEdit(chatInputRow);
+	m_chatSend  = new QPushButton("Send", chatInputRow);
+	chatInputLayout->addWidget(m_chatInput, 1);
+	chatInputLayout->addWidget(m_chatSend);
+	chatLayout->addWidget(chatInputRow);
+
+	connect(m_chatSend, &QPushButton::clicked, this, &GameWidget::onSendChat);
+	connect(m_chatInput, &QLineEdit::returnPressed, this, &GameWidget::onSendChat);
 	m_sideTabs->addTab(chatTab, "Chat");
 
 	contentLayout->addWidget(m_sideTabs, 1);
@@ -116,12 +136,49 @@ void GameWidget::setGameStateText() {
 	m_statusLabel->setText(QString::fromStdString(message.at(m_game.status())));
 }
 
+void GameWidget::appendChatMessages() {
+	const auto history = m_game.chatHistory();
+	if (history.size() < m_chatCount) {
+		m_chatList->clear();
+		m_chatCount = 0;
+	}
+	if (m_chatCount >= history.size()) {
+		return;
+	}
+
+	for (std::size_t i = m_chatCount; i < history.size(); ++i) {
+		const auto& entry  = history[i];
+		std::string prefix = "Observer";
+		if (entry.seat == gameNet::Seat::Black) {
+			prefix = "Black";
+		} else if (entry.seat == gameNet::Seat::White) {
+			prefix = "White";
+		}
+		const auto line = std::format("{}: {}", prefix, entry.message);
+		m_chatList->addItem(QString::fromStdString(line));
+	}
+	m_chatCount = history.size();
+	m_chatList->scrollToBottom();
+}
+
 void GameWidget::onPassClicked() {
 	m_game.tryPass();
 }
 
 void GameWidget::onResignClicked() {
 	m_game.tryResign();
+}
+
+void GameWidget::onSendChat() {
+	if (!m_chatInput) {
+		return;
+	}
+	const auto text = m_chatInput->text().trimmed();
+	if (text.isEmpty()) {
+		return;
+	}
+	m_game.chat(text.toStdString());
+	m_chatInput->clear();
 }
 
 } // namespace go::gui
