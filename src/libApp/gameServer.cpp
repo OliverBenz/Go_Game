@@ -41,13 +41,6 @@ void GameServer::stop() {
 }
 
 void GameServer::onClientConnected(gameNet::SessionId sessionId, gameNet::Seat seat) {
-	// TODO: Komi and timer not yet implemented.
-	m_server.send(sessionId, gameNet::ServerGameConfig{
-	                                 .boardSize   = static_cast<unsigned>(m_game.boardSize()),
-	                                 .komi        = 6.5,
-	                                 .timeSeconds = 0u,
-	                         });
-
 	if (!gameNet::isPlayer(seat)) {
 		return;
 	}
@@ -65,6 +58,13 @@ void GameServer::onClientConnected(gameNet::SessionId sessionId, gameNet::Seat s
 
 	if (m_players.size() == 2 && !m_gameThread.joinable()) {
 		m_gameThread = std::thread([this] { m_game.run(); });
+
+		// TODO: Komi and timer not yet implemented.
+		m_server.broadcast(gameNet::ServerGameConfig{
+		        .boardSize   = static_cast<unsigned>(m_game.boardSize()),
+		        .komi        = 6.5,
+		        .timeSeconds = 0u,
+		});
 	}
 }
 
