@@ -2,6 +2,7 @@
 
 #include "core/IGameStateListener.hpp"
 #include "core/game.hpp"
+#include "data/player.hpp"
 #include "gameNet/server.hpp"
 
 #include <array>
@@ -14,6 +15,11 @@
 
 namespace go {
 namespace app {
+
+struct ChatEntry {
+	Player player;
+	std::string message;
+};
 
 class GameServer : public gameNet::IServerHandler, public IGameStateListener {
 public:
@@ -43,6 +49,7 @@ private:
 	std::thread m_gameThread; //!< Runs the game loop.
 
 	std::unordered_map<Player, gameNet::SessionId> m_players;
+	std::vector<ChatEntry> m_chatHistory;
 
 	gameNet::Server m_server{};
 };

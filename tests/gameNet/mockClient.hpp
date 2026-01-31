@@ -20,9 +20,6 @@ public:
 	void onDisconnected() override;
 
 private:
-	std::string toString(gameNet::Seat seat);
-
-private:
 	gameNet::Client m_network;
 };
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "data/coordinate.hpp"
+#include "data/player.hpp"
 #include "gameNet/types.hpp"
 
 #include <optional>
@@ -32,6 +33,7 @@ struct ServerGameConfig {
 	unsigned timeSeconds;
 };
 
+// TODO: Replace seat with player
 //! Board update event with relevant data so the client can apply the delta.
 struct ServerDelta {
 	unsigned turn;               //!< Move number of game.
@@ -44,7 +46,8 @@ struct ServerDelta {
 };
 
 struct ServerChat {
-	Seat seat;           //!< Only player values.
+	Player player;       //!< Player who sent the message.
+	unsigned messageId;  //!< Unique identifier.
 	std::string message; //!< Chat message.
 };
 

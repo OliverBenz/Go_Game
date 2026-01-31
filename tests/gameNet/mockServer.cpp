@@ -62,8 +62,10 @@ void MockServer::handleNetworkEvent(gameNet::SessionId sessionId, const gameNet:
 }
 
 void MockServer::handleNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientChat& event) {
+	static unsigned messageId = 0u;
+
 	const auto seat = m_network.getSeat(sessionId);
-	m_network.broadcast(gameNet::ServerChat{.seat = seat, .message = event.message});
+	m_network.broadcast(gameNet::ServerChat{seat == gameNet::Seat::Black ? Player::Black : Player::White, messageId++, event.message});
 }
 
 gameNet::Seat MockServer::nextSeat(gameNet::Seat seat) const {

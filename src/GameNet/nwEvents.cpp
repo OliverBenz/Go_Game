@@ -136,9 +136,10 @@ static std::string toMessage(const ServerDelta& e) {
 
 static std::string toMessage(const ServerChat& e) {
 	json j;
-	j["type"]    = "chat";
-	j["seat"]    = static_cast<unsigned>(e.seat);
-	j["message"] = e.message;
+	j["type"]      = "chat";
+	j["player"]    = static_cast<unsigned>(e.player);
+	j["messageId"] = e.messageId;
+	j["message"]   = e.message;
 	return j.dump();
 }
 std::string toMessage(ServerEvent event) {
@@ -234,14 +235,18 @@ std::optional<ServerEvent> fromServerMessage(const std::string& message) {
 		return fromServerDeltaMessage(j);
 	}
 	if (type == "chat") {
-		if (!j.contains("seat") || !j["seat"].is_number_unsigned() || !j.contains("message") || !j["message"].is_string()) {
+		if (!j.contains("player") || !j["player"].is_number_unsigned() || !j.contains("messageId") || !j["messageId"].is_number_unsigned() ||
+		    !j.contains("message") || !j["message"].is_string()) {
 			return {};
 		}
-		const auto seat = static_cast<Seat>(j["seat"].get<unsigned>());
-		if (!isPlayer(seat)) {
+		if (j["player"].get<unsigned>() != static_cast<unsigned>(Player::Black) && j["player"].get<unsigned>() != static_cast<unsigned>(Player::White)) {
 			return {};
 		}
-		return ServerChat{.seat = seat, .message = j["message"].get<std::string>()};
+
+		const auto player        = static_cast<Player>(j["player"].get<unsigned>());
+		const auto chatMessageId = j["messageId"].get<unsigned>();
+		const auto chatMessage   = j["message"].get<std::string>();
+		return ServerChat{player, chatMessageId, std::move(chatMessage)};
 	}
 	return {};
 }
