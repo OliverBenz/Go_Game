@@ -1,15 +1,15 @@
 # Settings
-set(targetName libData)
+set(targetName Data)
 
 # Get files to build
 set(headers
-    ${CMAKE_CURRENT_LIST_DIR}/include/data/player.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/include/data/coordinate.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/include/data/board.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/include/data/gameStatus.hpp
+    "${CMAKE_CURRENT_LIST_DIR}/include/data/player.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/data/coordinate.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/data/board.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/data/gameStatus.hpp"
 )
 set(sources
-    ${CMAKE_CURRENT_LIST_DIR}/board.cpp
+    "${CMAKE_CURRENT_LIST_DIR}/board.cpp"
 )
 
 # Create target
@@ -18,7 +18,7 @@ add_library(go::data ALIAS ${targetName})
 
 target_include_directories(${targetName}
     PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/include
+        "${CMAKE_CURRENT_LIST_DIR}/include"
 )
 
 # Setup project settings
