@@ -1,4 +1,3 @@
-# Settings
 set(targetName Data)
 
 # Get files to build

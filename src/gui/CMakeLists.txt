@@ -1,17 +1,16 @@
-# Settings
 set(targetName goUi)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
 add_executable(${targetName}
-    ${CMAKE_CURRENT_LIST_DIR}/main.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/MainWindow.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/GameWidget.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/BoardWidget.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/boardRenderer.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ConnectDialog.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/HostDialog.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/Logging.cpp
+    "${CMAKE_CURRENT_LIST_DIR}/main.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/MainWindow.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/GameWidget.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/BoardWidget.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/boardRenderer.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ConnectDialog.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/HostDialog.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Logging.cpp"
 )
 
 target_link_libraries(${targetName} 

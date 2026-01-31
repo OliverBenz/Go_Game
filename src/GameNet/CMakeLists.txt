@@ -1,4 +1,3 @@
-# Settings
 set(targetName GameNet)
 
 # Get files to build
@@ -19,9 +18,7 @@ set(sources
 )
 
 
-add_library(${targetName} STATIC
-    ${headers} ${sources}
-)
+add_library(${targetName} STATIC ${headers} ${sources})
 add_library(go::gameNet ALIAS ${targetName})
 
 target_include_directories(${targetName}
