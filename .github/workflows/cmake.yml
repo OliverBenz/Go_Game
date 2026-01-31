@@ -24,7 +24,7 @@ jobs:
     - name: Configure CMake
       run: |
         nix develop --command bash -c "
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_TESTS=True -DBUILD_EXAMPLES=True
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON
         "
 
     - name: Build
