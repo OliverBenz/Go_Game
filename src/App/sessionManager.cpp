@@ -3,6 +3,7 @@
 #include "Logging.hpp"
 #include "app/gameServer.hpp"
 
+#include <algorithm>
 #include <cassert>
 
 namespace go::app {
@@ -28,6 +29,7 @@ void SessionManager::connect(const std::string& hostIp) {
 		std::lock_guard<std::mutex> lock(m_stateMutex);
 		m_position.reset(9u);
 		m_position.setStatus(GameStatus::Ready);
+		m_expectedMessageId = 1u;
 		m_chatHistory.clear();
 	}
 	m_localServer.reset();
@@ -41,6 +43,7 @@ void SessionManager::host(unsigned boardSize) {
 		std::lock_guard<std::mutex> lock(m_stateMutex);
 		m_position.reset(boardSize);
 		m_position.setStatus(GameStatus::Ready);
+		m_expectedMessageId = 1u;
 		m_chatHistory.clear();
 	}
 
@@ -58,6 +61,7 @@ void SessionManager::disconnect() {
 
 	std::lock_guard<std::mutex> lock(m_stateMutex);
 	m_position.reset(9u);
+	m_expectedMessageId = 1u;
 	m_chatHistory.clear();
 }
 
@@ -87,6 +91,15 @@ Player SessionManager::currentPlayer() const {
 	std::lock_guard<std::mutex> lock(m_stateMutex);
 	return m_position.getPlayer();
 }
+std::vector<ChatEntry> SessionManager::getChatSince(const unsigned messageId) const {
+	std::lock_guard<std::mutex> lock(m_stateMutex);
+
+	// Find first entry with id > messageId
+	auto it = std::upper_bound(m_chatHistory.begin(), m_chatHistory.end(), messageId,
+	                           [](const unsigned value, const ChatEntry& e) { return e.messageId > value; });
+
+	return {it, m_chatHistory.end()};
+}
 
 void SessionManager::onGameUpdate(const gameNet::ServerDelta& event) {
 	std::lock_guard<std::mutex> lock(m_stateMutex);
@@ -98,12 +111,19 @@ void SessionManager::onGameConfig(const gameNet::ServerGameConfig& event) {
 }
 void SessionManager::onChatMessage(const gameNet::ServerChat& event) {
 	std::lock_guard<std::mutex> lock(m_stateMutex);
-	m_chatHistory.push_back(event.message);
+
+	if (event.messageId == m_expectedMessageId) {
+		m_chatHistory.emplace_back(ChatEntry{event.player, event.messageId, event.message});
+		++m_expectedMessageId;
+	} else {
+		// TODO: Handle missing messages & ordered inserts (messageId assumed ordered in GUI)
+	}
 	m_eventHub.signal(AS_NewChat);
 }
 void SessionManager::onDisconnected() {
 	std::lock_guard<std::mutex> lock(m_stateMutex);
 	m_position.reset(9u);
+	m_expectedMessageId = 1u;
 	m_chatHistory.clear();
 }
 

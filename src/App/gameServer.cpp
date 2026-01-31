@@ -156,7 +156,7 @@ void GameServer::handleNetworkEvent(Player player, const gameNet::ClientResign&)
 
 void GameServer::handleNetworkEvent(Player player, const gameNet::ClientChat& event) {
 	m_chatHistory.emplace_back(ChatEntry{player, event.message});
-	m_server.broadcast(gameNet::ServerChat{player, m_chatHistory.size(), event.message});
+	m_server.broadcast(gameNet::ServerChat{player, static_cast<unsigned>(m_chatHistory.size()), event.message});
 }
 
 } // namespace go::app
