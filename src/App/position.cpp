@@ -94,7 +94,7 @@ void Position::updatePosition(const gameNet::ServerDelta& delta) {
 		if (delta.coord) {
 			m_board.place(Coord{delta.coord->x, delta.coord->y}, delta.seat == gameNet::Seat::Black ? Board::Stone::Black : Board::Stone::White);
 			for (const auto c: delta.captures) {
-				m_board.place({c.x, c.y}, Board::Stone::Empty);
+				m_board.remove({c.x, c.y});
 			}
 		} else {
 			Logger().Log(Logging::LogLevel::Warning, "Game delta missing place coordinate; skipping board update.");
