@@ -116,12 +116,14 @@ std::vector<ChatEntry> SessionManager::getChatSince(const unsigned messageId) co
 }
 
 void SessionManager::onGameUpdate(const gameNet::ServerDelta& event) {
-	GameStatus status = GameStatus::Active;
-	bool applied      = false;
+	GameStatus status         = GameStatus::Active;
+	GameStatus previousStatus = GameStatus::Active;
+	bool applied              = false;
 	{
 		std::lock_guard<std::mutex> lock(m_stateMutex);
-		applied = m_position.apply(event);
-		status  = m_position.getStatus(); // For signalling later
+		previousStatus = m_position.getStatus();
+		applied        = m_position.apply(event);
+		status         = m_position.getStatus(); // For signalling later
 	}
 
 	if (!applied) {
@@ -136,17 +138,16 @@ void SessionManager::onGameUpdate(const gameNet::ServerDelta& event) {
 		break;
 	case gameNet::ServerAction::Pass:
 		m_eventHub.signal(AS_PlayerChange);
-		if (status != GameStatus::Active) {
-			m_eventHub.signal(AS_StateChange);
-		}
 		break;
 	case gameNet::ServerAction::Resign:
-		m_eventHub.signal(AS_StateChange);
 		break;
 	case gameNet::ServerAction::Count:
 		assert(false); //!< This should already be prohibited by libGameNet.
 		break;
 	};
+	if (previousStatus != status) {
+		m_eventHub.signal(AS_StateChange);
+	}
 }
 void SessionManager::onGameConfig(const gameNet::ServerGameConfig& event) {
 	bool initialized = false;
