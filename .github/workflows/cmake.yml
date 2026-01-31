@@ -1,6 +1,6 @@
 name: CMake
 
-on: [push]
+on: [push, pull_request]
 
 env:
   BUILD_TYPE: Release
@@ -10,28 +10,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Fetch git submodules
-      run: git submodule update --init --recursive
-
-    - name: Create Build Environment
-      run: cmake -E make_directory ${{runner.workspace}}/build
-
-    - name: Install Dependencies
-      run: sudo apt update; sudo apt install libgtest-dev
-
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Install Nix
+      uses: cachix/install-nix-action@v27
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+        extra_nix_config: |
+          experimental-features = nix-command flakes
+    
     - name: Configure CMake
-      shell: bash
-      working-directory: ${{runner.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+      run: |
+        nix develop --command bash -c "
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_TESTS=True -DBUILD_EXAMPLES=True
+        "
 
     - name: Build
-      working-directory: ${{runner.workspace}}/build
-      shell: bash
-      run: cmake --build . --config $BUILD_TYPE
+      run: |
+        nix develop --command bash -c "
+          cmake --build build --config $BUILD_TYPE
+        "
 
     - name: Run Tests
-      working-directory: ${{runner.workspace}}/build
-      shell: bash
-      run: ./out/bin/Template.gtest
+      run: |
+        nix develop --command bash -c "
+          ctest --test-dir build --output-on-failure
+        "
