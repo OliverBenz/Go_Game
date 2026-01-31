@@ -28,10 +28,14 @@ void MockClient::tryPlace(unsigned x, unsigned y) {
 	m_network.send(gameNet::ClientPutStone{.c = {x, y}});
 }
 
-std::string MockClient::toString(gameNet::Seat seat) {
+static std::string toString(const Player player) {
+	return player == Player::Black ? "Black" : "White";
+}
+static std::string toString(const gameNet::Seat seat) {
 	assert(isPlayer(seat));
 	return seat == gameNet::Seat::Black ? "Black" : "White";
 }
+
 
 void MockClient::onGameUpdate(const gameNet::ServerDelta& event) {
 	const auto seat = toString(event.seat);
@@ -60,7 +64,7 @@ void MockClient::onGameConfig(const gameNet::ServerGameConfig& event) {
 }
 
 void MockClient::onChatMessage(const gameNet::ServerChat& event) {
-	std::cout << std::format("[Client] Received message from '{}':{}\n", toString(event.seat), event.message);
+	std::cout << std::format("[Client] Received message from '{}':{}\n", toString(event.player), event.message);
 }
 
 void MockClient::onDisconnected() {

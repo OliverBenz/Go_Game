@@ -155,7 +155,8 @@ void GameServer::handleNetworkEvent(Player player, const gameNet::ClientResign&)
 }
 
 void GameServer::handleNetworkEvent(Player player, const gameNet::ClientChat& event) {
-	m_server.broadcast(gameNet::ServerChat{.seat = (player == Player::Black ? gameNet::Seat::Black : gameNet::Seat::White), .message = event.message});
+	m_chatHistory.emplace_back(ChatEntry{player, event.message});
+	m_server.broadcast(gameNet::ServerChat{player, m_chatHistory.size(), event.message});
 }
 
 } // namespace go::app

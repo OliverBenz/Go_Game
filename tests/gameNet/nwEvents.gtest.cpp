@@ -105,8 +105,8 @@ TEST(GameNetMessages, ServerToMessage) {
 	                {"next", static_cast<unsigned>(gameNet::Seat::White)},
 	                {"status", static_cast<unsigned>(gameNet::GameStatus::WhiteWin)}}));
 
-	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ServerChat{gameNet::Seat::White, "hi"})),
-	          json({{"type", "chat"}, {"seat", static_cast<unsigned>(gameNet::Seat::White)}, {"message", "hi"}}));
+	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ServerChat{Player::White, 0u, "hi"})),
+	          json({{"type", "chat"}, {"player", static_cast<unsigned>(Player::White)}, {"messageId", 0}, {"message", "hi"}}));
 }
 
 TEST(GameNetMessages, ServerFromMessageValid) {
@@ -141,11 +141,12 @@ TEST(GameNetMessages, ServerFromMessageValid) {
 	EXPECT_FALSE(passEvent.coord.has_value());
 	EXPECT_TRUE(passEvent.captures.empty());
 
-	const auto chat = gameNet::fromServerMessage(R"({"type":"chat","seat":2,"message":"hello,world"})");
+	const auto chat = gameNet::fromServerMessage(R"({"type":"chat","player":2,"messageId":0,"message":"hello,world"})");
 	ASSERT_TRUE(chat.has_value());
 	ASSERT_TRUE(std::holds_alternative<gameNet::ServerChat>(*chat));
 	const auto chatEvent = std::get<gameNet::ServerChat>(*chat);
-	EXPECT_EQ(chatEvent.seat, gameNet::Seat::Black);
+	EXPECT_EQ(chatEvent.player, Player::White);
+	EXPECT_EQ(chatEvent.messageId, 0u);
 	EXPECT_EQ(chatEvent.message, "hello,world");
 
 	const auto config = gameNet::fromServerMessage(R"({"type":"config","boardSize":13,"komi":6.5,"time":300})");
