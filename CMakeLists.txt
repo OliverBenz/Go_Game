@@ -11,13 +11,14 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(BUILD_TESTS "Create the unit tests for the project." True)
 option(BUILD_EXAMPLES "Create examples for the project." False)
 
-
 # Add libraries to project
 add_subdirectory(lib)
 
 # Add source, tests and examples
 add_subdirectory(src)
 if(BUILD_TESTS)
+    include(CTest)
+    enable_testing()
     add_subdirectory(tests)
 endif()
 if(BUILD_EXAMPLES)
