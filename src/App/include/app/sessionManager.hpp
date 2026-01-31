@@ -8,6 +8,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace go::app {
@@ -62,8 +63,9 @@ private:
 	EventHub m_eventHub;
 	Position m_position{};
 
-	unsigned m_expectedMessageId{1u};
-	std::vector<ChatEntry> m_chatHistory{};
+	unsigned m_expectedMessageId{1u};                        //!< Next expected chat message id.
+	std::vector<ChatEntry> m_chatHistory{};                  //!< Chat history.
+	std::unordered_map<unsigned, ChatEntry> m_pendingChat{}; //!< Messages received out of order.
 
 	std::unique_ptr<GameServer> m_localServer;
 	mutable std::mutex m_stateMutex;
