@@ -1,4 +1,3 @@
-# Settings
 set(targetName Core)
 
 # Get files to build
@@ -23,10 +22,7 @@ set(sources
 )
 
 # Create target
-add_library(${targetName} STATIC
-    ${headers}
-    ${sources}
-)
+add_library(${targetName} STATIC ${headers} ${sources})
 add_library(go::core ALIAS ${targetName})
 
 target_include_directories(${targetName}

@@ -1,4 +1,3 @@
-# Settings
 set(targetName App)
 
 # Get files to build
@@ -19,9 +18,7 @@ set(sources
     "${CMAKE_CURRENT_LIST_DIR}/Logging.cpp"
 )
 
-add_library(${targetName} STATIC
-    ${headers} ${sources}
-)
+add_library(${targetName} STATIC ${headers} ${sources})
 add_library(go::app ALIAS ${targetName})
 
 target_include_directories(${targetName}

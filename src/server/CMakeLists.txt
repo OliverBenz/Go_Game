@@ -1,8 +1,7 @@
-# Settings
 set(targetName goServer)
 
 add_executable(${targetName}
-    ${CMAKE_CURRENT_LIST_DIR}/main.cpp    
+    "${CMAKE_CURRENT_LIST_DIR}/main.cpp"
 )
 
 target_link_libraries(${targetName}

@@ -1,4 +1,3 @@
-# Settings
 set(targetName Network)
 
 # Get files to build
@@ -16,9 +15,7 @@ set(sources
 )
 
 
-add_library(${targetName} STATIC
-    ${headers} ${sources}
-)
+add_library(${targetName} STATIC ${headers} ${sources})
 add_library(go::network ALIAS ${targetName})
 
 target_include_directories(${targetName}

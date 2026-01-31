@@ -1,4 +1,3 @@
-# Settings
 set(targetName Camera)
 
 find_package(OpenCV REQUIRED)
@@ -9,10 +8,7 @@ set(sources "${CMAKE_CURRENT_LIST_DIR}/main.cpp")
 
 # TODO: This core/ will be a library. Not the executable.
 # Create target
-add_executable(${targetName}
-    ${headers}
-    ${sources}
-)
+add_executable(${targetName} ${headers}${sources})
 
 target_include_directories(${targetName} PRIVATE ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(${targetName} PRIVATE ${OpenCV_LIBS})
