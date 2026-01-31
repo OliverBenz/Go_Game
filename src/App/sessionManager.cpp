@@ -8,7 +8,7 @@
 
 namespace go::app {
 
-SessionManager::SessionManager() : m_position{m_eventHub} {
+SessionManager::SessionManager() {
 	m_network.registerHandler(this);
 }
 SessionManager::~SessionManager() {
@@ -34,6 +34,10 @@ void SessionManager::connect(const std::string& hostIp) {
 	}
 	m_localServer.reset();
 	m_network.connect(hostIp);
+
+	m_eventHub.signal(AS_BoardChange);
+	m_eventHub.signal(AS_PlayerChange);
+	m_eventHub.signal(AS_StateChange);
 }
 
 void SessionManager::host(unsigned boardSize) {
@@ -50,6 +54,10 @@ void SessionManager::host(unsigned boardSize) {
 	m_localServer = std::make_unique<GameServer>(boardSize);
 	m_localServer->start();
 	m_network.connect("127.0.0.1");
+
+	m_eventHub.signal(AS_BoardChange);
+	m_eventHub.signal(AS_PlayerChange);
+	m_eventHub.signal(AS_StateChange);
 }
 
 void SessionManager::disconnect() {
@@ -59,10 +67,16 @@ void SessionManager::disconnect() {
 		m_localServer.reset();
 	}
 
-	std::lock_guard<std::mutex> lock(m_stateMutex);
-	m_position.reset(9u);
-	m_expectedMessageId = 1u;
-	m_chatHistory.clear();
+	{
+		std::lock_guard<std::mutex> lock(m_stateMutex);
+		m_position.reset(9u);
+		m_expectedMessageId = 1u;
+		m_chatHistory.clear();
+	}
+
+	m_eventHub.signal(AS_BoardChange);
+	m_eventHub.signal(AS_PlayerChange);
+	m_eventHub.signal(AS_StateChange);
 }
 
 
@@ -102,29 +116,78 @@ std::vector<ChatEntry> SessionManager::getChatSince(const unsigned messageId) co
 }
 
 void SessionManager::onGameUpdate(const gameNet::ServerDelta& event) {
-	std::lock_guard<std::mutex> lock(m_stateMutex);
-	m_position.apply(event);
+	GameStatus status = GameStatus::Active;
+	bool applied      = false;
+	{
+		std::lock_guard<std::mutex> lock(m_stateMutex);
+		applied = m_position.apply(event);
+		status  = m_position.getStatus(); // For signalling later
+	}
+
+	if (!applied) {
+		return;
+	}
+
+	// Signalling depending on action
+	switch (event.action) {
+	case gameNet::ServerAction::Place:
+		m_eventHub.signal(AS_BoardChange);
+		m_eventHub.signal(AS_PlayerChange);
+		break;
+	case gameNet::ServerAction::Pass:
+		m_eventHub.signal(AS_PlayerChange);
+		if (status != GameStatus::Active) {
+			m_eventHub.signal(AS_StateChange);
+		}
+		break;
+	case gameNet::ServerAction::Resign:
+		m_eventHub.signal(AS_StateChange);
+		break;
+	case gameNet::ServerAction::Count:
+		assert(false); //!< This should already be prohibited by libGameNet.
+		break;
+	};
 }
 void SessionManager::onGameConfig(const gameNet::ServerGameConfig& event) {
-	std::lock_guard<std::mutex> lock(m_stateMutex);
-	m_position.init(event);
+	bool initialized = false;
+	{
+		std::lock_guard<std::mutex> lock(m_stateMutex);
+		initialized = m_position.init(event);
+	}
+	if (!initialized) {
+		return;
+	}
+	m_eventHub.signal(AS_BoardChange);
+	m_eventHub.signal(AS_PlayerChange);
+	m_eventHub.signal(AS_StateChange);
 }
 void SessionManager::onChatMessage(const gameNet::ServerChat& event) {
-	std::lock_guard<std::mutex> lock(m_stateMutex);
+	bool appended = false;
+	{
+		std::lock_guard<std::mutex> lock(m_stateMutex);
 
-	if (event.messageId == m_expectedMessageId) {
-		m_chatHistory.emplace_back(ChatEntry{event.player, event.messageId, event.message});
-		++m_expectedMessageId;
-	} else {
-		// TODO: Handle missing messages & ordered inserts (messageId assumed ordered in GUI)
+		if (event.messageId == m_expectedMessageId) {
+			m_chatHistory.emplace_back(ChatEntry{event.player, event.messageId, event.message});
+			++m_expectedMessageId;
+			appended = true;
+		} else {
+			// TODO: Handle missing messages & ordered inserts (messageId assumed ordered in GUI)
+		}
 	}
-	m_eventHub.signal(AS_NewChat);
+	if (appended) {
+		m_eventHub.signal(AS_NewChat);
+	}
 }
 void SessionManager::onDisconnected() {
-	std::lock_guard<std::mutex> lock(m_stateMutex);
-	m_position.reset(9u);
-	m_expectedMessageId = 1u;
-	m_chatHistory.clear();
+	{
+		std::lock_guard<std::mutex> lock(m_stateMutex);
+		m_position.reset(9u);
+		m_expectedMessageId = 1u;
+		m_chatHistory.clear();
+	}
+	m_eventHub.signal(AS_BoardChange);
+	m_eventHub.signal(AS_PlayerChange);
+	m_eventHub.signal(AS_StateChange);
 }
 
 } // namespace go::app

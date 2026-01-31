@@ -60,7 +60,7 @@ public: // Client listener handlers
 private:
 	gameNet::Client m_network;
 	EventHub m_eventHub;
-	Position m_position;
+	Position m_position{};
 
 	unsigned m_expectedMessageId{1u};
 	std::vector<ChatEntry> m_chatHistory{};

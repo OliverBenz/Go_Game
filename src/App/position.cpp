@@ -5,23 +5,16 @@
 
 namespace go::app {
 
-Position::Position(EventHub& hub) : m_eventHub{hub} {
-}
-
 void Position::reset(const std::size_t boardSize) {
 	m_moveId = 0u;
 	m_status = GameStatus::Idle;
 	m_player = Player::Black;
 	m_board  = Board{boardSize};
-
-	m_eventHub.signal(AS_BoardChange);
-	m_eventHub.signal(AS_PlayerChange);
-	m_eventHub.signal(AS_StateChange);
 }
 
-void Position::init(const gameNet::ServerGameConfig& event) {
+bool Position::init(const gameNet::ServerGameConfig& event) {
 	if (m_status == GameStatus::Active) {
-		return;
+		return false;
 	}
 
 	// TODO: Komi and timer not yet implemented.
@@ -29,22 +22,33 @@ void Position::init(const gameNet::ServerGameConfig& event) {
 	m_status = GameStatus::Active;
 	m_player = Player::Black;
 	m_board  = Board{event.boardSize};
-
-	m_eventHub.signal(AS_BoardChange);
-	m_eventHub.signal(AS_PlayerChange);
-	m_eventHub.signal(AS_StateChange);
+	return true;
 }
 
-void Position::apply(const gameNet::ServerDelta& delta) {
-	if (isDeltaApplicable(delta)) {
-		updatePosition(delta);
-		signalOnAction(delta.action);
+bool Position::apply(const gameNet::ServerDelta& delta) {
+	if (!isDeltaApplicable(delta)) {
+		return false;
 	}
+
+	m_moveId = delta.turn;
+	m_status = delta.status == gameNet::GameStatus::Active ? GameStatus::Active : GameStatus::Done;
+	m_player = delta.next == gameNet::Seat::Black ? Player::Black : Player::White;
+
+	if (delta.action == gameNet::ServerAction::Place) {
+		if (delta.coord) {
+			m_board.place(Coord{delta.coord->x, delta.coord->y}, delta.seat == gameNet::Seat::Black ? Board::Stone::Black : Board::Stone::White);
+			for (const auto c: delta.captures) {
+				m_board.remove({c.x, c.y});
+			}
+		} else {
+			Logger().Log(Logging::LogLevel::Warning, "Game delta missing place coordinate; skipping board update.");
+		}
+	}
+	return true;
 }
 
 void Position::setStatus(GameStatus status) {
 	m_status = status;
-	m_eventHub.signal(AS_StateChange);
 }
 
 
@@ -83,44 +87,6 @@ bool Position::isDeltaApplicable(const gameNet::ServerDelta& delta) {
 	}
 
 	return true;
-}
-
-void Position::updatePosition(const gameNet::ServerDelta& delta) {
-	m_moveId = delta.turn;
-	m_status = delta.status == gameNet::GameStatus::Active ? GameStatus::Active : GameStatus::Done;
-	m_player = delta.next == gameNet::Seat::Black ? Player::Black : Player::White;
-
-	if (delta.action == gameNet::ServerAction::Place) {
-		if (delta.coord) {
-			m_board.place(Coord{delta.coord->x, delta.coord->y}, delta.seat == gameNet::Seat::Black ? Board::Stone::Black : Board::Stone::White);
-			for (const auto c: delta.captures) {
-				m_board.remove({c.x, c.y});
-			}
-		} else {
-			Logger().Log(Logging::LogLevel::Warning, "Game delta missing place coordinate; skipping board update.");
-		}
-	}
-}
-
-void Position::signalOnAction(gameNet::ServerAction action) {
-	switch (action) {
-	case gameNet::ServerAction::Place:
-		m_eventHub.signal(AS_BoardChange);
-		m_eventHub.signal(AS_PlayerChange);
-		break;
-	case gameNet::ServerAction::Pass:
-		m_eventHub.signal(AS_PlayerChange);
-		if (m_status != GameStatus::Active) {
-			m_eventHub.signal(AS_StateChange);
-		}
-		break;
-	case gameNet::ServerAction::Resign:
-		m_eventHub.signal(AS_StateChange);
-		break;
-	case gameNet::ServerAction::Count:
-		assert(false); //!< This should already be prohibited by libGameNet.
-		break;
-	};
 }
 
 } // namespace go::app
