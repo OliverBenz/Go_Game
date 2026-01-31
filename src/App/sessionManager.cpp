@@ -31,6 +31,7 @@ void SessionManager::connect(const std::string& hostIp) {
 		m_position.setStatus(GameStatus::Ready);
 		m_expectedMessageId = 1u;
 		m_chatHistory.clear();
+		m_pendingChat.clear();
 	}
 	m_localServer.reset();
 	m_network.connect(hostIp);
@@ -49,6 +50,7 @@ void SessionManager::host(unsigned boardSize) {
 		m_position.setStatus(GameStatus::Ready);
 		m_expectedMessageId = 1u;
 		m_chatHistory.clear();
+		m_pendingChat.clear();
 	}
 
 	m_localServer = std::make_unique<GameServer>(boardSize);
@@ -72,6 +74,7 @@ void SessionManager::disconnect() {
 		m_position.reset(9u);
 		m_expectedMessageId = 1u;
 		m_chatHistory.clear();
+		m_pendingChat.clear();
 	}
 
 	m_eventHub.signal(AS_BoardChange);
@@ -167,12 +170,26 @@ void SessionManager::onChatMessage(const gameNet::ServerChat& event) {
 	{
 		std::lock_guard<std::mutex> lock(m_stateMutex);
 
-		if (event.messageId == m_expectedMessageId) {
+		if (event.messageId < m_expectedMessageId) {
+			// Ignore already seen messages.
+		} else if (event.messageId == m_expectedMessageId) {
 			m_chatHistory.emplace_back(ChatEntry{event.player, event.messageId, event.message});
 			++m_expectedMessageId;
 			appended = true;
 		} else {
-			// TODO: Handle missing messages & ordered inserts (messageId assumed ordered in GUI)
+			m_pendingChat.emplace(event.messageId, ChatEntry{event.player, event.messageId, event.message});
+		}
+
+		// Try insterting pending chat messages to history.
+		while (true) {
+			auto it = m_pendingChat.find(m_expectedMessageId);
+			if (it == m_pendingChat.end()) {
+				break;
+			}
+			m_chatHistory.emplace_back(it->second);
+			m_pendingChat.erase(it);
+			++m_expectedMessageId;
+			appended = true;
 		}
 	}
 	if (appended) {
@@ -185,6 +202,7 @@ void SessionManager::onDisconnected() {
 		m_position.reset(9u);
 		m_expectedMessageId = 1u;
 		m_chatHistory.clear();
+		m_pendingChat.clear();
 	}
 	m_eventHub.signal(AS_BoardChange);
 	m_eventHub.signal(AS_PlayerChange);
