@@ -3,7 +3,7 @@ set(targetName "network.gtest")
 
 # Create executable
 add_executable(${targetName}
-    ${CMAKE_CURRENT_LIST_DIR}/server.gtest.cpp
+    "${CMAKE_CURRENT_LIST_DIR}/server.gtest.cpp"
 )
 
 # Link to required libraries

@@ -3,10 +3,10 @@ set(targetName "gameNet.gtest")
 
 # Create executable
 add_executable(${targetName}
-    ${CMAKE_CURRENT_LIST_DIR}/mockClient.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/mockServer.cpp    
-    ${CMAKE_CURRENT_LIST_DIR}/basic.gtest.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/nwEvents.gtest.cpp
+    "${CMAKE_CURRENT_LIST_DIR}/mockClient.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/mockServer.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/basic.gtest.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/nwEvents.gtest.cpp"
 )
 
 # Link to required libraries

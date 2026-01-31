@@ -3,8 +3,8 @@ set(targetName "core.gtest")
 
 # Create executable
 add_executable(${targetName}
-    ${CMAKE_CURRENT_LIST_DIR}/game.gtest.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/moveChecker.gtest.cpp
+    "${CMAKE_CURRENT_LIST_DIR}/game.gtest.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/moveChecker.gtest.cpp"
 )
 
 # Link to required libraries
