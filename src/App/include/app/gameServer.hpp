@@ -16,10 +16,6 @@
 namespace go {
 namespace app {
 
-struct ChatEntry {
-	Player player;
-	std::string message;
-};
 
 class GameServer : public gameNet::IServerHandler, public IGameStateListener {
 public:
@@ -43,6 +39,11 @@ private:
 	void handleNetworkEvent(Player player, const gameNet::ClientPass& event);
 	void handleNetworkEvent(Player player, const gameNet::ClientResign& event);
 	void handleNetworkEvent(Player player, const gameNet::ClientChat& event);
+
+	struct ChatEntry {
+		Player player;
+		std::string message;
+	};
 
 private:
 	Game m_game;

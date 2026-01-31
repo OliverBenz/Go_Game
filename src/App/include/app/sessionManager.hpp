@@ -13,6 +13,12 @@
 namespace go::app {
 class GameServer;
 
+struct ChatEntry {
+	Player player;
+	unsigned messageId;
+	std::string message;
+};
+
 //! Gets game stat delta and constructs a local representation of the game.
 //! Listeners can subscribe to certain signals, get notification when happens.
 //! Listeners then check which signal and query the updated data from this SessionManager.
@@ -43,6 +49,7 @@ public:
 	GameStatus status() const;
 	Board board() const;
 	Player currentPlayer() const;
+	std::vector<ChatEntry> getChatSince(unsigned messageId) const;
 
 public: // Client listener handlers
 	void onGameUpdate(const gameNet::ServerDelta& event) override;
@@ -55,7 +62,9 @@ private:
 	EventHub m_eventHub;
 	Position m_position;
 
-	std::vector<std::string> m_chatHistory;
+	unsigned m_expectedMessageId{1u};
+	std::vector<ChatEntry> m_chatHistory{};
+
 	std::unique_ptr<GameServer> m_localServer;
 	mutable std::mutex m_stateMutex;
 };
