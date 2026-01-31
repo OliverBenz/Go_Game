@@ -19,9 +19,13 @@ void EventHub::unsubscribe(IAppSignalListener* listener) {
 }
 
 void EventHub::signal(AppSignal signal) {
-	std::lock_guard<std::mutex> lock(m_listenerMutex);
+	std::vector<SignalListenerEntry> listeners;
+	{
+		std::lock_guard<std::mutex> lock(m_listenerMutex);
+		listeners = m_signalListeners;
+	}
 
-	for (const auto& [listener, signalMask]: m_signalListeners) {
+	for (const auto& [listener, signalMask]: listeners) {
 		if (signalMask & signal) {
 			listener->onAppEvent(signal);
 		}

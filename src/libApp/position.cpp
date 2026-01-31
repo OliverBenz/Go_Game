@@ -5,23 +5,18 @@
 
 namespace go::app {
 
-Position::Position(EventHub& hub) : m_eventHub{hub} {
-}
-
-void Position::reset(const std::size_t boardSize) {
+uint64_t Position::reset(const std::size_t boardSize) {
 	m_moveId = 0u;
 	m_status = GameStatus::Idle;
 	m_player = Player::Black;
 	m_board  = Board{boardSize};
 
-	m_eventHub.signal(AS_BoardChange);
-	m_eventHub.signal(AS_PlayerChange);
-	m_eventHub.signal(AS_StateChange);
+	return AS_BoardChange | AS_PlayerChange | AS_StateChange;
 }
 
-void Position::init(const gameNet::ServerGameConfig& event) {
+uint64_t Position::init(const gameNet::ServerGameConfig& event) {
 	if (m_status == GameStatus::Active) {
-		return;
+		return AS_None;
 	}
 
 	// TODO: Komi and timer not yet implemented.
@@ -30,21 +25,23 @@ void Position::init(const gameNet::ServerGameConfig& event) {
 	m_player = Player::Black;
 	m_board  = Board{event.boardSize};
 
-	m_eventHub.signal(AS_BoardChange);
-	m_eventHub.signal(AS_PlayerChange);
-	m_eventHub.signal(AS_StateChange);
+	return AS_BoardChange | AS_PlayerChange | AS_StateChange;
 }
 
-void Position::apply(const gameNet::ServerDelta& delta) {
+uint64_t Position::apply(const gameNet::ServerDelta& delta) {
 	if (isDeltaApplicable(delta)) {
 		updatePosition(delta);
-		signalOnAction(delta.action);
+		return signalMaskOnAction(delta.action);
 	}
+	return AS_None;
 }
 
-void Position::setStatus(GameStatus status) {
+uint64_t Position::setStatus(GameStatus status) {
+	if (m_status == status) {
+		return AS_None;
+	}
 	m_status = status;
-	m_eventHub.signal(AS_StateChange);
+	return AS_StateChange;
 }
 
 
@@ -102,25 +99,22 @@ void Position::updatePosition(const gameNet::ServerDelta& delta) {
 	}
 }
 
-void Position::signalOnAction(gameNet::ServerAction action) {
+uint64_t Position::signalMaskOnAction(gameNet::ServerAction action) {
 	switch (action) {
 	case gameNet::ServerAction::Place:
-		m_eventHub.signal(AS_BoardChange);
-		m_eventHub.signal(AS_PlayerChange);
-		break;
+		return AS_BoardChange | AS_PlayerChange;
 	case gameNet::ServerAction::Pass:
-		m_eventHub.signal(AS_PlayerChange);
 		if (m_status != GameStatus::Active) {
-			m_eventHub.signal(AS_StateChange);
+			return AS_PlayerChange | AS_StateChange;
 		}
-		break;
+		return AS_PlayerChange;
 	case gameNet::ServerAction::Resign:
-		m_eventHub.signal(AS_StateChange);
-		break;
+		return AS_StateChange;
 	case gameNet::ServerAction::Count:
 		assert(false); //!< This should already be prohibited by libGameNet.
 		break;
 	};
+	return AS_None;
 }
 
 } // namespace go::app

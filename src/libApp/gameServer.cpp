@@ -3,7 +3,9 @@
 #include "Logging.hpp"
 #include "core/game.hpp"
 
+#include <algorithm>
 #include <cassert>
+#include <cctype>
 #include <format>
 #include <iomanip>
 #include <random>
@@ -14,6 +16,26 @@ namespace go::app {
 static constexpr char LOG_REC_PUT[]    = "[GameServer] Received Event 'Put'    from player {} at ({}, {}).";
 static constexpr char LOG_REC_PASS[]   = "[GameServer] Received Event 'Pass'   from Player {}.";
 static constexpr char LOG_REC_RESIGN[] = "[GameServer] Received Event 'Resign' from Player {}.";
+static constexpr std::size_t kMaxChatMessageBytes = 256u;
+
+namespace {
+
+std::string sanitizeChatMessage(std::string message) {
+	message.erase(std::remove_if(message.begin(), message.end(), [](unsigned char c) { return c == '\r' || c == '\n'; }), message.end());
+	auto isSpace = [](unsigned char c) { return std::isspace(c) != 0; };
+	auto first   = std::find_if_not(message.begin(), message.end(), isSpace);
+	if (first == message.end()) {
+		return {};
+	}
+	auto last = std::find_if_not(message.rbegin(), message.rend(), isSpace).base();
+	message.assign(first, last);
+	if (message.size() > kMaxChatMessageBytes) {
+		message.resize(kMaxChatMessageBytes);
+	}
+	return message;
+}
+
+} // namespace
 
 GameServer::GameServer(std::size_t boardSize) : m_game(boardSize) {
 }
@@ -155,7 +177,14 @@ void GameServer::handleNetworkEvent(Player player, const gameNet::ClientResign&)
 }
 
 void GameServer::handleNetworkEvent(Player player, const gameNet::ClientChat& event) {
-	m_server.broadcast(gameNet::ServerChat{.seat = (player == Player::Black ? gameNet::Seat::Black : gameNet::Seat::White), .message = event.message});
+	auto message = sanitizeChatMessage(event.message);
+	if (message.empty()) {
+		return;
+	}
+	m_server.broadcast(gameNet::ServerChat{
+	        .seat    = (player == Player::Black ? gameNet::Seat::Black : gameNet::Seat::White),
+	        .message = std::move(message),
+	});
 }
 
 } // namespace go::app

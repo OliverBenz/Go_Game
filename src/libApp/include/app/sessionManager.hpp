@@ -38,13 +38,17 @@ public:
 	void tryPlace(unsigned x, unsigned y);
 	void tryResign();
 	void tryPass();
-	void chat(const std::string& message);
-	std::vector<ChatEntry> chatHistory() const;
+	void chat(std::string message);
+	struct ChatSnapshot {
+		std::size_t total{0};
+		std::vector<ChatEntry> entries;
+	};
+	ChatSnapshot chatSnapshot(std::size_t fromIndex) const;
 
 	// TODO: Maybe the UI elements should have a const reference to 'Position'. (Position is data layer; SessionManager is application layer)
 	//       Then position only has public getters and SessionManager is a friend so it can update.
 	//       Then we could remove these getters.
-	//       SessionManager updates Position. Position emits signals. Listeners query position for new data.
+	//       SessionManager updates Position and emits signals. Listeners query position for new data.
 	// Getters
 	GameStatus status() const;
 	Board board() const;
@@ -57,6 +61,11 @@ public: // Client listener handlers
 	void onDisconnected() override;
 
 private:
+	void signalMask(uint64_t mask);
+
+	static constexpr std::size_t kMaxChatMessageBytes = 256u;
+	static constexpr std::size_t kMaxChatHistory      = 200u;
+
 	gameNet::Client m_network;
 	EventHub m_eventHub;
 	Position m_position;

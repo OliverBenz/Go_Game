@@ -137,17 +137,17 @@ void GameWidget::setGameStateText() {
 }
 
 void GameWidget::appendChatMessages() {
-	const auto history = m_game.chatHistory();
-	if (history.size() < m_chatCount) {
+	auto snapshot = m_game.chatSnapshot(m_chatCount);
+	if (snapshot.total < m_chatCount) {
 		m_chatList->clear();
 		m_chatCount = 0;
+		snapshot   = m_game.chatSnapshot(0);
 	}
-	if (m_chatCount >= history.size()) {
+	if (snapshot.entries.empty()) {
 		return;
 	}
 
-	for (std::size_t i = m_chatCount; i < history.size(); ++i) {
-		const auto& entry  = history[i];
+	for (const auto& entry: snapshot.entries) {
 		std::string prefix = "Observer";
 		if (entry.seat == gameNet::Seat::Black) {
 			prefix = "Black";
@@ -157,7 +157,7 @@ void GameWidget::appendChatMessages() {
 		const auto line = std::format("{}: {}", prefix, entry.message);
 		m_chatList->addItem(QString::fromStdString(line));
 	}
-	m_chatCount = history.size();
+	m_chatCount = snapshot.total;
 	m_chatList->scrollToBottom();
 }
 

@@ -126,7 +126,8 @@ void BoardWidget::renderBoard() {
 	}
 
 	const auto offset    = boardOffset(size);
-	const auto boardSize = static_cast<unsigned>(m_game.board().size());
+	const auto board     = m_game.board();
+	const auto boardSize = static_cast<unsigned>(board.size());
 	if (m_boardRenderer.nodes() != boardSize) {
 		m_boardRenderer.setNodes(boardSize);
 		m_boardRenderer.setBoardSizePx(size);
@@ -135,7 +136,7 @@ void BoardWidget::renderBoard() {
 	painter.fillRect(rect(), QColor(20, 20, 20));
 	painter.save();
 	painter.translate(offset); // Center in drawing area
-	m_boardRenderer.draw(painter, m_game.board());
+	m_boardRenderer.draw(painter, board);
 	painter.restore();
 }
 
