@@ -82,6 +82,22 @@ void SessionManager::disconnect() {
 	m_eventHub.signal(AS_StateChange);
 }
 
+void SessionManager::shutdown() {
+	if (m_localServer) {
+		m_localServer->stop();
+		m_localServer.reset();
+	}
+	m_network.disconnect();
+
+	{
+		std::lock_guard<std::mutex> lock(m_stateMutex);
+		m_position.reset(9u);
+		m_expectedMessageId = 1u;
+		m_chatHistory.clear();
+		m_pendingChat.clear();
+	}
+}
+
 
 void SessionManager::tryPlace(unsigned x, unsigned y) {
 	m_network.send(gameNet::ClientPutStone{.c = {x, y}});

@@ -12,6 +12,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 	// Setup Window
 	setWindowTitle("Go Game");
 	setWindowFlags(windowFlags() | Qt::Tool | Qt::WindowStaysOnTopHint);
+	setAttribute(Qt::WA_QuitOnClose, true);
 	buildLayout();
 }
 
@@ -49,6 +50,7 @@ void MainWindow::openHostDialog() {
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {
+	m_game.shutdown();
 	QMainWindow::closeEvent(event);
 }
 

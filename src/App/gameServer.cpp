@@ -31,13 +31,17 @@ void GameServer::start() {
 }
 
 void GameServer::stop() {
+	if (m_gameThread.joinable()) {
+		m_game.pushEvent(ShutdownEvent{});
+	}
+
 	m_server.stop();
 	m_game.unsubscribeState(this);
 
 	if (m_gameThread.joinable()) {
-		m_game.pushEvent(ShutdownEvent{});
 		m_gameThread.join();
 	}
+	m_players.clear();
 }
 
 void GameServer::onClientConnected(gameNet::SessionId sessionId, gameNet::Seat seat) {
