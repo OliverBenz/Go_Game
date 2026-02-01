@@ -35,6 +35,7 @@ public:
 	void connect(const std::string& hostIp);
 	void host(unsigned boardSize);
 	void disconnect();
+	void shutdown();
 
 	// Setters
 	void tryPlace(unsigned x, unsigned y);
