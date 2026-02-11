@@ -188,10 +188,70 @@ cv::Mat warpToBoard(const cv::Mat& image) {
 //! Transform an image that contains a Go Board such that the final image is a top-down projection of the board.
 //! \note The border of the image is the outermost grid line + tolerance for the edge stones.
 cv::Mat rectifyImage(const cv::Mat& image) {
-	cv::Mat rectified = warpToBoard(image); //!< Warped for better grid detection.
+	// Input: Roughly warped image
+	cv::Mat warped = warpToBoard(image); //!< Warped for better grid detection.
 	
+	// Preprocess again
+	cv::Mat gray, blur, edges;
+	cv::cvtColor(warped, gray, cv::COLOR_BGR2GRAY);           // Greyscale
+	cv::GaussianBlur(gray, blur, cv::Size(9,9), 1.5);         // Blur to reduce noise
+	cv::Canny(blur, edges, 50, 120);                          // Edge detection
+	cv::dilate(edges, edges, cv::Mat(), cv::Point(-1,-1), 1); // Cleanup detected edges
+
+	// Find line segments
+	std::vector<cv::Vec4i> lines;
+	cv::HoughLinesP(edges, lines,
+		1,                // rho resolution
+		CV_PI / 180,      // theta resolution
+		80,               // threshold (votes)
+		100,              // minLineLength
+		20                // maxLineGap
+	);
+
+	// Separate horizontal / vertical lines
+	std::vector<cv::Vec4i> vertical;
+	std::vector<cv::Vec4i> horizontal;
+
+	for (const auto& l : lines) {
+		float dx = l[2] - l[0];
+		float dy = l[3] - l[1];
+
+		float angle = std::atan2(dy, dx) * 180.0f / CV_PI;
+
+		// Normalize angle to [-90, 90]
+		while (angle < -90) angle += 180;
+		while (angle >  90) angle -= 180;
+
+		if (std::abs(angle) < 15) {
+			horizontal.push_back(l);
+		}
+		else if (std::abs(angle) > 75) {
+			vertical.push_back(l);
+		}
+	}
+
+	// Output
+	cv::Mat classified = warped.clone();
+
+	for (const auto& l : horizontal)
+		cv::line(classified,
+				{l[0], l[1]},
+				{l[2], l[3]},
+				cv::Scalar(255, 0, 0), 2); // blue
+
+	for (const auto& l : vertical)
+		cv::line(classified,
+				{l[0], l[1]},
+				{l[2], l[3]},
+				cv::Scalar(0, 255, 0), 2); // green
+
+	// TODO: Rotate nicely horizontally
+	// TODO: 
+
 	// TODO: warp the image such that image border=outermost grid lines (+ tolerance for stones on edge).
-	return rectified;
+	
+
+	return classified;
 }
 
 // 3 steps
