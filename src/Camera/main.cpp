@@ -300,6 +300,14 @@ cv::Mat rectifyImage(const cv::Mat& image) {
 	// Check if grid found. Else try with another algorithm.
 	if (Nv == Nh && (Nv == 9 || Nv == 13 || Nv == 19)) {
 		std::cout << "Board size determined directly: " << Nv << "\n";
+
+#ifndef NDEBUG
+	// Debug: Verify if the grid is found with a second algorithm.
+	std::vector<double> vGridTest{}, hGridTest{};
+	assert(findGrid(vCenters, hCenters, vGridTest, hGridTest));
+	assert(vGridTest.size() == hGridTest.size());
+	assert(vGridTest.size() == vCenters.size() && hGridTest.size() == hCenters.size());
+#endif
 	} else {
 		std::cout << "Could not detect the board size trivially. Performing further steps.\n";
 		
@@ -313,6 +321,10 @@ cv::Mat rectifyImage(const cv::Mat& image) {
 		vCenters = vGrid;
 		hCenters = hGrid;
 	}
+
+
+
+	// Starting here, we assume grid found
 
 
 
@@ -353,7 +365,7 @@ cv::Mat rectifyImage(const cv::Mat& image) {
 
 	// TODO: warp the image such that image border=outermost grid lines (+ tolerance for stones on edge).
 	
-
+	std::cout << "\n\n";
 	return finalGridVis;
 }
 

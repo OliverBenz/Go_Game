@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <format>
 
 //! Construct histogramm of gap sizes to get best fitting size.
 double modeGap(const std::vector<double>& gaps, double binWidth)
@@ -71,6 +72,34 @@ std::vector<double> buildGridFromStart(const std::vector<double>& centersSorted,
     return grid;
 }
 
+//! Compute coverage count. Measure for the ability to predict neighbouring lines.
+int coverageCount(const std::vector<double>& centersSorted,
+                         double start,
+                         double spacing,
+                         int N,
+                         double tol)
+{
+    int count = 0;
+
+    for (double c : centersSorted)
+    {
+        // Compute nearest grid index k
+        double kReal = (c - start) / spacing;
+        int k = (int)std::lround(kReal);
+
+        // Check if that index is inside grid
+        if (k < 0 || k >= N)
+            continue;
+
+        double predicted = start + k * spacing;
+
+        if (std::abs(c - predicted) <= tol)
+            count++;
+    }
+
+    return count;
+}
+
 bool selectGridByProgression(const std::vector<double>& centersSorted,
                                     const std::vector<int>& Ns,
                                     std::vector<double>& outGrid,
@@ -96,9 +125,15 @@ bool selectGridByProgression(const std::vector<double>& centersSorted,
     double bestScore = 1e18;
 
     for (int N : Ns) {
+        double bestN = 1e18; // For debuggin purpose
+
         for (double start : centersSorted) {
             auto grid = buildGridFromStart(centersSorted, start, s, N, tol);
             if (grid.empty()) continue;
+
+            // Measure if this hypothetical grid can detect neighbouring lines in the given gap size.
+            // Used to favor larger grid configurations.
+            int coverage = coverageCount(centersSorted, start, s, N, tol);
 
             // score: sum of |grid[k] - (start + k*s)|
             double score = 0.0;
@@ -107,12 +142,23 @@ bool selectGridByProgression(const std::vector<double>& centersSorted,
                 score += std::abs(grid[k] - target);
             }
 
-            if (score < bestScore) {
+            // normalize: average error per line, relative to spacing
+            static constexpr double lambda = 0.02; //!< Weight to include coverage in weighted mean.
+            score = (score / (double)N) / s - lambda * coverage;
+
+            if (score < bestN) {
+                bestN = score;
+            }
+
+            const double preferLargerMargin = 0.15; // 15%
+            if (score < bestScore  || (outN != 0 && score <= bestScore * (1.0 + preferLargerMargin) && N > outN)) {
                 bestScore = score;
                 outGrid = std::move(grid);
                 outN = N;
             }
         }
+        
+        std::cout << std::format(" - Best score for size {}: {}\n", N, bestN);
     }
 
     std::cout << "Selected N=" << outN << " spacing=" << s
@@ -122,7 +168,6 @@ bool selectGridByProgression(const std::vector<double>& centersSorted,
 }
 
 
-// TODO: This algorithm is fundamentally biased towards small 'N' grids. Fix.
 bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hCenters,
     std::vector<double>& vGrid, std::vector<double>& hGrid)
 {
@@ -152,20 +197,3 @@ bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hC
 
     return okV && okH && Nv == Nh;
 }
-
-/* Usage
-
-	std::vector<int> Ns = {19, 13, 9}; //!< Possible board sizes
-
-	std::vector<double> vGrid;
-	int Nv = 0;
-	bool okV = selectGridByProgression(vCenters, Ns, vGrid, Nv);
-
-	std::vector<double> hGrid;
-	int Nh = 0;
-	bool okH = selectGridByProgression(hCenters, Ns, hGrid, Nh);
-
-	if (!okV || !okH || Nv != Nh) {
-		std::cerr << "Grid selection failed or Nv/Nh mismatch\n";
-	}
-*/
