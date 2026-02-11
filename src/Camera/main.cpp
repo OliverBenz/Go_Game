@@ -1,241 +1,155 @@
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
+
 #include <opencv2/opencv.hpp>
 
-int hmin = 0, smin = 89, vmin = 178;
-int hmax = 161, smax = 220, vmax = 226;
+// Notes and Findings: 
+// - Board Detection
+//   - Easy Straight Dataset
+//     - Adaptive Threshold:   Visually appears to work nicely. May conflict with background
+//     - OTSU Threshold:       Suboptimal. May require further tuning.
+//     - Canny Edge Detection: Visually appears to work. Further tuning needed.
 
-//! Uses default HSV space that manually was found to provide a good contour
-//! of the board and stones in simple imaging setups.
-class MaskContour {
-public:
-	// Apply HSV mask to one image
-	cv::Mat process(const cv::Mat& img) {
-		cv::Mat hsv, mask, result;
-		cv::cvtColor(img, hsv, cv::COLOR_BGR2HSV);
-		cv::inRange(hsv, cv::Scalar(hmin, smin, vmin), cv::Scalar(hmax, smax, vmax), mask);
-		cv::cvtColor(mask, result, cv::COLOR_GRAY2BGR); // so we can stack consistently
-		return result;
-	}
+// Tunable Parameters (Default values set below. Real application requires more (adaptive?) tuning):
+// - Gaussian Blur:        (Size{5,5}, 1) results in weaker Canny result than (Size{7,7},1.5)
+// - Canny Edge Detection: Check documentation. More parameters available.
 
-private:
-	static constexpr int hmin = 13, smin = 44, vmin = 194;
-	static constexpr int hmax = 37, smax = 197, vmax = 255;
+void showImages(cv::Mat& image1, cv::Mat& image2, cv::Mat& image3) {
+	double scale = 0.4;  // adjust as needed
+	cv::Mat small1, small2, small3;
 
-	//! Shifting vmin around the base by this amound shoud allow to find most boards.
-	static constexpr int vminRange = 20;
-};
+	cv::resize(image1, small1, cv::Size(), scale, scale);
+	cv::resize(image2, small2, cv::Size(), scale, scale);
+	cv::resize(image3, small3, cv::Size(), scale, scale);
 
-class MaskTesterHSV {
-public:
-	MaskTesterHSV() {
-		// Create trackbars
-		namedWindow("Mask", cv::WINDOW_AUTOSIZE);
-		cv::createTrackbar("H Min", "Mask", &hmin, 179);
-		cv::createTrackbar("H Max", "Mask", &hmax, 179);
-		cv::createTrackbar("S Min", "Mask", &smin, 255);
-		cv::createTrackbar("S Max", "Mask", &smax, 255);
-		cv::createTrackbar("V Min", "Mask", &vmin, 255);
-		cv::createTrackbar("V Max", "Mask", &vmax, 255);
-	}
-	// Apply HSV mask to one image
-	cv::Mat processSimpleMask(const cv::Mat& img) {
-		cv::Mat hsv, mask, result;
-		cv::cvtColor(img, hsv, cv::COLOR_BGR2HSV);
-		cv::inRange(hsv, cv::Scalar(hmin, smin, vmin), cv::Scalar(hmax, smax, vmax), mask);
-		cv::cvtColor(mask, result, cv::COLOR_GRAY2BGR); // so we can stack consistently
-		return result;
-	}
+	// Stack horizontally
+	cv::Mat combined;
+	cv::hconcat(std::vector<cv::Mat>{small1, small2, small3}, combined);
 
-	cv::Mat process(const cv::Mat& img) {
-		cv::Mat hsv, mask;
-		cv::cvtColor(img, hsv, cv::COLOR_BGR2HSV);
-		cv::inRange(hsv, cv::Scalar(hmin, smin, vmin), cv::Scalar(hmax, smax, vmax), mask);
-
-		// --- find board contour ---
-		std::vector<std::vector<cv::Point>> contours;
-		cv::findContours(mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-
-		if (contours.empty()) {
-			return img.clone(); // fallback
-		}
-
-		// largest contour = board
-		double maxArea = 0;
-		int maxIdx     = -1;
-		for (size_t i = 0; i < contours.size(); i++) {
-			double area = cv::contourArea(contours[i]);
-			if (area > maxArea) {
-				maxArea = area;
-				maxIdx  = (int)i;
-			}
-		}
-
-		std::vector<cv::Point> approx;
-		cv::approxPolyDP(contours[maxIdx], approx, 0.02 * cv::arcLength(contours[maxIdx], true), true);
-
-		if (approx.size() != 4) {
-			// not a quad, just show mask overlay
-			cv::Mat debug;
-			cv::cvtColor(mask, debug, cv::COLOR_GRAY2BGR);
-			cv::drawContours(debug, contours, maxIdx, cv::Scalar(0, 255, 0), 2);
-			return debug;
-		}
-
-		// --- order the 4 corners consistently ---
-		// compute centroid
-		cv::Point2f center(0, 0);
-		for (auto& p: approx)
-			center += cv::Point2f(p);
-		center *= (1.0 / approx.size());
-
-		std::vector<cv::Point2f> ordered(4);
-		for (auto& p: approx) {
-			if (p.x < center.x && p.y < center.y)
-				ordered[0] = p; // top-left
-			else if (p.x > center.x && p.y < center.y)
-				ordered[1] = p; // top-right
-			else if (p.x > center.x && p.y > center.y)
-				ordered[2] = p; // bottom-right
-			else
-				ordered[3] = p; // bottom-left
-		}
-
-		// --- target rectangle size ---
-		int outSize                     = 800; // you can pick board resolution
-		std::vector<cv::Point2f> target = {{0, 0}, {outSize - 1, 0}, {outSize - 1, outSize - 1}, {0, outSize - 1}};
-
-		// --- perspective transform ---
-		cv::Mat M = cv::getPerspectiveTransform(ordered, target);
-		cv::Mat warped;
-		cv::warpPerspective(img, warped, M, cv::Size(outSize, outSize));
-
-		return warped;
-	}
-
-
-	// TODO: Stone detection is bad. I need a different mask to find stones and their colour.
-	cv::Mat processWithStones(const cv::Mat& img) {
-		cv::Mat warped     = process(img);
-		auto stones        = detectStones(warped);
-		cv::Mat withStones = drawStones(warped, stones);
-
-		return withStones;
-	}
-
-	std::vector<cv::Vec3f> detectStones(const cv::Mat& warpedBoard) {
-		cv::Mat gray;
-		cv::cvtColor(warpedBoard, gray, cv::COLOR_BGR2GRAY);
-		cv::medianBlur(gray, gray, 5);
-
-		std::vector<cv::Vec3f> circles;
-		cv::HoughCircles(gray, circles, cv::HOUGH_GRADIENT, 1,
-		                 20,               // minDist between stone centers (tune: ~cell size)
-		                 100, 30, 10, 30); // param1, param2, minRadius, maxRadius
-
-		return circles;
-	}
-
-	cv::Mat drawStones(const cv::Mat& img, const std::vector<cv::Vec3f>& stones) {
-		cv::Mat result = img.clone();
-		for (size_t i = 0; i < stones.size(); i++) {
-			cv::Point center(cvRound(stones[i][0]), cvRound(stones[i][1]));
-			int radius = cvRound(stones[i][2]);
-			// Circle outline
-			cv::circle(result, center, radius, cv::Scalar(0, 255, 0), 2);
-			// Center dot
-			cv::circle(result, center, 2, cv::Scalar(0, 0, 255), 3);
-		}
-		return result;
-	}
-
-
-	int hmin = 13, smin = 44, vmin = 187; // or vmin 186
-	int hmax = 37, smax = 197, vmax = 255;
-};
-
-bool supportsHighGui() {
-	try {
-		cv::namedWindow("Probe", cv::WINDOW_AUTOSIZE);
-		cv::destroyWindow("Probe");
-		return true;
-	} catch (const cv::Exception&) { return false; }
+	cv::imshow("3 Images", combined);
+	cv::waitKey(0);
 }
 
-cv::Mat makeGrid(const std::vector<cv::Mat>& images) {
-	if (images.size() != 6) {
-		std::cerr << "Need exactly 6 images\n";
-		return cv::Mat();
+void analyseBoard(cv::Mat& image) {
+	if (image.empty()) {
+		std::cerr << "Failed to load image\n";
+		return;
 	}
 
-	// Resize all to the same size for neat layout
-	cv::Size sz(320, 240); // pick a display size
-	std::vector<cv::Mat> resized;
-	for (auto& img: images) {
-		cv::Mat r;
-		cv::resize(img, r, sz);
-		resized.push_back(r);
-	}
+	// 1. Grayscale
+	cv::Mat gray;
+	cv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);
 
-	// Row 1
-	cv::Mat row1;
-	cv::hconcat(std::vector<cv::Mat>{resized[0], resized[1], resized[2]}, row1);
+	// 2. Gaussian Blur to reduce noise
+	cv::Mat blurred;
+	cv::GaussianBlur(gray, blurred, cv::Size(7, 7), 1.5);
+	
+	
+	// 3. Otsu Threshold
+    cv::Mat otsu;
+    cv::threshold(blurred, otsu, 0, 255, cv::THRESH_BINARY + cv::THRESH_OTSU);
 
-	// Row 2
-	cv::Mat row2;
-	cv::hconcat(std::vector<cv::Mat>{resized[3], resized[4], resized[5]}, row2);
+    // 4. Adaptive Threshold
+    cv::Mat adaptive;
+    cv::adaptiveThreshold(blurred, adaptive, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 11, 2);
 
-	// Final grid
-	cv::Mat grid;
-	cv::vconcat(row1, row2, grid);
+    // 5. Canny
+    cv::Mat canny;
+    cv::Canny(blurred, canny, 50, 150);
 
-	return grid;
+    // 6. Stack horizontally
+    cv::Mat combined;
+    cv::hconcat(std::vector<cv::Mat>{otsu, adaptive, canny}, combined);
+
+	showImages(otsu, adaptive, canny);
 }
 
+// Find the board in an image and crop/scale/rectify so the image is of a planar board. 
+cv::Mat rectifyImage(const cv::Mat& image) {
+	if (image.empty()) {
+		std::cerr << "Failed to load image\n";
+		return {};
+	}
+
+	// 1. Preprocess image
+	cv::Mat prepared;
+	cv::cvtColor(image, prepared, cv::COLOR_BGR2GRAY);         // Grayscale
+	cv::GaussianBlur(prepared, prepared, cv::Size(7, 7), 1.5); // Gaussian Blur to reduce noise
+	cv::Canny(prepared, prepared, 50, 150);                    // Canny Edge Detection
+
+	// 2. Larger kernel merges thin internal lines
+	cv::Mat closed;
+	cv::Mat kernel = cv::getStructuringElement(
+		cv::MORPH_RECT,
+		cv::Size(15, 15)   // try 11–21 depending on resolution
+	);
+	cv::morphologyEx(prepared, closed, cv::MORPH_CLOSE, kernel);
+
+	// 3. Find Contours
+    std::vector<std::vector<cv::Point>> contours;
+    cv::findContours(closed, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+    if (contours.empty()) {
+        std::cerr << "No contours found\n";
+        return image;
+    }
+
+	// 4. Find largest contour
+	double maxArea = 0.0;
+	int bestIdx = -1;
+
+	for (int i = 0; i < (int)contours.size(); ++i) {
+		double area = cv::contourArea(contours[i]);
+		if (area > maxArea) {
+			maxArea = area;
+			bestIdx = i;
+		}
+	}
+	std::cout << "Largest contour idx: " << bestIdx << " area: " << maxArea << "\n";
+	if (bestIdx < 0) {
+		std::cerr << "No valid contour\n";
+		return image;
+	}
+
+
+
+
+	// Draw contour for testing
+	cv::Mat contourVis = image.clone(); // BGR
+	cv::drawContours(
+		contourVis,
+		contours,
+		bestIdx,                          // -1 = draw all
+		cv::Scalar(0, 255, 0),       // green
+		3                            // thickness
+	);
+	return contourVis;
+}
+
+
+// 3 steps
+// 1) Find board in image and rectify (find largest plausible board contour, dont care if its physical board or outer grid contour)
+// 2) Verify board size, find contours and adapt image again
+//    - Cut image to outermost grid lines + Buffer for edge stones. Do not cut to physical board boundary.
+//    - Use board size etc for testing
+// --- HERE, we have a solid intermediate state. We do not have to repeat this every for frame of the video feed.
+//     But only when the camera changes (would have to detect this)
+// - Output: Board cropped + Board size. Expect stable
+// 3) Detect grid lines again and stones.
 
 int main() {
-	// Load your 6 reference images
-	std::vector<cv::Mat> images;
-	for (auto i = 1; i != 7; ++i) {
-		cv::Mat img = cv::imread(std::filesystem::path(PATH_TEST_IMG) / std::format("boards_easy/angle_{}.jpeg", i));
-		if (img.empty()) {
-			std::cerr << "Could not read " << i << std::endl;
-			return -1;
-		}
-		images.push_back(img);
-	}
+	// Load Image
+	cv::Mat image9 = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "straight_easy/size_9.jpeg");
+	cv::Mat image13 = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "straight_easy/size_13.jpeg");
+	cv::Mat image19 = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "straight_easy/size_19.jpeg");
+	
+	auto rect9  = rectifyImage(image9);
+	auto rect13 = rectifyImage(image13);
+	auto rect19 = rectifyImage(image19);
 
-	const bool forceHeadless = std::getenv("GO_CAMERA_HEADLESS") != nullptr;
-	const bool guiAvailable  = !forceHeadless && supportsHighGui();
+	showImages(rect9, rect13, rect19);
 
-	std::vector<cv::Mat> processed;
-	if (guiAvailable) {
-		MaskTesterHSV mask;
-		while (true) {
-			processed.clear();
-			for (auto& img: images) {
-				processed.push_back(mask.process(img));
-			}
-			cv::Mat grid = makeGrid(processed);
-			cv::imshow("Masks", grid);
-
-			if (cv::waitKey(30) == 27)
-				break; // Esc to quit
-		}
-	} else {
-		MaskContour mask;
-		for (auto& img: images) {
-			processed.push_back(mask.process(img));
-		}
-		cv::Mat grid       = makeGrid(processed);
-		const auto outPath = std::filesystem::path("mask_grid.png");
-		if (cv::imwrite(outPath.string(), grid)) {
-			std::cout << "Saved " << outPath << " (GUI unavailable).\n";
-		} else {
-			std::cerr << "Failed to write " << outPath << ".\n";
-		}
-	}
+	//analyseBoard(image);
 
 	return 0;
 }
