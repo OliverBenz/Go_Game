@@ -4,7 +4,7 @@ find_package(OpenCV REQUIRED)
 
 # Get files to build
 set(headers )
-set(sources "${CMAKE_CURRENT_LIST_DIR}/main.cpp")
+set(sources "${CMAKE_CURRENT_LIST_DIR}/main.cpp" "${CMAKE_CURRENT_LIST_DIR}/statistics.hpp" "${CMAKE_CURRENT_LIST_DIR}/gridFinder.hpp")
 
 # TODO: This core/ will be a library. Not the executable.
 # Create target
