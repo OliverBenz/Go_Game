@@ -5,6 +5,9 @@
 
 #include <opencv2/opencv.hpp>
 
+#include "statistics.hpp"
+#include "gridFinder.hpp"
+
 // Notes and Findings: 
 // - Board Detection
 //   - Easy Straight Dataset
@@ -288,25 +291,62 @@ cv::Mat rectifyImage(const cv::Mat& image) {
 	auto vCenters = clusterWeighted1D(v1d, mergeEps);
 	auto hCenters = clusterWeighted1D(h1d, mergeEps);
 
-	std::cout << "Unique vertical candidates: " << vCenters.size() << "\n";
-	std::cout << "Unique horizontal candidates: " << hCenters.size() << "\n";
+	const auto Nv = vCenters.size();
+	const auto Nh = hCenters.size();
 
-	// 3. Choose the grid lines
+	std::cout << "Unique vertical candidates: " << Nv << "\n";
+	std::cout << "Unique horizontal candidates: " << Nh << "\n";
+
+	// Check if grid found. Else try with another algorithm.
+	if (Nv == Nh && (Nv == 9 || Nv == 13 || Nv == 19)) {
+		std::cout << "Board size determined directly: " << Nv << "\n";
+	} else {
+		std::cout << "Could not detect the board size trivially. Performing further steps.\n";
+		
+		std::vector<double> vGrid{};
+		std::vector<double> hGrid{};
+		if (!findGrid(vCenters, hCenters, vGrid, hGrid)) {
+			std::cerr << "Could not detect a valid grid. Stopping!\n";
+			return {};
+		}
+
+		vCenters = vGrid;
+		hCenters = hGrid;
+	}
 
 
 
 	// Output
-	cv::Mat candVis = warped.clone();
+	cv::Mat finalGridVis = warped.clone();
+	for (double x : vCenters) {
+		int xi = (int)std::lround(x);
+		cv::line(finalGridVis,
+				cv::Point(xi, 0),
+				cv::Point(xi, warped.rows - 1),
+				cv::Scalar(0, 255, 0),
+				2);
+	}
+	for (double y : hCenters) {
+		int yi = (int)std::lround(y);
+		cv::line(finalGridVis,
+				cv::Point(0, yi),
+				cv::Point(warped.cols - 1, yi),
+				cv::Scalar(255, 0, 0),
+				2);
+	}
+	// mark intersections (useful sanity check)
+	for (double x : vCenters) {
+		for (double y : hCenters) {
+			cv::circle(finalGridVis,
+					cv::Point((int)std::lround(x),
+								(int)std::lround(y)),
+					3,
+					cv::Scalar(0, 0, 255),
+					-1);
+		}
+	}
 
-	for (double x : vCenters)
-		cv::line(candVis, cv::Point((int)std::lround(x), 0),
-						cv::Point((int)std::lround(x), warped.rows-1),
-						cv::Scalar(0,255,0), 1);
 
-	for (double y : hCenters)
-		cv::line(candVis, cv::Point(0, (int)std::lround(y)),
-						cv::Point(warped.cols-1, (int)std::lround(y)),
-						cv::Scalar(255,0,0), 1);
 
 	// TODO: Rotate nicely horizontally
 	// TODO: 
@@ -314,7 +354,7 @@ cv::Mat rectifyImage(const cv::Mat& image) {
 	// TODO: warp the image such that image border=outermost grid lines (+ tolerance for stones on edge).
 	
 
-	return candVis;
+	return finalGridVis;
 }
 
 // 3 steps
