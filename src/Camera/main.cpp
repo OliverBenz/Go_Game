@@ -103,10 +103,15 @@ static std::vector<cv::Point2f> orderCorners(const std::vector<cv::Point>& quad)
     return ordered;
 }
 
+struct WarpResult {
+    cv::Mat warped; // outSize x outSize
+    cv::Mat H;      // original -> warped
+};
+
 // TODO: Add some debugging code. Want an image per manipulation step in Debug mode if enabled.
 // TODO: Magic numbers to variables (Later controlled in class?).
 // Find the board in an image and crop/scale/rectify so the image is of a planar board. 
-cv::Mat warpToBoard(const cv::Mat& image) {
+WarpResult warpToBoard(const cv::Mat& image) {
 	if (image.empty()) {
 		std::cerr << "Failed to load image\n";
 		return {};
@@ -186,7 +191,7 @@ cv::Mat warpToBoard(const cv::Mat& image) {
 	cv::Mat warped;
 	cv::warpPerspective(image, warped, H, cv::Size(outSize, outSize));
 
-	return warped;
+	return {warped, H};
 }
 
 struct Line1D {
@@ -237,7 +242,7 @@ static double computeMedianSpacing(const std::vector<double>& grid)
 //! \note The border of the image is the outermost grid line + tolerance for the edge stones.
 cv::Mat rectifyImage(const cv::Mat& image) {
 	// 0. Input: Roughly warped image
-	cv::Mat warped = warpToBoard(image); //!< Warped for better grid detection.
+	auto [warped, warpHomography] = warpToBoard(image); //!< Warped for better grid detection.
 	
 	// TODO: Properly rotate at some point. Roughly rotate in warpToBoard() and fine rotate here.
 
@@ -343,36 +348,41 @@ cv::Mat rectifyImage(const cv::Mat& image) {
 
 	double stoneBuffer = 0.5 * spacing; // NOTE: Could adjust 0.5 to account for imperfect placement.
 
-	double xmin = vGrid.front() - stoneBuffer;
-	double xmax = vGrid.back()  + stoneBuffer;
-	double ymin = hGrid.front() - stoneBuffer;
-	double ymax = hGrid.back()  + stoneBuffer;
+	float xmin = static_cast<float>(vGrid.front() - stoneBuffer);
+	float xmax = static_cast<float>(vGrid.back()  + stoneBuffer);
+	float ymin = static_cast<float>(hGrid.front() - stoneBuffer);
+	float ymax = static_cast<float>(hGrid.back()  + stoneBuffer);
 
-	std::vector<cv::Point2f> src = {
+	// Perform the warping on the original image (avoid getting black bars if the new image is larger than the warped(after first step) one)
+	// Board coordinates in the warped image
+	std::vector<cv::Point2f> srcWarped = {
 		{xmin, ymin},
 		{xmax, ymin},
 		{xmax, ymax},
 		{xmin, ymax}
 	};
 
+	// Invert the previous warping so we can apply our new warp on the original image.
+	cv::Mat Hinv = warpHomography.inv();
+	std::vector<cv::Point2f> srcOriginal;
+	cv::perspectiveTransform(srcWarped, srcOriginal, Hinv);
+
+	// Output range
+	const int outSize = 1000;
 	std::vector<cv::Point2f> dst = {
 		{0.f, 0.f},
-		{999.f, 0.f},
-		{999.f, 999.f},
-		{0.f, 999.f}
+		{(float)outSize - 1.f, 0.f},
+		{(float)outSize - 1.f, (float)outSize - 1.f},
+		{0.f, (float)outSize - 1.f}
 	};
 
-	cv::Mat H2 = cv::getPerspectiveTransform(src, dst);
+	cv::Mat homographyFinal = cv::getPerspectiveTransform(srcOriginal, dst);
 	cv::Mat refined;
-	cv::warpPerspective(warped, refined, H2, cv::Size(1000,1000));
-	
-	
-	// TODO: WarpToBoard has to return homography. Then we can warp refined and not get black bars
+	cv::warpPerspective(image, refined, homographyFinal, cv::Size(outSize, outSize));
 
+	
 	// TODO: Rotate nicely horizontally
 
-	// TODO: warp the image such that image border=outermost grid lines (+ tolerance for stones on edge).
-	
 	std::cout << "\n\n";
 	return refined;
 }
