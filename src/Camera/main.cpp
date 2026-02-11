@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <filesystem>
+#include <vector>
 #include <iostream>
 
 #include <opencv2/opencv.hpp>
@@ -185,19 +186,56 @@ cv::Mat warpToBoard(const cv::Mat& image) {
 	return warped;
 }
 
+struct Line1D {
+	double pos;     // x for vertical, y for horizontal
+	double weight;  // e.g. segment length
+};
+
+static std::vector<double> clusterWeighted1D(std::vector<Line1D> values, double eps) {
+    if (values.empty()) {
+		return {};
+	};
+
+	// Sort lines by position
+    std::sort(values.begin(), values.end(),
+              [](const Line1D& a, const Line1D& b){ return a.pos < b.pos; });
+
+    std::vector<double> centers;
+    double wSum = values[0].weight;
+    double pSum = values[0].pos * values[0].weight;
+    for (size_t i = 1; i < values.size(); ++i) {
+        if (std::abs(values[i].pos - values[i-1].pos) <= eps) {
+            wSum += values[i].weight;
+            pSum += values[i].pos * values[i].weight;
+        } else {
+            centers.push_back(pSum / wSum);
+            wSum = values[i].weight;
+            pSum = values[i].pos * values[i].weight;
+        }
+    }
+    centers.push_back(pSum / wSum);
+
+    return centers;
+}
+
 //! Transform an image that contains a Go Board such that the final image is a top-down projection of the board.
 //! \note The border of the image is the outermost grid line + tolerance for the edge stones.
 cv::Mat rectifyImage(const cv::Mat& image) {
-	// Input: Roughly warped image
+	// 0. Input: Roughly warped image
 	cv::Mat warped = warpToBoard(image); //!< Warped for better grid detection.
 	
-	// Preprocess again
+	// TODO: Properly rotate at some point. Roughly rotate in warpToBoard() and fine rotate here.
+
+
+	// 1. Preprocess again
 	cv::Mat gray, blur, edges;
 	cv::cvtColor(warped, gray, cv::COLOR_BGR2GRAY);           // Greyscale
 	cv::GaussianBlur(gray, blur, cv::Size(9,9), 1.5);         // Blur to reduce noise
 	cv::Canny(blur, edges, 50, 120);                          // Edge detection
 	cv::dilate(edges, edges, cv::Mat(), cv::Point(-1,-1), 1); // Cleanup detected edges
 
+
+	// 2. Find horizontal and vertical line candidates (merge close together lines but there are not necessarily our grid yet)
 	// Find line segments
 	std::vector<cv::Vec4i> lines;
 	cv::HoughLinesP(edges, lines,
@@ -229,21 +267,46 @@ cv::Mat rectifyImage(const cv::Mat& image) {
 			vertical.push_back(l);
 		}
 	}
+	std::cout << "Vertical lines: " << vertical.size() << "\n Horizontal lines: " << horizontal.size() << "\n";
+
+	// Group together lines (one grid line has finite thickness -> detected as many lines)
+	std::vector<Line1D> v1d, h1d;
+	auto segLen = [](const cv::Vec4i& l) {
+		double dx = l[2] - l[0];
+		double dy = l[3] - l[1];
+		return std::sqrt(dx*dx + dy*dy);
+	};
+	for (const auto& l : vertical) {
+		v1d.push_back({0.5 * (l[0] + l[2]), segLen(l)});
+	}
+	for (const auto& l : horizontal) {
+		h1d.push_back({0.5 * (l[1] + l[3]), segLen(l)});
+	}
+
+	// Merge lines close together
+	double mergeEps = 15.0; //!< In pixels
+	auto vCenters = clusterWeighted1D(v1d, mergeEps);
+	auto hCenters = clusterWeighted1D(h1d, mergeEps);
+
+	std::cout << "Unique vertical candidates: " << vCenters.size() << "\n";
+	std::cout << "Unique horizontal candidates: " << hCenters.size() << "\n";
+
+	// 3. Choose the grid lines
+
+
 
 	// Output
-	cv::Mat classified = warped.clone();
+	cv::Mat candVis = warped.clone();
 
-	for (const auto& l : horizontal)
-		cv::line(classified,
-				{l[0], l[1]},
-				{l[2], l[3]},
-				cv::Scalar(255, 0, 0), 2); // blue
+	for (double x : vCenters)
+		cv::line(candVis, cv::Point((int)std::lround(x), 0),
+						cv::Point((int)std::lround(x), warped.rows-1),
+						cv::Scalar(0,255,0), 1);
 
-	for (const auto& l : vertical)
-		cv::line(classified,
-				{l[0], l[1]},
-				{l[2], l[3]},
-				cv::Scalar(0, 255, 0), 2); // green
+	for (double y : hCenters)
+		cv::line(candVis, cv::Point(0, (int)std::lround(y)),
+						cv::Point(warped.cols-1, (int)std::lround(y)),
+						cv::Scalar(255,0,0), 1);
 
 	// TODO: Rotate nicely horizontally
 	// TODO: 
@@ -251,7 +314,7 @@ cv::Mat rectifyImage(const cv::Mat& image) {
 	// TODO: warp the image such that image border=outermost grid lines (+ tolerance for stones on edge).
 	
 
-	return classified;
+	return candVis;
 }
 
 // 3 steps
