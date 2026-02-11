@@ -15,13 +15,15 @@ set(sources
 )
 
 add_library(${targetName} STATIC ${headers} ${sources})
+add_library(go::camera ALIAS ${targetName})
+
 target_include_directories(${targetName}
     PUBLIC
         "${CMAKE_CURRENT_LIST_DIR}/include"
 )
 
-target_include_directories(${targetName} PRIVATE ${OpenCV_INCLUDE_DIRS})
-target_link_libraries(${targetName} PRIVATE ${OpenCV_LIBS})
+target_include_directories(${targetName} PUBLIC ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(${targetName} PUBLIC ${OpenCV_LIBS})
 
 # Setup project settings
 # set_project_warnings(${targetName})  # Which warnings to enable
