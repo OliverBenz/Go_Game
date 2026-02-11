@@ -15,6 +15,12 @@
 // - Gaussian Blur:        (Size{5,5}, 1) results in weaker Canny result than (Size{7,7},1.5)
 // - Canny Edge Detection: Check documentation. More parameters available.
 
+// Board Detection
+// 1) Coarse Detection (warpToBoard):  Warps the image to the board but not yet specific which exact board contour is found (outermost grid lines vs physical board contour).
+// 2) Normalise        (warpToBoard):  Output image has fixed normalised size.
+// 3) Refine           (rectifyImage): Border or image is the outermost grid lines + Tolerance for Stones placed at edge.
+// 4) Re-Normalise     (rectifyImage): Final image normalised and with proper border setup.
+
 void showImages(cv::Mat& image1, cv::Mat& image2, cv::Mat& image3) {
 	double scale = 0.4;  // adjust as needed
 	cv::Mat small1, small2, small3;
@@ -31,7 +37,7 @@ void showImages(cv::Mat& image1, cv::Mat& image2, cv::Mat& image3) {
 	cv::waitKey(0);
 }
 
-void analyseBoard(cv::Mat& image) {
+void analyseBoard(const cv::Mat& image) {
 	if (image.empty()) {
 		std::cerr << "Failed to load image\n";
 		return;
@@ -65,9 +71,9 @@ void analyseBoard(cv::Mat& image) {
 	showImages(otsu, adaptive, canny);
 }
 
-//! Order 4 corner points TL,BR,TR,BL (Top Left, Bottom Right, etc).
+//! Order 4 corner points TL,TR,BR,BL (Top Left, Bottom Right, etc).
 static std::vector<cv::Point2f> orderCorners(const std::vector<cv::Point>& quad) {
-	assert(quad.size() == 4u);
+	CV_Assert(quad.size() == 4u); // Check before calling this function.
 
     std::vector<cv::Point2f> pts(4);
     for (int i = 0; i < 4; ++i) {
@@ -86,14 +92,15 @@ static std::vector<cv::Point2f> orderCorners(const std::vector<cv::Point>& quad)
     };
 
     ordered[0] = *std::min_element(pts.begin(), pts.end(), sumCmp);  // TL
-    ordered[2] = *std::max_element(pts.begin(), pts.end(), sumCmp);  // BR
     ordered[1] = *std::min_element(pts.begin(), pts.end(), diffCmp); // TR
+    ordered[2] = *std::max_element(pts.begin(), pts.end(), sumCmp);  // BR
     ordered[3] = *std::max_element(pts.begin(), pts.end(), diffCmp); // BL
 
     return ordered;
 }
 
 // TODO: Add some debugging code. Want an image per manipulation step in Debug mode if enabled.
+// TODO: Magic numbers to variables (Later controlled in class?).
 // Find the board in an image and crop/scale/rectify so the image is of a planar board. 
 cv::Mat warpToBoard(const cv::Mat& image) {
 	if (image.empty()) {
@@ -120,7 +127,7 @@ cv::Mat warpToBoard(const cv::Mat& image) {
     cv::findContours(closed, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
     if (contours.empty()) {
         std::cerr << "No contours found\n";
-        return image;
+        return {};
     }
 
 	// 4. Find largest contour
@@ -137,7 +144,7 @@ cv::Mat warpToBoard(const cv::Mat& image) {
 	std::cout << "Largest contour idx: " << bestIdx << " area: " << maxArea << "\n";
 	if (bestIdx < 0) {
 		std::cerr << "No valid contour\n";
-		return image;
+		return {};
 	}
 	const auto dominantContour = contours[bestIdx];
 
@@ -148,10 +155,19 @@ cv::Mat warpToBoard(const cv::Mat& image) {
 
 	if(contourPolygon.size() != 4u) {
 		// Rectangular Go Board requires 4 corners
-		assert(false); // TODO: Fallback to minAreaRect?
+		assert(false); // TODO: Not implemented but will happen occasionally.
+
+		// TODO: Fallback to minAreaRect?
+		/*
+		cv::RotatedRect rr = cv::minAreaRect(dominantContour);
+		cv::Point2f rrPts[4];
+		rr.points(rrPts);
+		std::vector<cv::Point2f> src(rrPts, rrPts + 4);
+		src = orderCorners(std::vector<cv::Point>(convert rrPts to Points));
+		*/
 	}
 
-	// 6. Do Warping
+	// 6. Do Warping (Normalise)
 	const auto src = orderCorners(contourPolygon);
 	const int outSize = 1000;
 	std::vector<cv::Point2f> dst = {
