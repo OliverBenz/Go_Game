@@ -65,6 +65,34 @@ void analyseBoard(cv::Mat& image) {
 	showImages(otsu, adaptive, canny);
 }
 
+
+static std::vector<cv::Point2f> orderCorners(const std::vector<cv::Point>& quad)
+{
+    std::vector<cv::Point2f> pts(4);
+    for (int i = 0; i < 4; ++i) {
+		pts[i] = quad[i];
+	}
+
+    // TL = min(x+y), BR = max(x+y)
+    // TR = min(x-y), BL = max(x-y)
+    std::vector<cv::Point2f> ordered(4);
+
+    auto sumCmp = [](const cv::Point2f& a, const cv::Point2f& b) {
+        return (a.x + a.y) < (b.x + b.y);
+    };
+    auto diffCmp = [](const cv::Point2f& a, const cv::Point2f& b) {
+        return (a.x - a.y) < (b.x - b.y);
+    };
+
+    ordered[0] = *std::min_element(pts.begin(), pts.end(), sumCmp);  // TL
+    ordered[2] = *std::max_element(pts.begin(), pts.end(), sumCmp);  // BR
+    ordered[1] = *std::min_element(pts.begin(), pts.end(), diffCmp); // TR
+    ordered[3] = *std::max_element(pts.begin(), pts.end(), diffCmp); // BL
+
+    return ordered;
+}
+
+// TODO: Add some debugging code. Want an image per manipulation step in Debug mode if enabled.
 // Find the board in an image and crop/scale/rectify so the image is of a planar board. 
 cv::Mat rectifyImage(const cv::Mat& image) {
 	if (image.empty()) {
@@ -110,20 +138,34 @@ cv::Mat rectifyImage(const cv::Mat& image) {
 		std::cerr << "No valid contour\n";
 		return image;
 	}
+	const auto dominantContour = contours[bestIdx];
 
+	// 5. Contour to a polygon
+	std::vector<cv::Point> contourPolygon;
+	double eps = 0.02 * cv::arcLength(dominantContour, true);
+	cv::approxPolyDP(dominantContour, contourPolygon, eps, true);
 
+	if(contourPolygon.size() != 4u) {
+		// Rectangular Go Board requires 4 corners
+		assert(false); // TODO: Fallback to minAreaRect?
+	}
 
+	// 6. Do Warping
+	const auto src = orderCorners(contourPolygon);
+	const int outSize = 1000;
+	std::vector<cv::Point2f> dst = {
+		{0.f, 0.f},
+		{(float)outSize - 1.f, 0.f},
+		{(float)outSize - 1.f, (float)outSize - 1.f},
+		{0.f, (float)outSize - 1.f}
+	};
 
-	// Draw contour for testing
-	cv::Mat contourVis = image.clone(); // BGR
-	cv::drawContours(
-		contourVis,
-		contours,
-		bestIdx,                          // -1 = draw all
-		cv::Scalar(0, 255, 0),       // green
-		3                            // thickness
-	);
-	return contourVis;
+	cv::Mat H = cv::getPerspectiveTransform(src, dst);
+
+	cv::Mat warped;
+	cv::warpPerspective(image, warped, H, cv::Size(outSize, outSize));
+
+	return warped;
 }
 
 
@@ -139,7 +181,7 @@ cv::Mat rectifyImage(const cv::Mat& image) {
 
 int main() {
 	// Load Image
-	cv::Mat image9 = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "straight_easy/size_9.jpeg");
+	cv::Mat image9  = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "straight_easy/size_9.jpeg");
 	cv::Mat image13 = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "straight_easy/size_13.jpeg");
 	cv::Mat image19 = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "straight_easy/size_19.jpeg");
 	
