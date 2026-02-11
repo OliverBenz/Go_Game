@@ -221,6 +221,18 @@ static std::vector<double> clusterWeighted1D(std::vector<Line1D> values, double 
     return centers;
 }
 
+static double computeMedianSpacing(const std::vector<double>& grid)
+{
+    assert(grid.size() >= 2);
+
+    std::vector<double> diffs;
+    diffs.reserve(grid.size() - 1);
+    for (size_t i = 1; i < grid.size(); ++i)
+        diffs.push_back(grid[i] - grid[i - 1]);
+
+    return median(diffs);
+}
+
 //! Transform an image that contains a Go Board such that the final image is a top-down projection of the board.
 //! \note The border of the image is the outermost grid line + tolerance for the edge stones.
 cv::Mat rectifyImage(const cv::Mat& image) {
@@ -288,15 +300,16 @@ cv::Mat rectifyImage(const cv::Mat& image) {
 
 	// Merge lines close together
 	double mergeEps = 15.0; //!< In pixels
-	auto vCenters = clusterWeighted1D(v1d, mergeEps);
-	auto hCenters = clusterWeighted1D(h1d, mergeEps);
+	auto vGrid = clusterWeighted1D(v1d, mergeEps);
+	auto hGrid = clusterWeighted1D(h1d, mergeEps);
 
-	const auto Nv = vCenters.size();
-	const auto Nh = hCenters.size();
+	const auto Nv = vGrid.size();
+	const auto Nh = hGrid.size();
 
 	std::cout << "Unique vertical candidates: " << Nv << "\n";
 	std::cout << "Unique horizontal candidates: " << Nh << "\n";
 
+	// 3. Grid candidates to proper grid.
 	// Check if grid found. Else try with another algorithm.
 	if (Nv == Nh && (Nv == 9 || Nv == 13 || Nv == 19)) {
 		std::cout << "Board size determined directly: " << Nv << "\n";
@@ -304,69 +317,64 @@ cv::Mat rectifyImage(const cv::Mat& image) {
 #ifndef NDEBUG
 	// Debug: Verify if the grid is found with a second algorithm.
 	std::vector<double> vGridTest{}, hGridTest{};
-	assert(findGrid(vCenters, hCenters, vGridTest, hGridTest));
+	assert(findGrid(vGrid, hGrid, vGridTest, hGridTest));
 	assert(vGridTest.size() == hGridTest.size());
-	assert(vGridTest.size() == vCenters.size() && hGridTest.size() == hCenters.size());
+	assert(vGridTest.size() == vGrid.size() && hGridTest.size() == hGrid.size());
 #endif
 	} else {
 		std::cout << "Could not detect the board size trivially. Performing further steps.\n";
 		
-		std::vector<double> vGrid{};
-		std::vector<double> hGrid{};
-		if (!findGrid(vCenters, hCenters, vGrid, hGrid)) {
+		std::vector<double> vGridAttempt{};
+		std::vector<double> hGridAttempt{};
+		if (!findGrid(vGrid, hGrid, vGridAttempt, hGridAttempt)) {
 			std::cerr << "Could not detect a valid grid. Stopping!\n";
 			return {};
 		}
 
-		vCenters = vGrid;
-		hCenters = hGrid;
+		vGrid = vGridAttempt;
+		hGrid = hGridAttempt;
 	}
-
-
 
 	// Starting here, we assume grid found
+	// 4. Warp image with stone buffer at edge (want to detect full stone at edge)
+	double spacingX = computeMedianSpacing(vGrid);
+	double spacingY = computeMedianSpacing(hGrid);
+	double spacing = 0.5 * (spacingX + spacingY);  //!< Spacing between grid lines.
 
+	double stoneBuffer = 0.5 * spacing; // NOTE: Could adjust 0.5 to account for imperfect placement.
 
+	double xmin = vGrid.front() - stoneBuffer;
+	double xmax = vGrid.back()  + stoneBuffer;
+	double ymin = hGrid.front() - stoneBuffer;
+	double ymax = hGrid.back()  + stoneBuffer;
 
-	// Output
-	cv::Mat finalGridVis = warped.clone();
-	for (double x : vCenters) {
-		int xi = (int)std::lround(x);
-		cv::line(finalGridVis,
-				cv::Point(xi, 0),
-				cv::Point(xi, warped.rows - 1),
-				cv::Scalar(0, 255, 0),
-				2);
-	}
-	for (double y : hCenters) {
-		int yi = (int)std::lround(y);
-		cv::line(finalGridVis,
-				cv::Point(0, yi),
-				cv::Point(warped.cols - 1, yi),
-				cv::Scalar(255, 0, 0),
-				2);
-	}
-	// mark intersections (useful sanity check)
-	for (double x : vCenters) {
-		for (double y : hCenters) {
-			cv::circle(finalGridVis,
-					cv::Point((int)std::lround(x),
-								(int)std::lround(y)),
-					3,
-					cv::Scalar(0, 0, 255),
-					-1);
-		}
-	}
+	std::vector<cv::Point2f> src = {
+		{xmin, ymin},
+		{xmax, ymin},
+		{xmax, ymax},
+		{xmin, ymax}
+	};
 
+	std::vector<cv::Point2f> dst = {
+		{0.f, 0.f},
+		{999.f, 0.f},
+		{999.f, 999.f},
+		{0.f, 999.f}
+	};
 
+	cv::Mat H2 = cv::getPerspectiveTransform(src, dst);
+	cv::Mat refined;
+	cv::warpPerspective(warped, refined, H2, cv::Size(1000,1000));
+	
+	
+	// TODO: WarpToBoard has to return homography. Then we can warp refined and not get black bars
 
 	// TODO: Rotate nicely horizontally
-	// TODO: 
 
 	// TODO: warp the image such that image border=outermost grid lines (+ tolerance for stones on edge).
 	
 	std::cout << "\n\n";
-	return finalGridVis;
+	return refined;
 }
 
 // 3 steps
