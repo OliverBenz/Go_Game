@@ -65,9 +65,10 @@ void analyseBoard(cv::Mat& image) {
 	showImages(otsu, adaptive, canny);
 }
 
+//! Order 4 corner points TL,BR,TR,BL (Top Left, Bottom Right, etc).
+static std::vector<cv::Point2f> orderCorners(const std::vector<cv::Point>& quad) {
+	assert(quad.size() == 4u);
 
-static std::vector<cv::Point2f> orderCorners(const std::vector<cv::Point>& quad)
-{
     std::vector<cv::Point2f> pts(4);
     for (int i = 0; i < 4; ++i) {
 		pts[i] = quad[i];
@@ -94,7 +95,7 @@ static std::vector<cv::Point2f> orderCorners(const std::vector<cv::Point>& quad)
 
 // TODO: Add some debugging code. Want an image per manipulation step in Debug mode if enabled.
 // Find the board in an image and crop/scale/rectify so the image is of a planar board. 
-cv::Mat rectifyImage(const cv::Mat& image) {
+cv::Mat warpToBoard(const cv::Mat& image) {
 	if (image.empty()) {
 		std::cerr << "Failed to load image\n";
 		return {};
@@ -168,6 +169,14 @@ cv::Mat rectifyImage(const cv::Mat& image) {
 	return warped;
 }
 
+//! Transform an image that contains a Go Board such that the final image is a top-down projection of the board.
+//! \note The border of the image is the outermost grid line + tolerance for the edge stones.
+cv::Mat rectifyImage(const cv::Mat& image) {
+	cv::Mat rectified = warpToBoard(image); //!< Warped for better grid detection.
+	
+	// TODO: warp the image such that image border=outermost grid lines (+ tolerance for stones on edge).
+	return rectified;
+}
 
 // 3 steps
 // 1) Find board in image and rectify (find largest plausible board contour, dont care if its physical board or outer grid contour)
