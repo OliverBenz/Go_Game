@@ -396,11 +396,6 @@ BoardGeometry rectifyImage(const cv::Mat& image, DebugVisualizer* debugger) {
 	// Warp back to Original
 	std::vector<cv::Point2f> intersectionsOriginal;
 	cv::perspectiveTransform(intersectionsWarped, intersectionsOriginal, Hinv);
-	if (debugger) {
-		cv::Mat vis = image.clone();
-		for (const auto& p : intersectionsOriginal) cv::circle(vis, p, 4, cv::Scalar(255, 0, 0), -1);
-		debugger->add("Intersections Orig.", vis);
-	}
 
 	// Map to refined image
 	std::vector<cv::Point2f> intersectionsRefined;
