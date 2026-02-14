@@ -6,63 +6,63 @@
 #include <iostream>
 
 namespace go::camera {
-namespace debugging {
 
+namespace debugging {
 // TODO: Add to debug code with DebugVisualizer. (Extend visualizer to allow subStages)
 /* Usage: 
- *   if (debugger) debugger->add("Gap Histogram", drawGapHistogram(gaps, 4.0));
+ *   if (debugger) debugger->add("Gap Histogram", debugging:drawGapHistogram(gaps, 4.0));
  */
-cv::Mat drawGapHistogram(const std::vector<double>& gaps, double binWidth)
-{
-    if (gaps.empty()) return {};
 
-    double gmin = *std::min_element(gaps.begin(), gaps.end());
-    double gmax = *std::max_element(gaps.begin(), gaps.end());
+// cv::Mat drawGapHistogram(const std::vector<double>& gaps, double binWidth)
+// {
+//     if (gaps.empty()) return {};
 
-    int bins = static_cast<int>(std::ceil((gmax - gmin) / binWidth)) + 1;
-    std::vector<int> hist(bins, 0);
+//     double gmin = *std::min_element(gaps.begin(), gaps.end());
+//     double gmax = *std::max_element(gaps.begin(), gaps.end());
 
-    for (double g : gaps) {
-        int b = static_cast<int>(std::floor((g - gmin) / binWidth));
-        if (b >= 0 && b < bins) hist[b]++;
-    }
+//     int bins = static_cast<int>(std::ceil((gmax - gmin) / binWidth)) + 1;
+//     std::vector<int> hist(bins, 0);
 
-    int maxCount = *std::max_element(hist.begin(), hist.end());
+//     for (double g : gaps) {
+//         int b = static_cast<int>(std::floor((g - gmin) / binWidth));
+//         if (b >= 0 && b < bins) hist[b]++;
+//     }
 
-    const int width = 800;
-    const int height = 400;
-    const int margin = 40;
+//     int maxCount = *std::max_element(hist.begin(), hist.end());
 
-    cv::Mat histImg(height, width, CV_8UC3, cv::Scalar(20,20,20));
+//     const int width = 800;
+//     const int height = 400;
+//     const int margin = 40;
 
-    double binPixelWidth = static_cast<double>(width - 2*margin) / bins;
+//     cv::Mat histImg(height, width, CV_8UC3, cv::Scalar(20,20,20));
 
-    for (int i = 0; i < bins; ++i) {
-        double ratio = static_cast<double>(hist[i]) / maxCount;
-        int barHeight = static_cast<int>(ratio * (height - 2*margin));
+//     double binPixelWidth = static_cast<double>(width - 2*margin) / bins;
 
-        int x1 = margin + static_cast<int>(i * binPixelWidth);
-        int x2 = margin + static_cast<int>((i+1) * binPixelWidth);
-        int y1 = height - margin;
-        int y2 = height - margin - barHeight;
+//     for (int i = 0; i < bins; ++i) {
+//         double ratio = static_cast<double>(hist[i]) / maxCount;
+//         int barHeight = static_cast<int>(ratio * (height - 2*margin));
 
-        cv::rectangle(histImg,
-                      cv::Point(x1, y1),
-                      cv::Point(x2, y2),
-                      cv::Scalar(0, 200, 255),
-                      cv::FILLED);
-    }
+//         int x1 = margin + static_cast<int>(i * binPixelWidth);
+//         int x2 = margin + static_cast<int>((i+1) * binPixelWidth);
+//         int y1 = height - margin;
+//         int y2 = height - margin - barHeight;
 
-    cv::putText(histImg, "Gap Histogram",
-                cv::Point(20, 30),
-                cv::FONT_HERSHEY_SIMPLEX,
-                0.8,
-                cv::Scalar(255,255,255),
-                2);
+//         cv::rectangle(histImg,
+//                       cv::Point(x1, y1),
+//                       cv::Point(x2, y2),
+//                       cv::Scalar(0, 200, 255),
+//                       cv::FILLED);
+//     }
 
-    return histImg;
-}
- 
+//     cv::putText(histImg, "Gap Histogram",
+//                 cv::Point(20, 30),
+//                 cv::FONT_HERSHEY_SIMPLEX,
+//                 0.8,
+//                 cv::Scalar(255,255,255),
+//                 2);
+
+//     return histImg;
+// }
 }
 
 

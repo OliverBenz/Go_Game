@@ -378,10 +378,39 @@ cv::Mat rectifyImage(const cv::Mat& image, DebugVisualizer* debugger) {
 	cv::warpPerspective(image, refined, homographyFinal, cv::Size(outSize, outSize));
 	if (debugger) {
 		debugger->add("Warp Image", refined);
-		debugger->endStage();
 	}
 	
+	// 5. Compute and warp intersections
+	std::vector<cv::Point2f> intersectionsWarped;
+	intersectionsWarped.reserve(vGrid.size() * hGrid.size());
+
+	for (double x : vGrid) {
+		for (double y : hGrid) {
+			intersectionsWarped.emplace_back(
+				static_cast<float>(x),
+				static_cast<float>(y)
+			);
+		}
+	}
+
+	// Warp back to Original
+	std::vector<cv::Point2f> intersectionsOriginal;
+	cv::perspectiveTransform(intersectionsWarped, intersectionsOriginal, Hinv);
+
+	// Map to refined image
+	std::vector<cv::Point2f> intersectionsRefined;
+	cv::perspectiveTransform(intersectionsOriginal, intersectionsRefined, homographyFinal);
+	if (debugger) {
+		cv::Mat vis = refined.clone();
+		for (const auto& p : intersectionsRefined) {
+			cv::circle(vis, p, 4, cv::Scalar(255, 0, 0), -1);
+		}
+		debugger->add("Intersections", vis);
+	}
+
 	// TODO: Rotate nicely horizontally
+
+	if (debugger) debugger->endStage();
 
 	std::cout << "\n\n";
 	return refined;
