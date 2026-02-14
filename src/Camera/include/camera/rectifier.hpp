@@ -2,6 +2,8 @@
 
 #include <opencv2/opencv.hpp>
 
+#include "camera/debugVisualizer.hpp"
+
 // Rectifying is the first step in the board detection.
 // Motivation: The image of a board is usually messy (contains background and the board in some angle). This makes it hard to analyse the board. This should be fixed before further processing.
 // Goal:       Given a messy image of a board, produce an image where the board is visible from a top-down view without background and perfectly square edges.
@@ -13,7 +15,7 @@ namespace go::camera {
 //! Call this to produce the fully rectified image.
 //! \param [in] image Original unrectified image of a Go board.
 //! \returns    Image showing Go board in a top-down view with the background cut out and a slight padding around the outermost edges(to not cut off stones at the edges). 
-cv::Mat rectifyImage(const cv::Mat& image);
+cv::Mat rectifyImage(const cv::Mat& image, DebugVisualizer* debugger = nullptr);
 
 
 namespace internal {
@@ -26,7 +28,7 @@ struct WarpResult {
 //! Detect rough Go board outline in an image and warp to center the board. Cut out background
 //! \param [in] image Original unwarped image of a Go board.
 //! \note       In the resulting warped image, it is not defined what exactly the border is. This is done in the second step (rectifyImage).  
-WarpResult warpToBoard(const cv::Mat& image);
+WarpResult warpToBoard(const cv::Mat& image, DebugVisualizer* debugger = nullptr);
 
 }
 }
