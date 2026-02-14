@@ -34,7 +34,7 @@ double stddev(const std::vector<double>& v) {
     return std::sqrt(variance(v));
 }
 
-double median(std::vector<double>& values)
+double median(std::vector<double> values)
 {
     assert(!values.empty());
 
