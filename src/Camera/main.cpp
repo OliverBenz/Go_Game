@@ -43,7 +43,7 @@ void showImages(cv::Mat& image1, cv::Mat& image2, cv::Mat& image3) {
 }
 
 void analyseBoard(const cv::Mat& image, go::camera::DebugVisualizer* debugger) {	
-	cv::Mat input = go::camera::rectifyImage(image, debugger);
+	//cv::Mat input = go::camera::rectifyImage(image, debugger);
 	if (image.empty()) {
 		std::cerr << "Failed to rectify image\n";
 		return;
@@ -102,9 +102,9 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        auto rectified = go::camera::rectifyImage(image, &debug);
-		if (!rectified.empty()) {
-            cv::imshow("Rectified", rectified);
+        go::camera::BoardGeometry result = go::camera::rectifyImage(image, &debug);
+		if (!result.image.empty()) {
+            cv::imshow("Rectified", result.image);
         }
 
         cv::Mat mosaic = debug.buildMosaic();

@@ -224,7 +224,7 @@ static double computeMedianSpacing(const std::vector<double>& grid)
 
 //! Transform an image that contains a Go Board such that the final image is a top-down projection of the board.
 //! \note The border of the image is the outermost grid line + tolerance for the edge stones.
-cv::Mat rectifyImage(const cv::Mat& image, DebugVisualizer* debugger) {
+BoardGeometry rectifyImage(const cv::Mat& image, DebugVisualizer* debugger) {
 	// 0. Input: Roughly warped image
 	auto [warped, warpHomography] = internal::warpToBoard(image, debugger); //!< Warped for better grid detection.
 	if (debugger) {
@@ -317,11 +317,11 @@ cv::Mat rectifyImage(const cv::Mat& image, DebugVisualizer* debugger) {
 		std::cout << "Board size determined directly: " << Nv << "\n";
 
 #ifndef NDEBUG
-	// Debug: Verify if the grid is found with a second algorithm.
-	std::vector<double> vGridTest{}, hGridTest{};
-	assert(findGrid(vGrid, hGrid, vGridTest, hGridTest));
-	assert(vGridTest.size() == hGridTest.size());
-	assert(vGridTest.size() == vGrid.size() && hGridTest.size() == hGrid.size());
+		// Debug: Verify if the grid is found with a second algorithm.
+		std::vector<double> vGridTest{}, hGridTest{};
+		assert(findGrid(vGrid, hGrid, vGridTest, hGridTest));
+		assert(vGridTest.size() == hGridTest.size());
+		assert(vGridTest.size() == vGrid.size() && hGridTest.size() == hGrid.size());
 #endif
 	} else {
 		std::cout << "Could not detect the board size trivially. Performing further steps.\n";
@@ -396,24 +396,34 @@ cv::Mat rectifyImage(const cv::Mat& image, DebugVisualizer* debugger) {
 	// Warp back to Original
 	std::vector<cv::Point2f> intersectionsOriginal;
 	cv::perspectiveTransform(intersectionsWarped, intersectionsOriginal, Hinv);
+	if (debugger) {
+		cv::Mat vis = image.clone();
+		for (const auto& p : intersectionsOriginal) cv::circle(vis, p, 4, cv::Scalar(255, 0, 0), -1);
+		debugger->add("Intersections Orig.", vis);
+	}
 
 	// Map to refined image
 	std::vector<cv::Point2f> intersectionsRefined;
 	cv::perspectiveTransform(intersectionsOriginal, intersectionsRefined, homographyFinal);
 	if (debugger) {
 		cv::Mat vis = refined.clone();
-		for (const auto& p : intersectionsRefined) {
-			cv::circle(vis, p, 4, cv::Scalar(255, 0, 0), -1);
-		}
-		debugger->add("Intersections", vis);
+		for (const auto& p : intersectionsRefined) cv::circle(vis, p, 4, cv::Scalar(255, 0, 0), -1);
+		debugger->add("Intersections Ref.", vis);
+	}
+	
+	// Compute spacing (in refined coordinates)
+	std::vector<double> diffs;
+	for (std::size_t i = 1; i < intersectionsRefined.size(); ++i) {
+		diffs.push_back(intersectionsRefined[i].x - intersectionsRefined[i-1].x);
 	}
 
 	// TODO: Rotate nicely horizontally
 
 	if (debugger) debugger->endStage();
-
 	std::cout << "\n\n";
-	return refined;
+
+	// TODO: Unit test sanity check: Image (width|height) == N*spacing (up to tolerance. N-1 spacings in Grid + stone buffer) 
+	return {refined, homographyFinal, intersectionsRefined, median(diffs), static_cast<unsigned>(vGrid.size())};
 }
 
 }

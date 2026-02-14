@@ -12,17 +12,26 @@
 //   2) We fine-tune this board detection (function rectifyImage). Using the projected board image, we detect grid lines, crop the image to the edge grid lines + padding of a half stone.
 namespace go::camera {
 
+//! Final 
+struct BoardGeometry{
+    cv::Mat image;                          //!< Image mapped to Board with padding.
+    cv::Mat H;                              //!< Homography between the original image and the fine-tuned warped image.
+    std::vector<cv::Point2f> intersections; //!< List of grid intersections on the board (in refined warped coordinates).
+    double spacing;                         //!< Spacing between grid lines (in refined warped coordinated).
+    unsigned boardSize;                     //!< Size of the go board (9, 13, 19).
+};
+
 //! Call this to produce the fully rectified image.
 //! \param [in] image Original unrectified image of a Go board.
 //! \returns    Image showing Go board in a top-down view with the background cut out and a slight padding around the outermost edges(to not cut off stones at the edges). 
-cv::Mat rectifyImage(const cv::Mat& image, DebugVisualizer* debugger = nullptr);
+BoardGeometry rectifyImage(const cv::Mat& image, DebugVisualizer* debugger = nullptr);
 
 
 namespace internal {
 
 struct WarpResult {
     cv::Mat warped; //!< Image warped to fit the rough board contour. 
-    cv::Mat H;      //!< Homography used to apply the warping.
+    cv::Mat H;      //!< Homography used to apply the rough warping.
 };
 
 //! Detect rough Go board outline in an image and warp to center the board. Cut out background
