@@ -227,7 +227,6 @@ static double computeMedianSpacing(const std::vector<double>& grid)
 cv::Mat rectifyImage(const cv::Mat& image, DebugVisualizer* debugger) {
 	// 0. Input: Roughly warped image
 	auto [warped, warpHomography] = internal::warpToBoard(image, debugger); //!< Warped for better grid detection.
-	
 	if (debugger) {
 		debugger->beginStage("Rectify Image");
 		debugger->add("Input", warped);

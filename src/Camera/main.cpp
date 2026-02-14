@@ -42,10 +42,15 @@ void showImages(cv::Mat& image1, cv::Mat& image2, cv::Mat& image3) {
 	cv::waitKey(0);
 }
 
-void analyseBoard(const cv::Mat& image) {
+void analyseBoard(const cv::Mat& image, DebugVisualizer* debugger) {	
+	cv::Mat input = rectifyImage(image, debugger);
 	if (image.empty()) {
-		std::cerr << "Failed to load image\n";
+		std::cerr << "Failed to rectify image\n";
 		return;
+	}
+	if (debugger) {
+		debugger->beginStage("Board Analyse");
+		debugger->add("Input", input);
 	}
 
 	// 1. Grayscale
@@ -119,8 +124,8 @@ int main(int argc, char** argv) {
 		cv::Mat image19 = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "easy_straight/size_19.jpeg");
 		
 		auto rect9  = go::camera::rectifyImage(image9);
-		auto rect13 = go::camera::rectifyImage(image13);
-		auto rect19 = go::camera::rectifyImage(image19, &debug);
+		auto rect13 = go::camera::rectifyImage(image13, &debug);
+		auto rect19 = go::camera::rectifyImage(image19);
 
 		// showImages(rect9, rect13, rect19);
 
