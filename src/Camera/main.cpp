@@ -86,19 +86,50 @@ void analyseBoard(const cv::Mat& image) {
 // - Output: Board cropped + Board size. Expect stable
 // 3) Detect grid lines again and stones.
 
-int main() {
-	// Load Image
-	cv::Mat image9  = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "straight_easy/size_9.jpeg");
-	cv::Mat image13 = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "straight_easy/size_13.jpeg");
-	cv::Mat image19 = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "straight_easy/size_19.jpeg");
-	
-	auto rect9  = go::camera::rectifyImage(image9);
-	auto rect13 = go::camera::rectifyImage(image13);
-	auto rect19 = go::camera::rectifyImage(image19);
+int main(int argc, char** argv) {
+	go::camera::DebugVisualizer debug;
+	debug.setInteractive(false);
 
-	showImages(rect9, rect13, rect19);
+	// If a path is passed here then use this image. Else do test images.
+    if (argc > 1) {
+        // ---- Single image from command line ----
+        std::filesystem::path inputPath = argv[1];
 
-	//analyseBoard(image);
+        cv::Mat image = cv::imread(inputPath.string());
+        if (image.empty()) {
+            std::cerr << "Failed to load image: " << inputPath << "\n";
+            return 1;
+        }
+
+        auto rectified = go::camera::rectifyImage(image, &debug);
+		if (!rectified.empty()) {
+            cv::imshow("Rectified", rectified);
+        }
+
+        cv::Mat mosaic = debug.buildMosaic();
+        if (!mosaic.empty()) {
+            cv::imshow("Debug Mosaic", mosaic);
+        }
+
+        cv::waitKey(0);
+	} else {
+		// Load Image
+		cv::Mat image9  = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "easy_straight/size_9.jpeg");
+		cv::Mat image13 = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "easy_straight/size_13.jpeg");
+		cv::Mat image19 = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "easy_straight/size_19.jpeg");
+		
+		auto rect9  = go::camera::rectifyImage(image9);
+		auto rect13 = go::camera::rectifyImage(image13);
+		auto rect19 = go::camera::rectifyImage(image19, &debug);
+
+		// showImages(rect9, rect13, rect19);
+
+		const auto mosaic = debug.buildMosaic();
+		//cv::imshow("", mosaic);
+		//cv::waitKey(0);
+		cv::imwrite("/home/oliver/temp.png", mosaic);
+		//analyseBoard(image);
+	}
 
 	return 0;
 }

@@ -4,6 +4,36 @@
 #include "gridFinder.hpp"
 
 namespace go::camera {
+namespace debugging {
+
+//! Draw lines onto an image.
+cv::Mat drawLines(const cv::Mat& image, const std::vector<double>& vertical, const std::vector<double>& horizontal) {
+	cv::Mat drawnLines = image.clone();  // Use warped image ideally
+
+    for (double x : vertical) {
+        int xi = static_cast<int>(std::lround(x));
+        cv::line(drawnLines,
+                 cv::Point(xi, 0),
+                 cv::Point(xi, drawnLines.rows - 1),
+                 cv::Scalar(255, 0, 0),
+                 3);
+    }
+
+    // Draw clustered horizontal grid lines (thick yellow)
+    for (double y : horizontal) {
+        int yi = static_cast<int>(std::lround(y));
+        cv::line(drawnLines,
+                 cv::Point(0, yi),
+                 cv::Point(drawnLines.cols - 1, yi),
+                 cv::Scalar(100, 0, 150),
+                 3);
+    }
+	return drawnLines;
+	
+}
+
+}
+
 
 namespace internal {
 //! Order 4 corner points TL,TR,BR,BL (Top Left, Bottom Right, etc).
@@ -37,7 +67,12 @@ static std::vector<cv::Point2f> orderCorners(const std::vector<cv::Point>& quad)
 // TODO: Add some debugging code. Want an image per manipulation step in Debug mode if enabled.
 // TODO: Magic numbers to variables (Later controlled in class?).
 // Find the board in an image and crop/scale/rectify so the image is of a planar board. 
-WarpResult warpToBoard(const cv::Mat& image) {
+WarpResult warpToBoard(const cv::Mat& image, DebugVisualizer* debugger) {
+	if (debugger) {
+		debugger->beginStage("Warp To Board");
+		debugger->add("Input", image);
+	}
+	
 	if (image.empty()) {
 		std::cerr << "Failed to load image\n";
 		return {};
@@ -46,8 +81,13 @@ WarpResult warpToBoard(const cv::Mat& image) {
 	// 1. Preprocess image
 	cv::Mat prepared;
 	cv::cvtColor(image, prepared, cv::COLOR_BGR2GRAY);         // Grayscale
+	if (debugger) debugger->add("Grayscale", prepared);
+
 	cv::GaussianBlur(prepared, prepared, cv::Size(7, 7), 1.5); // Gaussian Blur to reduce noise
+	if (debugger) debugger->add("Gaussian Blur", prepared);
+
 	cv::Canny(prepared, prepared, 50, 150);                    // Canny Edge Detection
+	if (debugger) debugger->add("Canny Edge", prepared);
 
 	// 2. Larger kernel merges thin internal lines
 	cv::Mat closed;
@@ -56,6 +96,7 @@ WarpResult warpToBoard(const cv::Mat& image) {
 		cv::Size(15, 15)   // try 11–21 depending on resolution
 	);
 	cv::morphologyEx(prepared, closed, cv::MORPH_CLOSE, kernel);
+	if (debugger) debugger->add("Morphology Close", closed);
 
 	// 3. Find Contours
     std::vector<std::vector<cv::Point>> contours;
@@ -64,6 +105,11 @@ WarpResult warpToBoard(const cv::Mat& image) {
         std::cerr << "No contours found\n";
         return {};
     }
+	if (debugger) {
+		auto drawnContours = image.clone();
+		cv::drawContours(drawnContours, contours, -1, cv::Scalar(255, 0, 0), 2);
+		debugger->add("Contour Finder", drawnContours);
+	}
 
 	// 4. Find largest contour
 	double maxArea = 0.0;
@@ -82,6 +128,11 @@ WarpResult warpToBoard(const cv::Mat& image) {
 		return {};
 	}
 	const auto dominantContour = contours[bestIdx];
+	if (debugger) {
+		cv::Mat drawnContour = image.clone();
+		cv::drawContours(drawnContour, contours, bestIdx, cv::Scalar(255, 0, 0), 3);
+		debugger->add("Contour Largest", drawnContour);
+	}
 
 	// 5. Contour to a polygon
 	std::vector<cv::Point> contourPolygon;
@@ -116,6 +167,10 @@ WarpResult warpToBoard(const cv::Mat& image) {
 
 	cv::Mat warped;
 	cv::warpPerspective(image, warped, H, cv::Size(outSize, outSize));
+	if (debugger) {
+		debugger->add("Warped", warped);
+		debugger->endStage();
+	}
 
 	return {warped, H};
 }
@@ -169,20 +224,31 @@ static double computeMedianSpacing(const std::vector<double>& grid)
 
 //! Transform an image that contains a Go Board such that the final image is a top-down projection of the board.
 //! \note The border of the image is the outermost grid line + tolerance for the edge stones.
-cv::Mat rectifyImage(const cv::Mat& image) {
+cv::Mat rectifyImage(const cv::Mat& image, DebugVisualizer* debugger) {
 	// 0. Input: Roughly warped image
-	auto [warped, warpHomography] = internal::warpToBoard(image); //!< Warped for better grid detection.
+	auto [warped, warpHomography] = internal::warpToBoard(image, debugger); //!< Warped for better grid detection.
 	
+	if (debugger) {
+		debugger->beginStage("Rectify Image");
+		debugger->add("Input", warped);
+	}
+
 	// TODO: Properly rotate at some point. Roughly rotate in warpToBoard() and fine rotate here.
 
 
 	// 1. Preprocess again
 	cv::Mat gray, blur, edges;
 	cv::cvtColor(warped, gray, cv::COLOR_BGR2GRAY);           // Greyscale
-	cv::GaussianBlur(gray, blur, cv::Size(9,9), 1.5);         // Blur to reduce noise
-	cv::Canny(blur, edges, 50, 120);                          // Edge detection
-	cv::dilate(edges, edges, cv::Mat(), cv::Point(-1,-1), 1); // Cleanup detected edges
+	if (debugger) debugger->add("Grayscale", gray);
 
+	cv::GaussianBlur(gray, blur, cv::Size(9,9), 1.5);         // Blur to reduce noise
+	if (debugger) debugger->add("Gaussian Blur", blur);
+
+	cv::Canny(blur, edges, 50, 120);                          // Edge detection
+	if (debugger) debugger->add("Canny Edge", edges);
+
+	cv::dilate(edges, edges, cv::Mat(), cv::Point(-1,-1), 1); // Cleanup detected edges
+	if (debugger) debugger->add("Dilate Canny", edges);
 
 	// 2. Find horizontal and vertical line candidates (merge close together lines but there are not necessarily our grid yet)
 	// Find line segments
@@ -242,6 +308,9 @@ cv::Mat rectifyImage(const cv::Mat& image) {
 
 	std::cout << "Unique vertical candidates: " << Nv << "\n";
 	std::cout << "Unique horizontal candidates: " << Nh << "\n";
+	if (debugger) {
+		debugger->add("Grid Candidates", debugging::drawLines(warped, vGrid, hGrid));
+	}
 
 	// 3. Grid candidates to proper grid.
 	// Check if grid found. Else try with another algorithm.
@@ -308,7 +377,10 @@ cv::Mat rectifyImage(const cv::Mat& image) {
 	cv::Mat homographyFinal = cv::getPerspectiveTransform(srcOriginal, dst);
 	cv::Mat refined;
 	cv::warpPerspective(image, refined, homographyFinal, cv::Size(outSize, outSize));
-
+	if (debugger) {
+		debugger->add("Warp Image", refined);
+		debugger->endStage();
+	}
 	
 	// TODO: Rotate nicely horizontally
 
