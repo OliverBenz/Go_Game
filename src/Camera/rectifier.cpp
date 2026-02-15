@@ -3,6 +3,8 @@
 #include "statistics.hpp"
 #include "gridFinder.hpp"
 
+#include <cmath>
+
 namespace go::camera {
 namespace debugging {
 
@@ -406,19 +408,40 @@ BoardGeometry rectifyImage(const cv::Mat& image, DebugVisualizer* debugger) {
 		debugger->add("Intersections Ref.", vis);
 	}
 	
-	// Compute spacing (in refined coordinates)
-	std::vector<double> diffs;
-	for (std::size_t i = 1; i < intersectionsRefined.size(); ++i) {
-		diffs.push_back(intersectionsRefined[i].x - intersectionsRefined[i-1].x);
+	// Compute spacing (in refined coordinates) from adjacent intersection distances.
+	const auto N = vGrid.size(); //!< Board size (9,13,19).
+	std::vector<double> spacingSamples;
+	if (N >= 2 && intersectionsRefined.size() == N * N) {
+		spacingSamples.reserve(2 * N * (N - 1));
+
+		for (std::size_t x = 0; x < N; ++x) {
+			for (std::size_t y = 0; y + 1 < N; ++y) {
+				const double d = cv::norm(intersectionsRefined[x * N + (y + 1)] - intersectionsRefined[x * N + y]);
+				if (std::isfinite(d) && d > 0.0) spacingSamples.push_back(d);
+			}
+		}
+		for (std::size_t x = 0; x + 1 < N; ++x) {
+			for (std::size_t y = 0; y < N; ++y) {
+				const double d = cv::norm(intersectionsRefined[(x + 1) * N + y] - intersectionsRefined[x * N + y]);
+				if (std::isfinite(d) && d > 0.0) spacingSamples.push_back(d);
+			}
+		}
 	}
+
+	const double refinedSpacing = spacingSamples.empty() ? 0.0 : median(spacingSamples);
 
 	// TODO: Rotate nicely horizontally
 
 	if (debugger) debugger->endStage();
 	std::cout << "\n\n";
 
+	// Assert output: Fail means we missed a validity check earlier.
+	assert(vGrid.size() == hGrid.size());       // Grid lines equal.
+	assert(intersectionsRefined.size() == N*N); // Intersection count fits grid size.
+	assert(N == 9 || N == 13 || N == 19);       // Only valid board sizes.
+	assert(!refined.empty());	                // No empty image.
 	// TODO: Unit test sanity check: Image (width|height) == N*spacing (up to tolerance. N-1 spacings in Grid + stone buffer) 
-	return {refined, homographyFinal, intersectionsRefined, median(diffs), static_cast<unsigned>(vGrid.size())};
+	return {refined, homographyFinal, intersectionsRefined, refinedSpacing, static_cast<unsigned>(N)};
 }
 
 }
