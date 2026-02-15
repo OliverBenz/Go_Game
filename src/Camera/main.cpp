@@ -115,13 +115,13 @@ int main(int argc, char** argv) {
         cv::waitKey(0);
 	} else {
 		// Load Image
-		cv::Mat image9  = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "easy_straight/size_9.jpeg");
-		cv::Mat image13 = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "easy_straight/size_13.jpeg");
-		cv::Mat image19 = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "easy_straight/size_19.jpeg");
+		cv::Mat image9  = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "game_simple/size_9/move_13.png");
+		// cv::Mat image13 = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "easy_straight/size_13.jpeg");
+		// cv::Mat image19 = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "easy_straight/size_19.jpeg");
 		
-		auto rect9  = go::camera::rectifyImage(image9);
-		auto rect13 = go::camera::rectifyImage(image13);
-		auto rect19 = go::camera::rectifyImage(image19, &debug);
+		auto rect9  = go::camera::rectifyImage(image9, &debug);
+		//auto rect13 = go::camera::rectifyImage(image13);
+		//auto rect19 = go::camera::rectifyImage(image19);
 
 		// showImages(rect9, rect13, rect19);
 
