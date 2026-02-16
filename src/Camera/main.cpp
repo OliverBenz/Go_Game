@@ -48,14 +48,6 @@ void showImages(cv::Mat& image1, cv::Mat& image2, cv::Mat& image3) {
 	cv::waitKey(0);
 }
 
-
-static bool isValidSpacing(const double spacing) {
-	static constexpr double RANDOM_MIN = 4.;
-	static constexpr double RANDOM_MAX = 200.;
-
-	return spacing >= RANDOM_MIN && spacing <= RANDOM_MAX;
-}
-
 static bool isValidBoardSize(unsigned size) {
 	return size == 9 || size == 13 || size == 19;
 }
@@ -78,8 +70,8 @@ bool process(const std::filesystem::path& path, DebugVisualizer* debugger = null
 
 	// Properly construct the board geometry.
 	BoardGeometry geometry = rectifyImage(image, warped, debugger);
-	if (geometry.image.empty() || geometry.H.empty() || geometry.intersections.empty()
-		|| !isValidSpacing(geometry.spacing) || isValidBoardSize(geometry.boardSize) || geometry.boardSize*geometry.boardSize == geometry.intersections.size()) {
+	if (geometry.image.empty() || geometry.H.empty()
+		|| !isValidBoardSize(geometry.boardSize) || geometry.boardSize*geometry.boardSize != geometry.intersections.size()) {
 		std::cerr << "[Error] Could not construct board geometry from warped image.\n";
 		return false;
 	}
