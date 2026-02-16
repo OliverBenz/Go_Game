@@ -6,12 +6,14 @@ find_package(OpenCV REQUIRED)
 set(headers
     "${CMAKE_CURRENT_LIST_DIR}/statistics.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/include/camera/debugVisualizer.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/camera/boardFinder.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/gridFinder.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/include/camera/rectifier.hpp"
 )
 set(sources
     "${CMAKE_CURRENT_LIST_DIR}/statistics.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/debugVisualizer.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/boardFinder.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/gridFinder.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/rectifier.cpp"
 )
