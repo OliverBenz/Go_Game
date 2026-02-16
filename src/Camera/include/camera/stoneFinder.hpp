@@ -12,9 +12,9 @@ enum class StoneState { Empty, Black, White };
 
 struct StoneResult {
     bool success;
-    std::vector<StoneState> board;
+    std::vector<StoneState> stones;
 };
 
-StoneResult analyseBoard(const BoardGeometry& geometry, go::camera::DebugVisualizer* debugger);
+StoneResult analyseBoard(const BoardGeometry& geometry, go::camera::DebugVisualizer* debugger = nullptr);
 
 }

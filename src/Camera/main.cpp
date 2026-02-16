@@ -78,7 +78,8 @@ bool process(const std::filesystem::path& path, DebugVisualizer* debugger = null
 
 	// Properly construct the board geometry.
 	BoardGeometry geometry = rectifyImage(image, warped, debugger);
-	if (geometry.image.empty() || geometry.H.empty() || geometry.intersections.empty() || !isValidSpacing(geometry.spacing) || isValidBoardSize(geometry.boardSize)) {
+	if (geometry.image.empty() || geometry.H.empty() || geometry.intersections.empty()
+		|| !isValidSpacing(geometry.spacing) || isValidBoardSize(geometry.boardSize) || geometry.boardSize*geometry.boardSize == geometry.intersections.size()) {
 		std::cerr << "[Error] Could not construct board geometry from warped image.\n";
 		return false;
 	}
