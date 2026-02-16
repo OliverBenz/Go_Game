@@ -4,6 +4,7 @@ set(targetName "camera.gtest")
 # Create executable
 add_executable(${targetName}
     "${CMAKE_CURRENT_LIST_DIR}/rectifier.gtest.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/process.gtest.cpp"
 )
 
 # Link to required libraries
