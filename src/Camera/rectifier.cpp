@@ -84,12 +84,10 @@ static double computeMedianSpacing(const std::vector<double>& grid)
 
 //! Transform an image that contains a Go Board such that the final image is a top-down projection of the board.
 //! \note The border of the image is the outermost grid line + tolerance for the edge stones.
-BoardGeometry rectifyImage(const cv::Mat& image, DebugVisualizer* debugger) {
-	// 0. Input: Roughly warped image
-	auto [warped, warpHomography] = warpToBoard(image, debugger); //!< Warped for better grid detection.
+BoardGeometry rectifyImage(const cv::Mat& originalImg, const WarpResult& input, DebugVisualizer* debugger) {
 	if (debugger) {
 		debugger->beginStage("Rectify Image");
-		debugger->add("Input", warped);
+		debugger->add("Input", input.image);
 	}
 
 	// TODO: Properly rotate at some point. Roughly rotate in warpToBoard() and fine rotate here.
@@ -97,7 +95,7 @@ BoardGeometry rectifyImage(const cv::Mat& image, DebugVisualizer* debugger) {
 
 	// 1. Preprocess again
 	cv::Mat gray, blur, edges;
-	cv::cvtColor(warped, gray, cv::COLOR_BGR2GRAY);           // Greyscale
+	cv::cvtColor(input.image, gray, cv::COLOR_BGR2GRAY);           // Greyscale
 	if (debugger) debugger->add("Grayscale", gray);
 
 	cv::GaussianBlur(gray, blur, cv::Size(9,9), 1.5);         // Blur to reduce noise
@@ -168,7 +166,7 @@ BoardGeometry rectifyImage(const cv::Mat& image, DebugVisualizer* debugger) {
 	std::cout << "Unique vertical candidates: " << Nv << "\n";
 	std::cout << "Unique horizontal candidates: " << Nh << "\n";
 	if (debugger) {
-		debugger->add("Grid Candidates", debugging::drawLines(warped, vGrid, hGrid));
+		debugger->add("Grid Candidates", debugging::drawLines(input.image, vGrid, hGrid));
 	}
 
 	// 3. Grid candidates to proper grid.
@@ -220,7 +218,7 @@ BoardGeometry rectifyImage(const cv::Mat& image, DebugVisualizer* debugger) {
 	};
 
 	// Invert the previous warping so we can apply our new warp on the original image.
-	cv::Mat Hinv = warpHomography.inv();
+	cv::Mat Hinv = input.H.inv();
 	std::vector<cv::Point2f> srcOriginal;
 	cv::perspectiveTransform(srcWarped, srcOriginal, Hinv);
 
@@ -235,7 +233,7 @@ BoardGeometry rectifyImage(const cv::Mat& image, DebugVisualizer* debugger) {
 
 	cv::Mat homographyFinal = cv::getPerspectiveTransform(srcOriginal, dst);
 	cv::Mat refined;
-	cv::warpPerspective(image, refined, homographyFinal, cv::Size(outSize, outSize));
+	cv::warpPerspective(originalImg, refined, homographyFinal, cv::Size(outSize, outSize));
 	if (debugger) {
 		debugger->add("Warp Image", refined);
 	}

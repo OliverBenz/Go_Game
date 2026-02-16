@@ -1,6 +1,7 @@
 #pragma once
 
 #include "camera/debugVisualizer.hpp"
+#include "camera/rectifier.hpp"
 
 #include <opencv2/core/mat.hpp>
 #include <vector>
@@ -14,6 +15,6 @@ struct StoneResult {
     std::vector<StoneState> board;
 };
 
-StoneResult analyseBoard(const cv::Mat& image, go::camera::DebugVisualizer* debugger);
+StoneResult analyseBoard(const BoardGeometry& geometry, go::camera::DebugVisualizer* debugger);
 
 }

@@ -48,6 +48,51 @@ void showImages(cv::Mat& image1, cv::Mat& image2, cv::Mat& image3) {
 	cv::waitKey(0);
 }
 
+
+static bool isValidSpacing(const double spacing) {
+	static constexpr double RANDOM_MIN = 4.;
+	static constexpr double RANDOM_MAX = 200.;
+
+	return spacing >= RANDOM_MIN && spacing <= RANDOM_MAX;
+}
+
+static bool isValidBoardSize(unsigned size) {
+	return size == 9 || size == 13 || size == 19;
+}
+
+// TODO: Better validity checks. Add success flag to all? Maybe return optionals?
+bool process(const std::filesystem::path& path, DebugVisualizer* debugger = nullptr) {
+	// Read image
+	cv::Mat image = cv::imread(path.string());
+	if (image.empty()) {
+		std::cerr << "Failed to load image: " << path << "\n";
+		return false;
+	}
+
+	// Warp image roughly around the board.
+	WarpResult warped = warpToBoard(image, debugger);
+	if (warped.image.empty() || warped.H.empty()) {
+		std::cerr << "[Error] Could not find board in image.\n";
+		return false;
+	}
+
+	// Properly construct the board geometry.
+	BoardGeometry geometry = rectifyImage(image, warped, debugger);
+	if (geometry.image.empty() || geometry.H.empty() || geometry.intersections.empty() || !isValidSpacing(geometry.spacing) || isValidBoardSize(geometry.boardSize)) {
+		std::cerr << "[Error] Could not construct board geometry from warped image.\n";
+		return false;
+	}
+	
+	// Find the stones on the board.
+	StoneResult result = analyseBoard(geometry, debugger);
+	if (!result.success) {
+		std::cerr << "[Error] Could not analyse the board to find stones.\n";
+		return false;
+	}
+
+	return true;
+}
+
 }
 
 // 3 steps
@@ -59,50 +104,31 @@ void showImages(cv::Mat& image1, cv::Mat& image2, cv::Mat& image3) {
 //     But only when the camera changes (would have to detect this)
 // - Output: Board cropped + Board size. Expect stable
 // 3) Detect grid lines again and stones.
-
 int main(int argc, char** argv) {
 	go::camera::DebugVisualizer debug;
 	debug.setInteractive(false);
 
 	// If a path is passed here then use this image. Else do test images.
     if (argc > 1) {
-        // ---- Single image from command line ----
-        std::filesystem::path inputPath = argv[1];
+        std::filesystem::path inputPath = argv[1]; // Path from command line.
 
-        cv::Mat image = cv::imread(inputPath.string());
-        if (image.empty()) {
-            std::cerr << "Failed to load image: " << inputPath << "\n";
-            return 1;
-        }
+		if (go::camera::process(inputPath, &debug)) {
+			cv::Mat mosaic = debug.buildMosaic();
+			if (!mosaic.empty()) {
+				cv::imshow("Debug Mosaic", mosaic);
+			}
+			cv::waitKey(0);
+		}
 
-        go::camera::BoardGeometry result = go::camera::rectifyImage(image, &debug);
-		if (!result.image.empty()) {
-            cv::imshow("Rectified", result.image);
-        }
-
-        cv::Mat mosaic = debug.buildMosaic();
-        if (!mosaic.empty()) {
-            cv::imshow("Debug Mosaic", mosaic);
-        }
-
-        cv::waitKey(0);
 	} else {
-		// Load Image
-		cv::Mat image9  = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "game_simple/size_9/move_4.png");
-		// cv::Mat image13 = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "easy_straight/size_13.jpeg");
-		// cv::Mat image19 = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "easy_straight/size_19.jpeg");
-		
-		go::camera::analyseBoard(image9, &debug);
-		//auto rect13 = go::camera::rectifyImage(image13);
-		//auto rect19 = go::camera::rectifyImage(image19);
-
-		// showImages(rect9, rect13, rect19);
-
-		const auto mosaic = debug.buildMosaic();
-		//cv::imshow("", mosaic);
-		//cv::waitKey(0);
-		cv::imwrite("/home/oliver/temp.png", mosaic);
-		//analyseBoard(image);
+		const auto exampleImage = std::filesystem::path(PATH_TEST_IMG) / "game_simple/size_9/move_4.png"; 
+	
+		if (go::camera::process(exampleImage, &debug)) {
+			const auto mosaic = debug.buildMosaic();
+			//cv::imshow("", mosaic);
+			//cv::waitKey(0);
+			cv::imwrite("/home/oliver/temp.png", mosaic);			
+		}
 	}
 
 	return 0;
