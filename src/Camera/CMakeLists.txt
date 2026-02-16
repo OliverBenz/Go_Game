@@ -9,6 +9,7 @@ set(headers
     "${CMAKE_CURRENT_LIST_DIR}/include/camera/boardFinder.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/gridFinder.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/include/camera/rectifier.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/camera/stoneFinder.hpp"
 )
 set(sources
     "${CMAKE_CURRENT_LIST_DIR}/statistics.cpp"
@@ -16,6 +17,7 @@ set(sources
     "${CMAKE_CURRENT_LIST_DIR}/boardFinder.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/gridFinder.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/rectifier.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/stoneFinder.cpp"
 )
 
 add_library(${targetName} STATIC ${headers} ${sources})
