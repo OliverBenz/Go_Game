@@ -15,9 +15,7 @@ static cv::Rect clampRect(const cv::Rect& r, const cv::Size& sz) {
 // Stone detection on a rectified Go board.
 // Pipeline: rectify -> grayscale/blur -> per-intersection circular mean intensity -> kmeans(K=3) -> validate clusters -> overlay.
 // Key caveat: kmeans *always* partitions the data (even on an empty board), so we gate “stone clusters” by spread/support/separation.
-StoneResult analyseBoard(const cv::Mat& image, go::camera::DebugVisualizer* debugger) {	
-	// Step 0: Rectify the board and get geometry (top-down image + intersections + spacing in refined coordinates).
-	BoardGeometry geometry = go::camera::rectifyImage(image, debugger);
+StoneResult analyseBoard(const BoardGeometry& geometry, go::camera::DebugVisualizer* debugger) {	
 	if (geometry.image.empty()) {
 		std::cerr << "Failed to rectify image\n";
 		return {false, {}};

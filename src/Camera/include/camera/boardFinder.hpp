@@ -7,7 +7,7 @@
 namespace go::camera {
 
 struct WarpResult {
-    cv::Mat warped; //!< Image warped to fit the rough board contour. 
+    cv::Mat image; //!< Image warped to fit the rough board contour. 
     cv::Mat H;      //!< Homography used to apply the rough warping.
 };
 

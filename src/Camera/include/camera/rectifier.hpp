@@ -1,8 +1,9 @@
 #pragma once
 
-#include <opencv2/opencv.hpp>
-
 #include "camera/debugVisualizer.hpp"
+#include "boardFinder.hpp"
+
+#include <opencv2/opencv.hpp>
 
 // Rectifying is the first step in the board detection.
 // Motivation: The image of a board is usually messy (contains background and the board in some angle). This makes it hard to analyse the board. This should be fixed before further processing.
@@ -22,8 +23,8 @@ struct BoardGeometry{
 };
 
 //! Call this to produce the fully rectified image.
-//! \param [in] image Original unrectified image of a Go board.
+//! \param [in] image Warped image of a Go board (Board already detected).
 //! \returns    Image showing Go board in a top-down view with the background cut out and a slight padding around the outermost edges(to not cut off stones at the edges). 
-BoardGeometry rectifyImage(const cv::Mat& image, DebugVisualizer* debugger = nullptr);
+BoardGeometry rectifyImage(const cv::Mat& originalImg, const WarpResult& input, DebugVisualizer* debugger = nullptr);
 
 }
