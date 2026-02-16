@@ -1,6 +1,7 @@
 # Go Game Client
-A simple Go engine designed to keep modular, clean and efficient.
-The core library shall be kept free of bloat so you can even enjoy a game of Go in the terminal of weak hardware.
+A simple Go game client with local LAN support and an image detection system so you can play on a physical board instead of the computer.
+The whole project is still very much work in progress. Current focus lies on the image detection system as well as a robotic arm that can mirror the opponents move on the physical board.
+The project is aimed to be kept modular so you can easily just take whatever parts are useful to you.
 
 ## Motivation
 The motivation for this project is simple. 
