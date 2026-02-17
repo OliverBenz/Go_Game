@@ -2,22 +2,24 @@
 
 #include "camera/rectifier.hpp"
 
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <iostream>
+
 #include <opencv2/opencv.hpp>
 
 namespace go::camera {
 
-// Helper: clamp ROI safely
-static cv::Rect clampRect(const cv::Rect& r, const cv::Size& sz) {
-    cv::Rect imgRect(0, 0, sz.width, sz.height);
-    return r & imgRect;
-}
-
 // Stone detection on a rectified Go board.
-// Pipeline: rectify -> grayscale/blur -> per-intersection circular mean intensity -> kmeans(K=3) -> validate clusters -> overlay.
-// Key caveat: kmeans *always* partitions the data (even on an empty board), so we gate “stone clusters” by spread/support/separation.
+// Pipeline: BGR -> Lab -> per-intersection circular mean L -> percentile thresholds -> classify -> optional overlay.
 StoneResult analyseBoard(const BoardGeometry& geometry, go::camera::DebugVisualizer* debugger) {	
 	if (geometry.image.empty()) {
 		std::cerr << "Failed to rectify image\n";
+		return {false, {}};
+	}
+	if (geometry.intersections.empty()) {
+		std::cerr << "No intersections provided\n";
 		return {false, {}};
 	}
 	if (debugger) {
@@ -25,154 +27,151 @@ StoneResult analyseBoard(const BoardGeometry& geometry, go::camera::DebugVisuali
 		debugger->add("Input", geometry.image);
 	}
 
-	// Step 1: Convert to grayscale (intensity-only classifier) and denoise to stabilize ROI (Region of Interest) means.
-	cv::Mat gray;
-	cv::cvtColor(geometry.image, gray, cv::COLOR_BGR2GRAY);
-	if (debugger) debugger->add("Grayscale", gray);
-
-	cv::Mat imgBlurred;
-	cv::GaussianBlur(gray, imgBlurred, cv::Size(5, 5), 1.0);
-	if (debugger) debugger->add("Gaussian Blur", imgBlurred);
-
-	// Step 2: Convert board geometry spacing into a robust sampling radius (pixels).
-	if (!std::isfinite(geometry.spacing) || geometry.spacing < 4.0) {
-		std::cerr << "Invalid grid spacing for stone detection: " << geometry.spacing << "\n";
+	// Convert to Lab and extract L channel.
+	cv::Mat lab;
+	if (geometry.image.channels() == 3) {
+		cv::cvtColor(geometry.image, lab, cv::COLOR_BGR2Lab);
+	} else if (geometry.image.channels() == 4) {
+		cv::Mat bgr;
+		cv::cvtColor(geometry.image, bgr, cv::COLOR_BGRA2BGR);
+		cv::cvtColor(bgr, lab, cv::COLOR_BGR2Lab);
+	} else if (geometry.image.channels() == 1) {
+		cv::Mat bgr;
+		cv::cvtColor(geometry.image, bgr, cv::COLOR_GRAY2BGR);
+		cv::cvtColor(bgr, lab, cv::COLOR_BGR2Lab);
+	} else {
+		std::cerr << "Unsupported image channels: " << geometry.image.channels() << "\n";
 		if (debugger) debugger->endStage();
 		return {false, {}};
 	}
 
-	const int maxRadiusPx = std::max(2, (std::min(imgBlurred.cols, imgBlurred.rows) - 1) / 2);
-	int roiRadiusPx = (int)std::lround(0.45 * geometry.spacing); // ~stone radius fraction of grid spacing (tune per dataset).
-	roiRadiusPx = std::max(2, std::min(roiRadiusPx, maxRadiusPx));
-	const int patchSize = 2 * roiRadiusPx + 1;
-	assert(patchSize > 0);
+	cv::Mat L;
+	cv::extractChannel(lab, L, 0);
 
-	// Step 3: Build a circular mask once; we’ll crop it to match border-clipped ROIs.
-	cv::Mat circleMask(patchSize, patchSize, CV_8U, cv::Scalar(0));
-	cv::circle(circleMask, cv::Point(roiRadiusPx, roiRadiusPx), roiRadiusPx, cv::Scalar(255), -1, cv::LINE_8);
-
-	// Step 4: For each intersection, sample the mean grayscale value inside the circular ROI.
-	std::vector<float> intensities(geometry.intersections.size(), 0.0f);
-	std::vector<int> validIdx;
-	validIdx.reserve(geometry.intersections.size());
-
-	for (std::size_t idx = 0; idx < geometry.intersections.size(); ++idx) {
-		const cv::Point2f p = geometry.intersections[idx];
-		if (!std::isfinite(p.x) || !std::isfinite(p.y)) continue;
-		const int cx = (int)std::lround(p.x); // intersection center x (pixels)
-		const int cy = (int)std::lround(p.y); // intersection center y (pixels)
-
-		// ROI around the intersection; clampRect avoids OpenCV asserts at image borders.
-		const cv::Rect roi0(cx - roiRadiusPx, cy - roiRadiusPx, patchSize, patchSize);
-		const cv::Rect roi = clampRect(roi0, imgBlurred.size());
-		if (roi.width <= 0 || roi.height <= 0) {
-			continue;
+	// Fixed sampling radius (in pixels). Scale with grid spacing if available.
+	const int radius = [&]() {
+		int r = 6;
+		if (std::isfinite(geometry.spacing) && geometry.spacing > 0.0) {
+			r = static_cast<int>(std::lround(geometry.spacing * 0.23));
 		}
+		r = std::max(r, 2);
+		r = std::min(r, 30);
+		return r;
+	}();
 
-		const cv::Mat patch = imgBlurred(roi);
-
-		// maskRect maps the clamped ROI back into the full mask coordinate system (handles border clipping).
-		const cv::Rect maskRect(roi.x - roi0.x, roi.y - roi0.y, roi.width, roi.height);
-		if (maskRect.x < 0 || maskRect.y < 0 || maskRect.x + maskRect.width > circleMask.cols ||
-		    maskRect.y + maskRect.height > circleMask.rows || maskRect.size() != patch.size()) {
-			continue;
+	// Precompute integer offsets for a filled circle mask (for speed).
+	std::vector<cv::Point> circleOffsets;
+	circleOffsets.reserve(static_cast<std::size_t>((2 * radius + 1) * (2 * radius + 1)));
+	const int r2 = radius * radius;
+	for (int dy = -radius; dy <= radius; ++dy) {
+		for (int dx = -radius; dx <= radius; ++dx) {
+			if ((dx * dx + dy * dy) <= r2) {
+				circleOffsets.emplace_back(dx, dy);
+			}
 		}
-
-		const cv::Mat maskROI = circleMask(maskRect);
-
-		// meanStdDev with mask computes stats on masked pixels only (here: circular area).
-		cv::Scalar mean, stddev;
-		cv::meanStdDev(patch, mean, stddev, maskROI);
-		const float m = static_cast<float>(mean[0]);
-		if (!std::isfinite(m)) {
-			continue;
-		}
-
-		intensities[idx] = m;
-		validIdx.push_back((int)idx);
 	}
 
-	// Debug: visualize sampled intensities at valid intersections (per-point heatmap overlay).
+	// Compute mean L around each intersection.
+	const int rows = L.rows;
+	const int cols = L.cols;
+
+	std::vector<float> meanL;
+	meanL.reserve(geometry.intersections.size());
+	std::vector<uint8_t> isValid;
+	isValid.reserve(geometry.intersections.size());
+	std::vector<float> distribution;
+	distribution.reserve(geometry.intersections.size());
+
+	for (const auto& p : geometry.intersections) {
+		const int cx = static_cast<int>(std::lround(p.x));
+		const int cy = static_cast<int>(std::lround(p.y));
+
+		std::uint32_t sum = 0;
+		std::uint32_t count = 0;
+		for (const auto& off : circleOffsets) {
+			const int x = cx + off.x;
+			const int y = cy + off.y;
+			if (x < 0 || x >= cols || y < 0 || y >= rows) {
+				continue;
+			}
+			sum += static_cast<std::uint32_t>(L.ptr<std::uint8_t>(y)[x]);
+			++count;
+		}
+
+		if (count == 0) {
+			meanL.push_back(0.0f);
+			isValid.push_back(static_cast<uint8_t>(0u));
+			continue;
+		}
+
+		const float m = static_cast<float>(sum) / static_cast<float>(count);
+		meanL.push_back(m);
+		isValid.push_back(static_cast<uint8_t>(1u));
+		distribution.push_back(m);
+	}
+
+	if (distribution.empty()) {
+		if (debugger) debugger->endStage();
+		return {false, {}};
+	}
+
+	// Robust thresholds:
+	// The old percentile-as-threshold approach forces a fixed fraction of intersections into Black/White,
+	// which creates false positives when there are few/no stones. Instead, treat stones as outliers in L.
+	std::vector<float> sortedL = distribution;
+	std::sort(sortedL.begin(), sortedL.end());
+	const std::size_t n = sortedL.size();
+	const float medianL = sortedL[(n - 1) / 2];
+
+	std::vector<float> absDev;
+	absDev.reserve(n);
+	for (float v : sortedL) {
+		absDev.push_back(std::abs(v - medianL));
+	}
+	std::sort(absDev.begin(), absDev.end());
+	const float mad = absDev[(n - 1) / 2];
+	const float robustStd = std::max(1.0f, 1.4826f * mad);
+
+	static constexpr float MIN_ABS_CONTRAST_L = 24.0f; // Lab L in [0..255]
+	static constexpr float K_SIGMA = 3.5f;
+	const float delta = std::max(MIN_ABS_CONTRAST_L, K_SIGMA * robustStd);
+	const float blackThreshold = medianL - delta;
+	const float whiteThreshold = medianL + delta;
+
+	// Classify each intersection and return only detected stones (non-empty).
+	std::vector<StoneState> stones;
+	stones.reserve(geometry.intersections.size());
+
+	cv::Mat vis;
 	if (debugger) {
-		cv::Mat vis;
-		cv::cvtColor(gray, vis, cv::COLOR_GRAY2BGR);
-
-		// Use a fixed, plausible display range centered at the median so we don't stretch small lighting gradients.
-		std::vector<double> vals;
-		vals.reserve(validIdx.size());
-		for (int idx : validIdx) {
-			const double v = intensities[(std::size_t)idx];
-			if (std::isfinite(v)) vals.push_back(v);
-		}
-
-		double midI = 127.5;
-		if (!vals.empty()) {
-			auto midIt = vals.begin() + (vals.size() / 2);
-			std::nth_element(vals.begin(), midIt, vals.end());
-			midI = *midIt;
-		}
-
-		const double kHeatmapHalfRange = 60.0; // +/- around median (in gray levels).
-		double lowI = std::max(0.0, midI - kHeatmapHalfRange);
-		double highI = std::min(255.0, midI + kHeatmapHalfRange);
-		if (!std::isfinite(lowI) || !std::isfinite(highI) || highI <= lowI + 1.0) {
-			lowI = 0.0;
-			highI = 255.0;
-		}
-
-		// Build a 0..255 -> BGR lookup table once, then index into it per point.
-		cv::Mat ramp(256, 1, CV_8UC1);
-		for (int i = 0; i < 256; ++i) ramp.at<std::uint8_t>(i, 0) = (std::uint8_t)i;
-		cv::Mat rampBgr;
-		cv::applyColorMap(ramp, rampBgr, cv::COLORMAP_TURBO);
-
-		const double denom = highI - lowI;
-		const int r = std::max(1, roiRadiusPx / 3);
-		for (int idx : validIdx) {
-			const cv::Point2f p = geometry.intersections[(std::size_t)idx];
-			if (!std::isfinite(p.x) || !std::isfinite(p.y)) continue;
-
-			const double v = intensities[(std::size_t)idx];
-			if (!std::isfinite(v)) continue;
-
-			int v8 = (int)std::lround(255.0 * (v - lowI) / denom);
-			v8 = std::max(0, std::min(255, v8));
-
-			const cv::Vec3b c = rampBgr.at<cv::Vec3b>(v8, 0);
-			cv::circle(vis, p, r, cv::Scalar(c[0], c[1], c[2]), -1, cv::LINE_AA);
-		}
-
-		debugger->add("Intersection Intensities (median±60)", vis);
+		vis = geometry.image.clone();
 	}
-		
 
-	// Circle in real image
-	// if (debugger) {
-	// 	cv::Mat vis;
-	// 	if (geometry.image.channels() == 1) cv::cvtColor(geometry.image, vis, cv::COLOR_GRAY2BGR);
-	// 	else if (geometry.image.channels() == 3) vis = geometry.image.clone();
-	// 	else if (geometry.image.channels() == 4) cv::cvtColor(geometry.image, vis, cv::COLOR_BGRA2BGR);
-	// 	else vis = geometry.image.clone();
+	for (std::size_t i = 0; i < geometry.intersections.size(); ++i) {
+		if (isValid[i] == 0u) {
+			continue;
+		}
 
-	// 	const int drawRadiusPx = roiRadiusPx;
-	// 	const int thickness = std::max(1, (int)std::lround(drawRadiusPx * 0.12)); // scale thickness with radius for readability.
+		const float l = meanL[i];
+		if (l <= blackThreshold) {
+			stones.push_back(StoneState::Black);
+			if (!vis.empty()) {
+				cv::circle(vis, geometry.intersections[i], radius, cv::Scalar(0, 0, 0), 2);
+			}
+		} else if (l >= whiteThreshold) {
+			stones.push_back(StoneState::White);
+			if (!vis.empty()) {
+				cv::circle(vis, geometry.intersections[i], radius, cv::Scalar(255, 0, 0), 2);
+			}
+		}
+	}
 
-	// 	for (std::size_t idx = 0; idx < geometry.intersections.size(); ++idx) {
-	// 		const auto& p = geometry.intersections[idx];
-	// 		if (!std::isfinite(p.x) || !std::isfinite(p.y)) continue;
+	if (debugger) {
+		debugger->add("Stone Overlay", vis);
+		debugger->endStage();
+	}
 
-	// 		if (stateFlat[idx] == StoneState::Black) {
-	// 			cv::circle(vis, p, drawRadiusPx, cv::Scalar(0, 0, 0), thickness, cv::LINE_AA); // black outline
-	// 		} else if (stateFlat[idx] == StoneState::White) {
-	// 			cv::circle(vis, p, drawRadiusPx, cv::Scalar(255, 0, 0), thickness, cv::LINE_AA); // blue outline (BGR)
-	// 		}
-	// 	}
-
-	// 	debugger->add("Detected Stones", vis);
-	// 	debugger->endStage();
-	// }
-
-    return {true, {}};
+	return {true, std::move(stones)};
 }
 
 }
