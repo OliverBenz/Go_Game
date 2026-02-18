@@ -1,536 +1,523 @@
 #include "gridFinder.hpp"
 
 #include <algorithm>
-#include <cstdint>
 #include <cmath>
+#include <cstdint>
 #include <format>
-#include <limits>
-#include <vector>
 #include <iostream>
+#include <limits>
+#include <numbers>
+#include <vector>
 
+/**
+ * @brief 1D lattice fitting for Go board grid lines.
+ *
+ * Input to this module is a *sorted* list of candidate line-center positions per axis (pixels).
+ * Detections may have missing lines and may include spurious lines (most commonly the physical board border).
+ *
+ * We model the grid as a 1D periodic lattice and fit it deterministically:
+ *  1) estimate spacing from the mode of adjacent gaps,
+ *  2) estimate phase by clustering modulo residuals r_i = c_i mod s,
+ *  3) enumerate integer offsets that map detections to lattice indices,
+ *  4) score fits by explained structure (inliers/span) and RMS alignment error,
+ *  5) choose N jointly across vertical+horizontal fits and reconstruct equally-spaced grids.
+ *
+ * This avoids tolerance-based snapping loops and naturally rejects border artifacts as outliers.
+ */
 namespace go::camera {
 
-namespace debugging {
-// TODO: Add to debug code with DebugVisualizer. (Extend visualizer to allow subStages)
-/* Usage: 
- *   if (debugger) debugger->add("Gap Histogram", debugging:drawGapHistogram(gaps, 4.0));
+/*! Estimate the dominant adjacent gap (grid spacing) using a coarse histogram.
+ *  Using a mode (instead of a mean) is fast and robust against outlier gaps introduced by missing/spurious lines.
+ *
+ * \param [in] gaps     Adjacent differences between sorted candidate centers (pixels).
+ * \param [in] binWidth Histogram bin width (pixels).
+ * \return     Estimated spacing in pixels, or 0.0 if @p gaps is empty.
  */
+double modeGap(const std::vector<double>& gaps, double binWidth) {
+	// 0. Guard.
+	if (gaps.empty())
+		return 0.0;
 
-// cv::Mat drawGapHistogram(const std::vector<double>& gaps, double binWidth)
-// {
-//     if (gaps.empty()) return {};
+	// 1. Determine the observed gap range.
+	const double gmin = *std::min_element(gaps.begin(), gaps.end()); //!< Min gap (px)
+	const double gmax = *std::max_element(gaps.begin(), gaps.end()); //!< Max gap (px)
 
-//     double gmin = *std::min_element(gaps.begin(), gaps.end());
-//     double gmax = *std::max_element(gaps.begin(), gaps.end());
+	// 2. Histogram gaps into uniform bins.
+	const int bins = (int)std::ceil((gmax - gmin) / binWidth) + 1; //!< Number of bins (>= 1)
+	std::vector<int> hist(bins, 0);                                //!< Per-bin counts
 
-//     int bins = static_cast<int>(std::ceil((gmax - gmin) / binWidth)) + 1;
-//     std::vector<int> hist(bins, 0);
+	// g = one adjacent gap (px)
+	for (double g: gaps) {
+		const int b = (int)std::floor((g - gmin) / binWidth); //!< Bin index
+		if (b >= 0 && b < bins)
+			hist[b]++; // vote
+	}
 
-//     for (double g : gaps) {
-//         int b = static_cast<int>(std::floor((g - gmin) / binWidth));
-//         if (b >= 0 && b < bins) hist[b]++;
-//     }
-
-//     int maxCount = *std::max_element(hist.begin(), hist.end());
-
-//     const int width = 800;
-//     const int height = 400;
-//     const int margin = 40;
-
-//     cv::Mat histImg(height, width, CV_8UC3, cv::Scalar(20,20,20));
-
-//     double binPixelWidth = static_cast<double>(width - 2*margin) / bins;
-
-//     for (int i = 0; i < bins; ++i) {
-//         double ratio = static_cast<double>(hist[i]) / maxCount;
-//         int barHeight = static_cast<int>(ratio * (height - 2*margin));
-
-//         int x1 = margin + static_cast<int>(i * binPixelWidth);
-//         int x2 = margin + static_cast<int>((i+1) * binPixelWidth);
-//         int y1 = height - margin;
-//         int y2 = height - margin - barHeight;
-
-//         cv::rectangle(histImg,
-//                       cv::Point(x1, y1),
-//                       cv::Point(x2, y2),
-//                       cv::Scalar(0, 200, 255),
-//                       cv::FILLED);
-//     }
-
-//     cv::putText(histImg, "Gap Histogram",
-//                 cv::Point(20, 30),
-//                 cv::FONT_HERSHEY_SIMPLEX,
-//                 0.8,
-//                 cv::Scalar(255,255,255),
-//                 2);
-
-//     return histImg;
-// }
+	// 3. Pick the most populated bin and return its center.
+	const int bestBin = (int)(std::max_element(hist.begin(), hist.end()) - hist.begin()); //!< argmax(hist)
+	return gmin + (bestBin + 0.5) * binWidth;                                             // bin center (px)
 }
 
+/*! Positive modulo helper in [0, period).
+ * \param [in] x      Value to wrap.
+ * \param [in] period Period (must be > 0).
+ * \return Wrapped value in [0, period), or 0.0 if @p period <= 0.
+ */
+static double positiveFmod(const double x, const double period) {
+	if (period <= 0.0) {
+		return 0.0;
+	}
 
-//! Construct histogramm of gap sizes to get best fitting size.
-double modeGap(const std::vector<double>& gaps, double binWidth)
-{
-    if (gaps.empty()) return 0.0;
-
-    double gmin = *std::min_element(gaps.begin(), gaps.end());
-    double gmax = *std::max_element(gaps.begin(), gaps.end());
-
-    int bins = (int)std::ceil((gmax - gmin) / binWidth) + 1;
-    std::vector<int> hist(bins, 0);
-
-    for (double g : gaps) {
-        int b = (int)std::floor((g - gmin) / binWidth);
-        if (b >= 0 && b < bins) hist[b]++;
-    }
-
-    int bestBin = (int)(std::max_element(hist.begin(), hist.end()) - hist.begin());
-    
-	// return center of best bin
-    return gmin + (bestBin + 0.5) * binWidth;
+	double r = std::fmod(x, period); // raw fmod result
+	if (r < 0.0) {
+		r += period; // shift into [0, period)
+	}
+	if (r >= period) {
+		r = 0.0; // guard against rare numerical edge cases
+	}
+	return r;
 }
 
-static double positiveFmod(double x, double period) {
-    if (period <= 0.0) return 0.0;
-    double r = std::fmod(x, period);
-    if (r < 0.0) r += period;
-    if (r >= period) r = 0.0;
-    return r;
-}
+/*! Estimate the dominant lattice phase (offset) given a spacing.
+ * For a true lattice with spacing s, centers c_i cluster around a common residual in:
+ *   r_i = c_i mod s
+ * We histogram residuals to find the dominant cluster and then compute a circular mean within that cluster neighborhood for sub-bin precision (handles
+ * wrap-around at 0/s).
+ *
+ * \param [in] centersSorted Sorted candidate center positions (pixels).
+ * \param [in] spacing       Lattice spacing (pixels).
+ * \return     Phase r* in [0, spacing).
+ */
+static double dominantResidualPhase(const std::vector<double>& centersSorted, const double spacing) {
+	if (centersSorted.empty() || spacing <= 0.) {
+		return 0.;
+	}
 
-static double dominantResidualPhase(const std::vector<double>& centersSorted, double spacing) {
-    if (centersSorted.empty() || spacing <= 0.0) return 0.0;
+	// 1. Compute residuals r_i = c_i mod spacing, wrapped to [0, spacing).
+	std::vector<double> residuals; // residuals in [0, spacing)
+	residuals.reserve(centersSorted.size());
+	for (auto c: centersSorted) { // c = candidate center (px)
+		residuals.push_back(positiveFmod(c, spacing));
+	}
 
-    // Residuals r_i = c_i mod spacing, wrapped to [0, spacing).
-    std::vector<double> residuals;
-    residuals.reserve(centersSorted.size());
-    for (double c : centersSorted) {
-        residuals.push_back(positiveFmod(c, spacing));
-    }
+	// 2. Histogram residuals to find the dominant phase cluster.
+	const double binWidth = std::clamp(0.04 * spacing, 1.0, 4.0);                         //!< Px (few pixels)
+	const int bins        = std::max(8, static_cast<int>(std::ceil(spacing / binWidth))); //!< Number of bins around [0, spacing)
+	std::vector<int> hist(static_cast<std::size_t>(bins), 0);                             //!< Residual histogram
 
-    // Histogram residuals to find dominant phase cluster.
-    const double binWidth = std::clamp(0.04 * spacing, 1.0, 4.0); // ~3px for typical spacing ~75px
-    const int bins = std::max(8, static_cast<int>(std::ceil(spacing / binWidth)));
-    std::vector<int> hist(static_cast<std::size_t>(bins), 0);
+	for (double r: residuals) {
+		int b = static_cast<int>(std::floor(r / binWidth));   //!< Bin index
+		b     = std::clamp(b, 0, static_cast<int>(bins) - 1); // Safety clamp
+		hist[static_cast<std::size_t>(b)]++;                  // Vote
+	}
 
-    for (double r : residuals) {
-        int b = static_cast<int>(std::floor(r / binWidth));
-        b = std::clamp(b, 0, bins - 1);
-        hist[static_cast<std::size_t>(b)]++;
-    }
+	//! \param [in] i Histogram bin index
+	auto smoothedCount = [&](const int i) -> int {
+		const int prev = (i - 1 + bins) % bins;                                                                                 //!< Wrap-around previous
+		const int next = (i + 1) % bins;                                                                                        //!< Wrap-around next
+		return hist[static_cast<std::size_t>(prev)] + hist[static_cast<std::size_t>(i)] + hist[static_cast<std::size_t>(next)]; // 3-bin smoothing
+	};
 
-    auto smoothedCount = [&](int i) -> int {
-        const int prev = (i - 1 + bins) % bins;
-        const int next = (i + 1) % bins;
-        return hist[static_cast<std::size_t>(prev)] + hist[static_cast<std::size_t>(i)] + hist[static_cast<std::size_t>(next)];
-    };
+	// 3. Pick the (smoothed) mode bin.
+	int bestBin   = 0;                  // best bin index
+	int bestCount = -1;                 // best smoothed count
+	for (int i = 0; i < bins; ++i) {    // i = bin index
+		const int c = smoothedCount(i); // smoothed votes
+		if (c > bestCount) {
+			bestCount = c;
+			bestBin   = i;
+		}
+	}
 
-    int bestBin = 0;
-    int bestCount = -1;
-    for (int i = 0; i < bins; ++i) {
-        const int c = smoothedCount(i);
-        if (c > bestCount) {
-            bestCount = c;
-            bestBin = i;
-        }
-    }
+	const int prev = (bestBin - 1 + bins) % bins; //!< Neighborhood bin
+	const int next = (bestBin + 1) % bins;        //!< Neighborhood bin
 
-    const int prev = (bestBin - 1 + bins) % bins;
-    const int next = (bestBin + 1) % bins;
+	// 4. Compute circular mean inside the dominant bin window (bestBin +/- 1) to get sub-bin phase.
+	double sumSin = 0.0; // sum of sin(angle)
+	double sumCos = 0.0; // sum of cos(angle)
+	int used      = 0;   // number of residuals used
 
-    // Compute circular mean of residuals inside the dominant bin window (bestBin +/- 1) to get sub-bin phase.
-    static constexpr double TWO_PI = 6.28318530717958647692;
-    double sumSin = 0.0;
-    double sumCos = 0.0;
-    int used = 0;
+	//! r = residual (px)
+	for (double r: residuals) {
+		int b = static_cast<int>(std::floor(r / binWidth)); //!< Bin index
+		b     = std::clamp(b, 0, bins - 1);                 // safety clamp
+		if (b != bestBin && b != prev && b != next) {
+			continue; // keep dominant cluster only
+		}
 
-    for (double r : residuals) {
-        int b = static_cast<int>(std::floor(r / binWidth));
-        b = std::clamp(b, 0, bins - 1);
-        if (b != bestBin && b != prev && b != next) continue;
+		const double ang = 2. * std::numbers::pi * (r / spacing); // map residual to a circle angle
+		sumSin += std::sin(ang);
+		sumCos += std::cos(ang);
+		++used;
+	}
 
-        const double ang = TWO_PI * (r / spacing);
-        sumSin += std::sin(ang);
-        sumCos += std::cos(ang);
-        ++used;
-    }
+	if (used == 0 || (std::abs(sumSin) + std::abs(sumCos)) < 1e-12) {
+		// Fallback: center of dominant bin (still deterministic).
+		const double phase = (static_cast<double>(bestBin) + 0.5) * binWidth; // bin center (px)
+		return std::clamp(phase, 0.0, std::nextafter(spacing, 0.0));
+	}
 
-    if (used == 0 || (std::abs(sumSin) + std::abs(sumCos)) < 1e-12) {
-        // Fallback: center of dominant bin.
-        const double phase = (static_cast<double>(bestBin) + 0.5) * binWidth;
-        return std::clamp(phase, 0.0, std::nextafter(spacing, 0.0));
-    }
-
-    double ang = std::atan2(sumSin, sumCos);
-    if (ang < 0.0) ang += TWO_PI;
-    const double phase = (ang / TWO_PI) * spacing;
-    return std::clamp(phase, 0.0, std::nextafter(spacing, 0.0));
+	// 5. Convert circular mean back to a phase in pixels.
+	double ang = std::atan2(sumSin, sumCos); // mean angle in [-pi, pi]
+	if (ang < 0.0) {
+		ang += 2. * std::numbers::pi;
+	}
+	const double phase = (ang / (2. * std::numbers::pi)) * spacing; // phase r* (px)
+	return std::clamp(phase, 0.0, std::nextafter(spacing, 0.0));
 }
 
 struct LatticeScore {
-    double rms{std::numeric_limits<double>::infinity()};
-    int inliers{0};
-    int span{0};
-    int offset{0}; // integer multiple of spacing applied to phase
+	double rms{std::numeric_limits<double>::infinity()}; //!< RMS alignment error (px) over inlier indices
+	std::size_t inliers{0};                              //!< Number of lattice indices k that received a match
+	int span{0};                                         //!< Contiguous index span covered by inliers
+	int offset{0};                                       //!< Integer multiple of spacing applied to the phase
 };
 
-static bool evaluateLatticeOffset(const std::vector<double>& centersSorted,
-                                  double start,
-                                  double spacing,
-                                  int N,
-                                  LatticeScore& outScore)
-{
-    if (N <= 0 || spacing <= 0.0) return false;
+/*! Score a specific lattice start (phase + offset) for a given spacing and N.
+ *  Each detected center is assigned to its nearest lattice index:
+ *    k = round((c - start) / spacing)
+ *  For each k we keep only the best-matching detection (smallest |error|).
+ *  The score is computed from indices that got a match (inliers), their covered span, and the RMS alignment error.
+ * \param [in]  centersSorted Sorted candidate center positions (pixels).
+ * \param [in]  start         Lattice start position grid[0] (pixels).
+ * \param [in]  spacing       Lattice spacing (pixels).
+ * \param [in]  N             Board size (number of lines on this axis).
+ * \param [out] outScore      Filled with inlier/span/RMS metrics if a valid score can be computed.
+ * \return      True if at least one inlier was found; false otherwise.
+ */
+static bool evaluateLatticeOffset(const std::vector<double>& centersSorted, double start, double spacing, int N, LatticeScore& outScore) {
+	// 0. Guard.
+	if (N <= 0 || spacing <= 0.0)
+		return false;
 
-    // For each grid index k, keep the closest detected center (best absolute residual).
-    std::vector<double> bestErr(static_cast<std::size_t>(N), std::numeric_limits<double>::infinity());
-    std::vector<uint8_t> has(static_cast<std::size_t>(N), 0u);
+	// 1. For each lattice index k, keep the closest detected center (best absolute residual).
+	std::vector<double> bestErr(static_cast<std::size_t>(N), std::numeric_limits<double>::infinity()); // per-k best error (px)
+	std::vector<uint8_t> has(static_cast<std::size_t>(N), 0u);                                         // per-k match flag
 
-    for (double c : centersSorted) {
-        const double kReal = (c - start) / spacing;
-        const int k = static_cast<int>(std::lround(kReal));
-        if (k < 0 || k >= N) continue;
+	for (double c: centersSorted) {                                // c = detected center (px)
+		const double kReal = (c - start) / spacing;                // real-valued index
+		const int k        = static_cast<int>(std::lround(kReal)); // nearest lattice index
+		if (k < 0 || k >= N)
+			continue;
 
-        const double predicted = start + static_cast<double>(k) * spacing;
-        const double e = c - predicted;
-        const double ae = std::abs(e);
+		const double predicted = start + static_cast<double>(k) * spacing; // lattice position for k
+		const double e         = c - predicted;                            // residual error (px)
+		const double ae        = std::abs(e);                              // |residual| (px)
 
-        const std::size_t ki = static_cast<std::size_t>(k);
-        if (has[ki] == 0u || ae < std::abs(bestErr[ki])) {
-            bestErr[ki] = e;
-            has[ki] = 1u;
-        }
-    }
+		const std::size_t ki = static_cast<std::size_t>(k); // k as size_t for indexing
+		if (has[ki] == 0u || ae < std::abs(bestErr[ki])) {
+			bestErr[ki] = e;
+			has[ki]     = 1u;
+		}
+	}
 
-    double sumSq = 0.0;
-    int inliers = 0;
-    int minK = N;
-    int maxK = -1;
-    for (int k = 0; k < N; ++k) {
-        const std::size_t ki = static_cast<std::size_t>(k);
-        if (has[ki] == 0u) continue;
-        ++inliers;
-        sumSq += bestErr[ki] * bestErr[ki];
-        minK = std::min(minK, k);
-        maxK = std::max(maxK, k);
-    }
+	// 2. Compute inlier count, covered span, and RMS error.
+	double sumSq     = 0.0;       // sum of squared errors
+	unsigned inliers = 0u;        // number of matched indices
+	int minK         = N;         // smallest matched k
+	int maxK         = -1;        // largest matched k
+	for (int k = 0; k < N; ++k) { // k = lattice index
+		const std::size_t ki = static_cast<std::size_t>(k);
+		if (has[ki] == 0u)
+			continue;
+		++inliers;
+		sumSq += bestErr[ki] * bestErr[ki];
+		minK = std::min(minK, k);
+		maxK = std::max(maxK, k);
+	}
 
-    if (inliers == 0) return false;
+	if (inliers == 0u)
+		return false;
 
-    outScore.rms = std::sqrt(sumSq / static_cast<double>(inliers));
-    outScore.inliers = inliers;
-    outScore.span = (maxK >= minK) ? (maxK - minK + 1) : 0;
-    return true;
+	// 3. Fill output score.
+	outScore.rms     = std::sqrt(sumSq / static_cast<double>(inliers));
+	outScore.inliers = inliers;
+	outScore.span    = (maxK >= minK) ? (maxK - minK + 1) : 0;
+	return true;
 }
 
-static bool selectGridByLatticeFit(const std::vector<double>& centersSorted,
-                                   const std::vector<int>& Ns,
-                                   std::vector<double>& outGrid,
-                                   int& outN)
-{
-    outGrid.clear();
-    outN = 0;
+/*!
+ * Fit a 1D equally-spaced lattice to candidate centers for a fixed N.
+ * Major steps:
+ *  1) (Optional) slide a contiguous window of size N over detections to reduce edge outlier influence,
+ *  2) estimate spacing from the modal adjacent gap in the window (modeGap()),
+ *  3) estimate phase by clustering modulo residuals (dominantResidualPhase()),
+ *  4) enumerate integer offsets (indexing) and score each start by inliers/span + RMS,
+ *  5) select the best-scoring start and reconstruct the lattice.
+ *
+ * \param [in]  centersSorted Sorted candidate center positions for one axis (pixels).
+ * \param [in]  N             Board size to fit (number of lines on this axis).
+ * \param [out] outGrid       Selected lattice positions (size = N).
+ * \return      True if a lattice fit was found; false otherwise.
+ */
+static bool selectGridByLatticeFit(const std::vector<double>& centersSorted, const std::size_t N, std::vector<double>& outGrid) {
+	outGrid.clear();
 
-    if (centersSorted.size() < 6) return false;
+	// Need enough detections to estimate spacing/phase robustly.
+	if (centersSorted.size() < 6) {
+		return false;
+	}
 
-    LatticeScore bestOverall{};
-    int bestN = 0;
-    double bestStart = 0.0;
-    double bestSpacing = 0.0;
-    double bestPhase = 0.0;
-    std::size_t bestWindowStart = 0;
-    double bestGapRms = std::numeric_limits<double>::infinity();
+	// 1. Track the best fit for this N.
+	LatticeScore bestForN{};                                                   //!< Best score for this N
+	double bestStartForN            = 0.0;                                     //!< Best start for this N
+	double bestSpacingForN          = 0.0;                                     //!< Best spacing for this N
+	double bestPhaseForN            = 0.0;                                     //!< Best phase for this N
+	std::size_t bestWindowStartForN = 0;                                       //!< Best window start for this N
+	double bestGapRmsForN           = std::numeric_limits<double>::infinity(); //!< Best window gapRms for this N
 
-    for (int N : Ns) {
-        if (N <= 0) continue;
+	// 2. If we have more candidates than N, prefer a contiguous window of size N.
+	//    This naturally rejects spurious physical board borders at the extremes.
+	const std::size_t M          = centersSorted.size();   // number of detections
+	const std::size_t windowSize = M >= N ? N : M;         //!< Window size
+	const std::size_t windows    = M >= N ? M - N + 1 : 1; //!< Number of windows
 
-        LatticeScore bestForN{};
-        double bestStartForN = 0.0;
-        double bestSpacingForN = 0.0;
-        double bestPhaseForN = 0.0;
-        std::size_t bestWindowStartForN = 0;
-        double bestGapRmsForN = std::numeric_limits<double>::infinity();
+	// 3. Evaluate each window for this N.
+	for (std::size_t w = 0; w < windows; ++w) {            // w = window index
+		const std::size_t wStart = (windows == 1) ? 0 : w; // first detection index in this window
 
-        // If we have more candidates than N, prefer a contiguous window of size N.
-        // This naturally rejects spurious physical board borders at the extremes.
-        const std::size_t M = centersSorted.size();
-        const std::size_t windowSize = (M >= static_cast<std::size_t>(N)) ? static_cast<std::size_t>(N) : M;
-        const std::size_t windows = (M >= static_cast<std::size_t>(N)) ? (M - static_cast<std::size_t>(N) + 1) : 1;
+		const auto beginIt = centersSorted.begin() + static_cast<std::ptrdiff_t>(wStart); // begin iterator
+		const auto endIt   = beginIt + static_cast<std::ptrdiff_t>(windowSize);           // end iterator
+		const std::vector<double> centersWindow(beginIt, endIt);                          // contiguous window copy
 
-        for (std::size_t w = 0; w < windows; ++w) {
-            const std::size_t wStart = (windows == 1) ? 0 : w;
+		if (centersWindow.size() < 2)
+			continue;
 
-            const auto beginIt = centersSorted.begin() + static_cast<std::ptrdiff_t>(wStart);
-            const auto endIt = beginIt + static_cast<std::ptrdiff_t>(windowSize);
-            const std::vector<double> centersWindow(beginIt, endIt);
+		// 3.1 Estimate spacing from adjacent gaps (windowed to reduce influence of border outliers).
+		std::vector<double> gaps; //!< Adjacent gaps (px)
+		gaps.reserve(centersWindow.size() - 1);
+		for (std::size_t i = 0; i < centersWindow.size() - 1; ++i) {
+			gaps.push_back(centersWindow[i + 1] - centersWindow[i]);
+		}
 
-            if (centersWindow.size() < 2) continue;
+		const double spacing = modeGap(gaps, 4.0); // spacing estimate (px)
+		if (spacing < 1e-6 || !std::isfinite(spacing)) {
+			continue;
+		}
 
-            // Spacing estimate from adjacent gaps (on this window to reduce influence of border outliers).
-            std::vector<double> gaps;
-            gaps.reserve(centersWindow.size() - 1);
-            for (std::size_t i = 0; i + 1 < centersWindow.size(); ++i) {
-                gaps.push_back(centersWindow[i + 1] - centersWindow[i]);
-            }
+		// 3.2 Gap regularity (tie-break within this N): true grid lines have near-constant adjacent gaps.
+		double gapSumSq = 0.0; //!< sum of squared gap residuals
+		for (auto g: gaps) {
+			const double d = g - spacing;
+			gapSumSq += d * d;
+		}
+		const double gapRms = gaps.empty() ? std::numeric_limits<double>::infinity() : std::sqrt(gapSumSq / static_cast<double>(gaps.size()));
 
-            const double spacing = modeGap(gaps, 4.0);
-            if (!(spacing > 1e-6 && std::isfinite(spacing))) continue;
+		// 3.3 Estimate phase from modulo residual clustering.
+		const double phase = dominantResidualPhase(centersWindow, spacing); // phase r* (px)
 
-            // Gap regularity: true grid lines have near-constant adjacent gaps; border artifacts create outlier gaps.
-            double gapSumSq = 0.0;
-            for (double g : gaps) {
-                const double d = g - spacing;
-                gapSumSq += d * d;
-            }
-            const double gapRms = gaps.empty()
-                ? std::numeric_limits<double>::infinity()
-                : std::sqrt(gapSumSq / static_cast<double>(gaps.size()));
+		// 3.4 Enumerate integer offsets: start = phase + offset * spacing.
+		//     Offsets come from mapping detections to approximate lattice indices.
+		std::vector<int> kApprox; // approx index per detection
+		kApprox.reserve(centersWindow.size());
+		// c = detected center (px)
+		for (double c: centersWindow) {
+			kApprox.push_back(static_cast<int>(std::lround((c - phase) / spacing)));
+		}
 
-            const double phase = dominantResidualPhase(centersWindow, spacing);
+		std::vector<int> offsets; // unique offsets to test
+		offsets.reserve(kApprox.size() * static_cast<std::size_t>(N));
+		// k = approximate lattice index for one detection
+		for (int k: kApprox) {
+			// j = candidate lattice index [0..N-1]
+			for (int j = 0; j < static_cast<int>(N); ++j) {
+				offsets.push_back(k - j);
+			}
+		}
 
-            // Candidate integer offsets: start = phase + offset * spacing
-            // Enumerate offsets derived from mapping detected centers to lattice indices.
-            std::vector<int> kApprox;
-            kApprox.reserve(centersWindow.size());
-            for (double c : centersWindow) {
-                kApprox.push_back(static_cast<int>(std::lround((c - phase) / spacing)));
-            }
+		std::sort(offsets.begin(), offsets.end());
+		offsets.erase(std::unique(offsets.begin(), offsets.end()), offsets.end());
 
-            std::vector<int> offsets;
-            offsets.reserve(kApprox.size() * static_cast<std::size_t>(N));
-            for (int k : kApprox) {
-                for (int j = 0; j < N; ++j) {
-                    offsets.push_back(k - j);
-                }
-            }
+		// 3.5 Evaluate each offset and keep the best for this window.
+		LatticeScore bestForWindow{};    //!< Best score for this window
+		double bestStartForWindow = 0.0; //!< Best lattice start for this window
 
-            std::sort(offsets.begin(), offsets.end());
-            offsets.erase(std::unique(offsets.begin(), offsets.end()), offsets.end());
+		// offset = integer shift applied to phase
+		for (int offset: offsets) {
+			const double start = phase + static_cast<double>(offset) * spacing; //!< candidate grid[0] (px)
 
-            LatticeScore bestForWindow{};
-            double bestStartForWindow = 0.0;
+			LatticeScore score{}; //!< score for this candidate start
+			score.offset = offset;
+			if (!evaluateLatticeOffset(centersWindow, start, spacing, N, score))
+				continue;
 
-            for (int offset : offsets) {
-                const double start = phase + static_cast<double>(offset) * spacing;
+			// Selection criteria for this window:
+			// maximize explained structure first (inliers/span), then minimize alignment error.
+			static constexpr double RMS_EPS = 1e-6;                                                    //!< Epsilon for RMS comparisons (numerical stability)
+			const bool betterInliers        = score.inliers > bestForWindow.inliers;                   //!< Prefer more matched lattice indices
+			const bool equalInliers         = score.inliers == bestForWindow.inliers;                  //!< Tie on inliers
+			const bool betterSpan           = score.span > bestForWindow.span;                         //!< Prefer larger covered index span
+			const bool equalSpan            = score.span == bestForWindow.span;                        //!< Tie on span
+			const bool betterRms            = score.rms + RMS_EPS < bestForWindow.rms;                 //!< Prefer smaller RMS alignment error
+			const bool equalRms             = std::abs(score.rms - bestForWindow.rms) <= RMS_EPS;      //!< Tie on RMS
+			const bool betterOffset         = std::abs(score.offset) < std::abs(bestForWindow.offset); //!< Prefer smaller |offset| (more centered indexing)
 
-                LatticeScore score{};
-                score.offset = offset;
-                if (!evaluateLatticeOffset(centersWindow, start, spacing, N, score)) continue;
+			if (betterInliers || (equalInliers && (betterSpan || (equalSpan && (betterRms || (equalRms && betterOffset)))))) {
+				bestForWindow      = score;
+				bestStartForWindow = start;
+			}
+		}
 
-                // Selection criteria for this window:
-                // maximize explained structure first (inliers/span), then minimize alignment error.
-                static constexpr double RMS_EPS = 1e-6;
-                const bool betterInliers = score.inliers > bestForWindow.inliers;
-                const bool equalInliers = score.inliers == bestForWindow.inliers;
-                const bool betterSpan = score.span > bestForWindow.span;
-                const bool equalSpan = score.span == bestForWindow.span;
-                const bool betterRms = score.rms + RMS_EPS < bestForWindow.rms;
-                const bool equalRms = std::abs(score.rms - bestForWindow.rms) <= RMS_EPS;
-                const bool betterOffset = std::abs(score.offset) < std::abs(bestForWindow.offset);
+		if (!std::isfinite(bestForWindow.rms) || bestForWindow.inliers == 0) {
+			continue;
+		}
 
-                if (betterInliers
-                    || (equalInliers && (betterSpan
-                        || (equalSpan && (betterRms
-                            || (equalRms && betterOffset))))))
-                {
-                    bestForWindow = score;
-                    bestStartForWindow = start;
-                }
-            }
+		// 3.6 Select the best window for this N.
+		static constexpr double RMS_EPS = 1e-6;                                                  //!< Epsilon for RMS comparisons (numerical stability)
+		const bool betterInliers        = bestForWindow.inliers > bestForN.inliers;              //!< Prefer more inliers
+		const bool equalInliers         = bestForWindow.inliers == bestForN.inliers;             //!< Tie on inliers
+		const bool betterSpan           = bestForWindow.span > bestForN.span;                    //!< Prefer larger covered span
+		const bool equalSpan            = bestForWindow.span == bestForN.span;                   //!< Tie on span
+		const bool betterGapRms         = gapRms + RMS_EPS < bestGapRmsForN;                     //!< Prefer more regular adjacent gaps
+		const bool equalGapRms          = std::abs(gapRms - bestGapRmsForN) <= RMS_EPS;          //!< Tie on gapRms
+		const bool betterRms            = bestForWindow.rms + RMS_EPS < bestForN.rms;            //!< Prefer smaller RMS alignment error
+		const bool equalRms             = std::abs(bestForWindow.rms - bestForN.rms) <= RMS_EPS; //!< Tie on RMS
+		const bool preferLeftWindow     = wStart < bestWindowStartForN;                          //!< Deterministic tie-break (choose earlier window)
 
-            if (!std::isfinite(bestForWindow.rms) || bestForWindow.inliers == 0) {
-                continue;
-            }
+		if (betterInliers ||
+		    (equalInliers && (betterSpan || (equalSpan && (betterGapRms || (equalGapRms && (betterRms || (equalRms && preferLeftWindow)))))))) {
+			bestForN            = bestForWindow;
+			bestStartForN       = bestStartForWindow;
+			bestSpacingForN     = spacing;
+			bestPhaseForN       = phase;
+			bestWindowStartForN = wStart;
+			bestGapRmsForN      = gapRms;
+		}
+	}
 
-            // Select best window for this N.
-            static constexpr double RMS_EPS = 1e-6;
-            const bool betterInliers = bestForWindow.inliers > bestForN.inliers;
-            const bool equalInliers = bestForWindow.inliers == bestForN.inliers;
-            const bool betterSpan = bestForWindow.span > bestForN.span;
-            const bool equalSpan = bestForWindow.span == bestForN.span;
-            const bool betterGapRms = gapRms + RMS_EPS < bestGapRmsForN;
-            const bool equalGapRms = std::abs(gapRms - bestGapRmsForN) <= RMS_EPS;
-            const bool betterRms = bestForWindow.rms + RMS_EPS < bestForN.rms;
-            const bool equalRms = std::abs(bestForWindow.rms - bestForN.rms) <= RMS_EPS;
-            const bool preferLeftWindow = wStart < bestWindowStartForN;
-
-            if (betterInliers
-                || (equalInliers && (betterSpan
-                    || (equalSpan && (betterGapRms
-                        || (equalGapRms && (betterRms
-                            || (equalRms && preferLeftWindow))))))))
-            {
-                bestForN = bestForWindow;
-                bestStartForN = bestStartForWindow;
-                bestSpacingForN = spacing;
-                bestPhaseForN = phase;
-                bestWindowStartForN = wStart;
-                bestGapRmsForN = gapRms;
-            }
-        }
-
-        if (!std::isfinite(bestForN.rms) || bestForN.inliers == 0) {
+	if (!std::isfinite(bestForN.rms) || bestForN.inliers == 0u) {
 #ifndef NDEBUG
-            std::cout << std::format(" - Fit N={}: no valid lattice fit\n", N);
+		std::cout << std::format(" - Fit N={}: no valid lattice fit\n", N);
 #endif
-            continue;
-        }
-
-#ifndef NDEBUG
-        std::cout << std::format(" - Fit N={}: rms={:.3f}px inliers={}/{} span={} gapRms={:.3f}px windowStart={}\n",
-                                 N, bestForN.rms, bestForN.inliers, N, bestForN.span, bestGapRmsForN, bestWindowStartForN);
-#endif
-
-        // Choose global best:
-        // prefer the board size that explains the most detected lines (absolute inliers),
-        // then break ties by completeness (inlier ratio), then by RMS (alignment).
-        const double ratio = static_cast<double>(bestForN.inliers) / static_cast<double>(N);
-        const double bestRatio = (bestN == 0) ? -1.0 : (static_cast<double>(bestOverall.inliers) / static_cast<double>(bestN));
-
-        static constexpr double RATIO_EPS = 1e-12;
-        static constexpr double RMS_EPS = 1e-6;
-
-        const bool betterInliers = bestForN.inliers > bestOverall.inliers;
-        const bool equalInliers = bestForN.inliers == bestOverall.inliers;
-        const bool betterRatio = ratio > bestRatio + RATIO_EPS;
-        const bool equalRatio = std::abs(ratio - bestRatio) <= RATIO_EPS;
-        const bool betterRms = bestForN.rms + RMS_EPS < bestOverall.rms;
-        const bool equalRms = std::abs(bestForN.rms - bestOverall.rms) <= RMS_EPS;
-        const bool preferSmallerN = (bestN == 0) ? true : (N < bestN);
-
-        if (betterInliers
-            || (equalInliers && (betterRatio
-                || (equalRatio && (betterRms
-                    || (equalRms && preferSmallerN)))))) {
-            bestOverall = bestForN;
-            bestN = N;
-            bestStart = bestStartForN;
-            bestSpacing = bestSpacingForN;
-            bestPhase = bestPhaseForN;
-            bestWindowStart = bestWindowStartForN;
-            bestGapRms = bestGapRmsForN;
-        }
-    }
-
-    if (bestN == 0) return false;
-
-    outN = bestN;
-    outGrid.resize(static_cast<std::size_t>(outN));
-    for (int k = 0; k < outN; ++k) {
-        outGrid[static_cast<std::size_t>(k)] = bestStart + static_cast<double>(k) * bestSpacing;
-    }
-
-#ifndef NDEBUG
-    std::cout << std::format("Selected N={} spacing={:.3f} phase={:.3f} offset={} rms={:.3f}px inliers={}/{} windowStart={}\n",
-                             outN, bestSpacing, bestPhase, bestOverall.offset, bestOverall.rms, bestOverall.inliers, outN, bestWindowStart);
-#endif
-
-    return true;
-}
-
-
-bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hCenters,
-    std::vector<double>& vGrid, std::vector<double>& hGrid)
-{
-    auto isValidN = [](std::size_t n) {
-        return n == 9u || n == 13u || n == 19u;
-    };
-
-    // Calculate gaps between the selected lines
-	std::vector<double> gaps; //!< Gap sized between the grid lines.
-	gaps.reserve(vCenters.size() - 1);
-	for (size_t i = 0; i + 1 < vCenters.size(); ++i) {
-		gaps.push_back(vCenters[i + 1] - vCenters[i]);
+		return false;
 	}
 
 #ifndef NDEBUG
-	// // // Construct histogramm of gaps and select highest bin
-	double s = modeGap(gaps, 4.0);
+	std::cout << std::format(" - Fit N={}: rms={:.3f}px inliers={}/{} span={} gapRms={:.3f}px windowStart={}\n", N, bestForN.rms, bestForN.inliers, N,
+	                         bestForN.span, bestGapRmsForN, bestWindowStartForN);
+#endif
+
+	// 4. Reconstruct the full lattice for this N.
+	outGrid.resize(N);
+	for (std::size_t k = 0u; k < N; ++k) { // k = lattice line index
+		outGrid[k] = bestStartForN + static_cast<double>(k) * bestSpacingForN;
+	}
+
+#ifndef NDEBUG
+	std::cout << std::format("Selected N={} spacing={:.3f} phase={:.3f} offset={} rms={:.3f}px inliers={}/{} windowStart={}\n", N, bestSpacingForN,
+	                         bestPhaseForN, bestForN.offset, bestForN.rms, bestForN.inliers, N, bestWindowStartForN);
+#endif
+
+	return true;
+}
+
+bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hCenters, std::vector<double>& vGrid, std::vector<double>& hGrid) {
+	auto isValidN = [](std::size_t n) { // helper: is n a legal board size?
+		return n == 9u || n == 13u || n == 19u;
+	};
+
+#ifndef NDEBUG
+	// Estimate a spacing from the vertical axis for logging / sanity checks.
+	std::vector<double> gaps; // Gap size between candidate vertical lines (px)
+	gaps.reserve(vCenters.size() - 1);
+	for (size_t i = 0; i + 1 < vCenters.size(); ++i) { // i = index into vCenters
+		gaps.push_back(vCenters[i + 1] - vCenters[i]);
+	}
+
+	double s = modeGap(gaps, 4.0); // rough spacing estimate (px)
 	std::cout << "DEBUG: Estimated spacing s=" << s << "\n";
 #endif
 
-    // Possible board sizes
-    const std::vector<int> NsAll = {19, 13, 9};
+	const std::vector<std::size_t> NsAll = {19, 13, 9}; //!< Candidate board sizes (try larger first, scoring will decide).
 
-    // Jointly select N using both axes. This avoids locking onto a wrong N when one axis
-    // happens to have an exact valid count due to missing detections (e.g., 13x13 board with 9 detected lines).
-    struct JointCandidate {
-        int N{0};
-        int inliersTotal{0};
-        double ratio{0.0};
-        double rms{std::numeric_limits<double>::infinity()};
-        std::vector<double> v;
-        std::vector<double> h;
-    };
+	// Jointly select N using both axes. This avoids locking onto a wrong N when one axis happens to
+	//    have an exact valid count due to missing detections (e.g., 13x13 board with 9 detected lines).
+	struct JointCandidate {
+		std::size_t N{0u};                                   //!< Board size
+		std::size_t inliersTotal{0u};                        //!< ScoreV.inliers + scoreH.inliers
+		double ratio{0.0};                                   //!< InliersTotal / (2*N)
+		double rms{std::numeric_limits<double>::infinity()}; //!< Combined weighted RMS (px)
+		std::vector<double> v;                               //!< Fitted vertical grid for this N
+		std::vector<double> h;                               //!< Fitted horizontal grid for this N
+	};
 
-    JointCandidate best{};
-    bool hasBest = false;
+	JointCandidate best{}; // best joint candidate so far
+	bool hasBest = false;  // whether best is initialized
 
-    for (int N : NsAll) {
-        std::vector<double> vTmp;
-        std::vector<double> hTmp;
-        int Nv = 0;
-        int Nh = 0;
+	// 1 Evaluate each N and keep the best joint score.
+	for (auto N: NsAll) {
+		std::vector<double> vTmp; //!< Fitted vertical grid for this N
+		std::vector<double> hTmp; //!< Fitted horizontal grid for this N
 
-        if (!selectGridByLatticeFit(vCenters, std::vector<int>{N}, vTmp, Nv) || Nv != N) continue;
-        if (!selectGridByLatticeFit(hCenters, std::vector<int>{N}, hTmp, Nh) || Nh != N) continue;
-        if (vTmp.size() < 2u || hTmp.size() < 2u) continue;
+		if (!selectGridByLatticeFit(vCenters, N, vTmp))
+			continue;
+		if (!selectGridByLatticeFit(hCenters, N, hTmp))
+			continue;
 
-        const double vStart = vTmp.front();
-        const double vSpacing = vTmp[1] - vTmp[0];
-        const double hStart = hTmp.front();
-        const double hSpacing = hTmp[1] - hTmp[0];
-        if (!(vSpacing > 1e-6 && hSpacing > 1e-6 && std::isfinite(vSpacing) && std::isfinite(hSpacing))) continue;
+		// Just need two lines for spacing calculation
+		if (vTmp.size() < 2u || hTmp.size() < 2u)
+			continue;
 
-        LatticeScore scoreV{};
-        LatticeScore scoreH{};
-        if (!evaluateLatticeOffset(vCenters, vStart, vSpacing, N, scoreV)) continue;
-        if (!evaluateLatticeOffset(hCenters, hStart, hSpacing, N, scoreH)) continue;
+		const double vStart   = vTmp.front();      //!< Vertical grid[0] (px)
+		const double vSpacing = vTmp[1] - vTmp[0]; //!< Vertical spacing (px)
+		const double hStart   = hTmp.front();      //!< Horizontal grid[0] (px)
+		const double hSpacing = hTmp[1] - hTmp[0]; //!< Horizontal spacing (px)
+		if (!(vSpacing > 1e-6 && hSpacing > 1e-6 && std::isfinite(vSpacing) && std::isfinite(hSpacing)))
+			continue;
 
-        const int totalInliers = scoreV.inliers + scoreH.inliers;
-        const double ratio = static_cast<double>(totalInliers) / static_cast<double>(2 * N);
-        const int used = totalInliers;
-        const double rms = (used > 0)
-            ? std::sqrt((scoreV.rms * scoreV.rms * static_cast<double>(scoreV.inliers)
-                       + scoreH.rms * scoreH.rms * static_cast<double>(scoreH.inliers))
-                       / static_cast<double>(used))
-            : std::numeric_limits<double>::infinity();
+		// Re-score against the full candidate lists to get robust inlier counts.
+		LatticeScore scoreV{}; //!< Vertical axis score vs all candidates
+		LatticeScore scoreH{}; //!< Horizontal axis score vs all candidates
+		if (!evaluateLatticeOffset(vCenters, vStart, vSpacing, N, scoreV))
+			continue;
+		if (!evaluateLatticeOffset(hCenters, hStart, hSpacing, N, scoreH))
+			continue;
 
-        static constexpr double RATIO_EPS = 1e-12;
-        static constexpr double RMS_EPS = 1e-6;
+		const auto totalInliers = scoreV.inliers + scoreH.inliers;                                //!< Total explained lines
+		const double ratio      = static_cast<double>(totalInliers) / static_cast<double>(2 * N); //!< Completeness ratio
+		const double rms        = (totalInliers > 0)                                              //!< Combined weighted RMS (px)
+		                                  ? std::sqrt((scoreV.rms * scoreV.rms * static_cast<double>(scoreV.inliers) +
+                                                scoreH.rms * scoreH.rms * static_cast<double>(scoreH.inliers)) /
+		                                              static_cast<double>(totalInliers))
+		                                  : std::numeric_limits<double>::infinity();
 
-        const bool betterInliers = totalInliers > best.inliersTotal;
-        const bool equalInliers = totalInliers == best.inliersTotal;
-        const bool betterRatio = ratio > best.ratio + RATIO_EPS;
-        const bool equalRatio = std::abs(ratio - best.ratio) <= RATIO_EPS;
-        const bool betterRms = rms + RMS_EPS < best.rms;
-        const bool equalRms = std::abs(rms - best.rms) <= RMS_EPS;
-        const bool preferSmallerN = (best.N == 0) ? true : (N < best.N);
+		static constexpr double RATIO_EPS = 1e-12; //!< Epsilon for ratio comparisons
+		static constexpr double RMS_EPS   = 1e-6;  //!< Epsilon for RMS comparisons
 
-        if (!hasBest
-            || betterInliers
-            || (equalInliers && (betterRatio
-                || (equalRatio && (betterRms
-                    || (equalRms && preferSmallerN)))))) {
-            hasBest = true;
-            best.N = N;
-            best.inliersTotal = totalInliers;
-            best.ratio = ratio;
-            best.rms = rms;
-            best.v.swap(vTmp);
-            best.h.swap(hTmp);
-        }
-    }
+		const bool betterInliers  = totalInliers > best.inliersTotal;          //!< Prefer more explained lines (both axes)
+		const bool equalInliers   = totalInliers == best.inliersTotal;         //!< Tie on inliers
+		const bool betterRatio    = ratio > best.ratio + RATIO_EPS;            //!< Prefer higher completeness ratio
+		const bool equalRatio     = std::abs(ratio - best.ratio) <= RATIO_EPS; //!< Tie on ratio
+		const bool betterRms      = rms + RMS_EPS < best.rms;                  //!< Prefer smaller combined RMS error
+		const bool equalRms       = std::abs(rms - best.rms) <= RMS_EPS;       //!< Tie on RMS
+		const bool preferSmallerN = (best.N == 0) ? true : (N < best.N);       //!< Deterministic tie-break
 
-    if (!hasBest || best.N == 0) return false;
+		if (!hasBest || betterInliers || (equalInliers && (betterRatio || (equalRatio && (betterRms || (equalRms && preferSmallerN)))))) {
+			// Update best joint candidate.
+			hasBest           = true;
+			best.N            = N;
+			best.inliersTotal = totalInliers;
+			best.ratio        = ratio;
+			best.rms          = rms;
+			best.v.swap(vTmp);
+			best.h.swap(hTmp);
+		}
+	}
 
-    // If an axis already has exactly N candidates, keep them as-is to avoid introducing
-    // small phase shifts from refitting (stone detection is sensitive to intersection jitter).
-    // Otherwise use the fitted lattice.
-    vGrid = (vCenters.size() == static_cast<std::size_t>(best.N)) ? vCenters : std::move(best.v);
-    hGrid = (hCenters.size() == static_cast<std::size_t>(best.N)) ? hCenters : std::move(best.h);
-    return isValidN(vGrid.size()) && isValidN(hGrid.size()) && vGrid.size() == hGrid.size();
+	// 3. Must have a valid selection.
+	if (!hasBest || best.N == 0)
+		return false;
+
+	// 4. Output grids. If an axis already has exactly N candidates, keep them as-is to avoid introducing
+	//    small phase shifts from refitting (stone detection is sensitive to intersection jitter).
+	//    Otherwise use the fitted lattice.
+	const bool vHasExact = (vCenters.size() == best.N); // keep original vCenters if already complete
+	const bool hHasExact = (hCenters.size() == best.N); // keep original hCenters if already complete
+	vGrid                = vHasExact ? vCenters : std::move(best.v);
+	hGrid                = hHasExact ? hCenters : std::move(best.h);
+
+	// 6. Ensure consistency.
+	return isValidN(vGrid.size()) && isValidN(hGrid.size()) && vGrid.size() == hGrid.size();
 }
 
-}
+} // namespace go::camera

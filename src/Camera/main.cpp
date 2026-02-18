@@ -1,12 +1,12 @@
-#include <cstdlib>
-#include <filesystem>
 #include <algorithm>
 #include <array>
-#include <cstdint>
 #include <cmath>
+#include <cstdint>
+#include <cstdlib>
+#include <filesystem>
+#include <iostream>
 #include <limits>
 #include <vector>
-#include <iostream>
 
 #include <opencv2/opencv.hpp>
 
@@ -15,7 +15,7 @@
 #include "gridFinder.hpp"
 
 namespace go::camera {
-// Notes and Findings: 
+// Notes and Findings:
 // - Board Detection
 //   - Easy Straight Dataset
 //     - Adaptive Threshold:   Visually appears to work nicely. May conflict with background
@@ -27,13 +27,12 @@ namespace go::camera {
 // - Canny Edge Detection: Check documentation. More parameters available.
 
 // Board Detection
-// 1) Coarse Detection (warpToBoard):  Warps the image to the board but not yet specific which exact board contour is found (outermost grid lines vs physical board contour).
-// 2) Normalise        (warpToBoard):  Output image has fixed normalised size.
-// 3) Refine           (rectifyImage): Border or image is the outermost grid lines + Tolerance for Stones placed at edge.
-// 4) Re-Normalise     (rectifyImage): Final image normalised and with proper border setup.
+// 1) Coarse Detection (warpToBoard):  Warps the image to the board but not yet specific which exact board contour is found (outermost grid lines vs physical
+// board contour). 2) Normalise        (warpToBoard):  Output image has fixed normalised size. 3) Refine           (rectifyImage): Border or image is the
+// outermost grid lines + Tolerance for Stones placed at edge. 4) Re-Normalise     (rectifyImage): Final image normalised and with proper border setup.
 
 void showImages(cv::Mat& image1, cv::Mat& image2, cv::Mat& image3) {
-	double scale = 0.4;  // adjust as needed
+	double scale = 0.4; // adjust as needed
 	cv::Mat small1, small2, small3;
 
 	cv::resize(image1, small1, cv::Size(), scale, scale);
@@ -70,12 +69,12 @@ bool process(const std::filesystem::path& path, DebugVisualizer* debugger = null
 
 	// Properly construct the board geometry.
 	BoardGeometry geometry = rectifyImage(image, warped, debugger);
-	if (geometry.image.empty() || geometry.H.empty()
-		|| !isValidBoardSize(geometry.boardSize) || geometry.boardSize*geometry.boardSize != geometry.intersections.size()) {
+	if (geometry.image.empty() || geometry.H.empty() || !isValidBoardSize(geometry.boardSize) ||
+	    geometry.boardSize * geometry.boardSize != geometry.intersections.size()) {
 		std::cerr << "[Error] Could not construct board geometry from warped image.\n";
 		return false;
 	}
-	
+
 	// Find the stones on the board.
 	StoneResult result = analyseBoard(geometry, debugger);
 	if (!result.success) {
@@ -86,7 +85,7 @@ bool process(const std::filesystem::path& path, DebugVisualizer* debugger = null
 	return true;
 }
 
-}
+} // namespace go::camera
 
 // 3 steps
 // 1) Find board in image and rectify (find largest plausible board contour, dont care if its physical board or outer grid contour)
@@ -102,8 +101,8 @@ int main(int argc, char** argv) {
 	debug.setInteractive(false);
 
 	// If a path is passed here then use this image. Else do test images.
-    if (argc > 1) {
-        std::filesystem::path inputPath = argv[1]; // Path from command line.
+	if (argc > 1) {
+		std::filesystem::path inputPath = argv[1]; // Path from command line.
 
 		if (go::camera::process(inputPath, &debug)) {
 			cv::Mat mosaic = debug.buildMosaic();
@@ -114,13 +113,13 @@ int main(int argc, char** argv) {
 		}
 
 	} else {
-		const auto exampleImage = std::filesystem::path(PATH_TEST_IMG) / "game_simple/size_13/move_25.png"; 
-	
+		const auto exampleImage = std::filesystem::path(PATH_TEST_IMG) / "game_simple/size_13/move_25.png";
+
 		if (go::camera::process(exampleImage, &debug)) {
 			const auto mosaic = debug.buildMosaic();
-			//cv::imshow("", mosaic);
-			//cv::waitKey(0);
-			cv::imwrite("/home/oliver/temp.png", mosaic);			
+			// cv::imshow("", mosaic);
+			// cv::waitKey(0);
+			cv::imwrite("/home/oliver/temp.png", mosaic);
 		}
 	}
 
