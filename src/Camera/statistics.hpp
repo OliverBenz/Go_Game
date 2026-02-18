@@ -10,4 +10,4 @@ double stddev(const std::vector<double>& v);
 
 double median(std::vector<double> values);
 
-}
+} // namespace go::camera

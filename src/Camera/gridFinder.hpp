@@ -4,18 +4,17 @@
 
 namespace go::camera {
 
-//! Determine the true Go board grid lines from clustered vertical and horizontal line candidates
-//! by fitting arithmetic progressions (9x9, 13x13, 19x19) and selecting the best structural match.
-//! \param vCenters [in]  Sorted x-coordinates of candidate vertical line centers (warped image space).
-//! \param hCenters [in]  Sorted y-coordinates of candidate horizontal line centers (warped image space).
-//! \param vGrid    [out] Output x-coordinates of the selected vertical grid lines (size = board dimension).
-//! \param hGrid    [out] Output y-coordinates of the selected horizontal grid lines (size = board dimension).
-//! \return         True if a consistent NxN grid (N ∈ {9,13,19}) was found; false otherwise.
-bool findGrid(
-    const std::vector<double>& vCenters, 
-    const std::vector<double>& hCenters,
-    std::vector<double>& vGrid, 
-    std::vector<double>& hGrid
-);
+/*! Reconstruct the NxN Go board grid from candidate line-center detections.
+ *  The rectified board image provides sorted candidate line centers per axis.
+ *  Detections may be missing grid lines or contains extra lines (most commonly the physical board border).
+ *  We fit an equally-spaced 1D lattice for each N in {9, 13, 19} and select the best joint fit across both axes.
+ *
+ * \param [in]  vCenters Sorted x-coordinates of candidate vertical line centers (pixels, rectified image space).
+ * \param [in]  hCenters Sorted y-coordinates of candidate horizontal line centers (pixels, rectified image space).
+ * \param [out] vGrid    Output x-coordinates of the selected vertical grid lines (size = N).
+ * \param [out] hGrid    Output y-coordinates of the selected horizontal grid lines (size = N).
+ * \return      True if a consistent NxN grid (N in {9,13,19}) was found; false otherwise.
+ */
+bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hCenters, std::vector<double>& vGrid, std::vector<double>& hGrid);
 
-}
+} // namespace go::camera
