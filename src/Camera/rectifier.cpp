@@ -5,6 +5,7 @@
 #include "statistics.hpp"
 #include "gridFinder.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 namespace go::camera {
@@ -159,6 +160,57 @@ BoardGeometry rectifyImage(const cv::Mat& originalImg, const WarpResult& input, 
 	double mergeEps = 15.0; //!< In pixels
 	auto vGrid = clusterWeighted1D(v1d, mergeEps);
 	auto hGrid = clusterWeighted1D(h1d, mergeEps);
+
+	// Filter out physical board border artifacts:
+	// A true grid line is crossed by many orthogonal line segments, while the physical board border is not.
+	{
+		const double coverTol = 8.0;
+		auto computeCoverageCounts = [&](const std::vector<double>& centers,
+		                                const std::vector<cv::Vec4i>& orthSegments,
+		                                bool centersAreX) -> std::vector<int>
+		{
+			std::vector<int> counts(centers.size(), 0);
+			for (std::size_t i = 0; i < centers.size(); ++i) {
+				const double c = centers[i];
+				int cnt = 0;
+				for (const auto& s : orthSegments) {
+					const double a = centersAreX ? static_cast<double>(s[0]) : static_cast<double>(s[1]);
+					const double b = centersAreX ? static_cast<double>(s[2]) : static_cast<double>(s[3]);
+					const double mn = std::min(a, b) - coverTol;
+					const double mx = std::max(a, b) + coverTol;
+					if (c >= mn && c <= mx) ++cnt;
+				}
+				counts[i] = cnt;
+			}
+			return counts;
+		};
+
+		auto pruneEdgeArtifactsByCoverage = [&](std::vector<double>& centers, const std::vector<int>& counts) {
+			if (centers.size() < 3) return;
+			const int maxCount = *std::max_element(counts.begin(), counts.end());
+			if (maxCount <= 0) return;
+
+			// Only prune obvious low-coverage artifacts at the edges.
+			const int thresh = std::max(1, static_cast<int>(std::lround(0.15 * static_cast<double>(maxCount))));
+
+			std::vector<double> pruned;
+			pruned.reserve(centers.size());
+			for (std::size_t i = 0; i < centers.size(); ++i) {
+				const bool isEdge = (i == 0u) || (i + 1u == centers.size());
+				if (isEdge && counts[i] < thresh) continue;
+				pruned.push_back(centers[i]);
+			}
+
+			// Only accept pruning if we still have a plausible board dimension.
+			if (pruned.size() >= 9u) centers.swap(pruned);
+		};
+
+		const auto vCoverage = computeCoverageCounts(vGrid, horizontal, /*centersAreX=*/true);
+		pruneEdgeArtifactsByCoverage(vGrid, vCoverage);
+
+		const auto hCoverage = computeCoverageCounts(hGrid, vertical, /*centersAreX=*/false);
+		pruneEdgeArtifactsByCoverage(hGrid, hCoverage);
+	}
 
 	const auto Nv = vGrid.size();
 	const auto Nh = hGrid.size();
