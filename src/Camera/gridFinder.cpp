@@ -258,6 +258,14 @@ static bool selectGridByLatticeFit(const std::vector<double>& centersSorted, con
 		return false;
 	}
 
+	// Global mode spacing from the full axis candidates (used as a consistency prior across variants).
+	std::vector<double> fullGaps;
+	fullGaps.reserve(centersSorted.size() - 1);
+	for (std::size_t i = 0; i + 1 < centersSorted.size(); ++i) {
+		fullGaps.push_back(centersSorted[i + 1] - centersSorted[i]);
+	}
+	const double globalModeSpacing = modeGap(fullGaps, 4.0);
+
 	// 1. Track the best fit for this N.
 	LatticeScore bestForN{};                                                   //!< Best score for this N
 	double bestStartForN            = 0.0;                                     //!< Best start for this N
@@ -266,19 +274,39 @@ static bool selectGridByLatticeFit(const std::vector<double>& centersSorted, con
 	std::size_t bestWindowStartForN = 0;                                       //!< Best window start for this N
 	double bestGapRmsForN           = std::numeric_limits<double>::infinity(); //!< Best window gapRms for this N
 
-	// 2. If we have more candidates than N, prefer a contiguous window of size N.
-	//    This naturally rejects spurious physical board borders at the extremes.
+	// 2. Build evaluation variants.
+	//    - Standard contiguous windows of size N (or M if M < N).
+	//    - When M == N, also evaluate "drop-one" variants (size N-1) so one spurious border line can be
+	//      removed and the missing true line extrapolated by the lattice fit.
 	const std::size_t M          = centersSorted.size();   // number of detections
 	const std::size_t windowSize = M >= N ? N : M;         //!< Window size
-	const std::size_t windows    = M >= N ? M - N + 1 : 1; //!< Number of windows
+	const std::size_t windows    = M >= N ? M - N + 1 : 1; //!< Number of contiguous windows
+	const bool allowDropOne      = (M == N);               //!< Evaluate subsets with one removed detection
+	const std::size_t variants   = windows + (allowDropOne ? M : 0);
 
-	// 3. Evaluate each window for this N.
-	for (std::size_t w = 0; w < windows; ++w) {            // w = window index
-		const std::size_t wStart = (windows == 1) ? 0 : w; // first detection index in this window
+	// 3. Evaluate each variant for this N.
+	for (std::size_t variant = 0; variant < variants; ++variant) {
+		std::vector<double> centersWindow;
+		centersWindow.reserve(windowSize);
+		std::size_t wStart = 0; // deterministic tie-break proxy for this variant
 
-		const auto beginIt = centersSorted.begin() + static_cast<std::ptrdiff_t>(wStart); // begin iterator
-		const auto endIt   = beginIt + static_cast<std::ptrdiff_t>(windowSize);           // end iterator
-		const std::vector<double> centersWindow(beginIt, endIt);                          // contiguous window copy
+		if (variant < windows) {
+			wStart             = (windows == 1) ? 0 : variant;
+			const auto beginIt = centersSorted.begin() + static_cast<std::ptrdiff_t>(wStart);
+			const auto endIt   = beginIt + static_cast<std::ptrdiff_t>(windowSize);
+			centersWindow.assign(beginIt, endIt);
+		} else {
+			const std::size_t drop = variant - windows; // dropped detection index
+			centersWindow.clear();
+			centersWindow.reserve(M - 1);
+			for (std::size_t i = 0; i < M; ++i) {
+				if (i == drop) {
+					continue;
+				}
+				centersWindow.push_back(centersSorted[i]);
+			}
+			wStart = drop;
+		}
 
 		if (centersWindow.size() < 2)
 			continue;
@@ -362,20 +390,44 @@ static bool selectGridByLatticeFit(const std::vector<double>& centersSorted, con
 			continue;
 		}
 
-		// 3.6 Select the best window for this N.
-		static constexpr double RMS_EPS = 1e-6;                                                  //!< Epsilon for RMS comparisons (numerical stability)
-		const bool betterInliers        = bestForWindow.inliers > bestForN.inliers;              //!< Prefer more inliers
-		const bool equalInliers         = bestForWindow.inliers == bestForN.inliers;             //!< Tie on inliers
-		const bool betterSpan           = bestForWindow.span > bestForN.span;                    //!< Prefer larger covered span
-		const bool equalSpan            = bestForWindow.span == bestForN.span;                   //!< Tie on span
-		const bool betterGapRms         = gapRms + RMS_EPS < bestGapRmsForN;                     //!< Prefer more regular adjacent gaps
-		const bool equalGapRms          = std::abs(gapRms - bestGapRmsForN) <= RMS_EPS;          //!< Tie on gapRms
-		const bool betterRms            = bestForWindow.rms + RMS_EPS < bestForN.rms;            //!< Prefer smaller RMS alignment error
-		const bool equalRms             = std::abs(bestForWindow.rms - bestForN.rms) <= RMS_EPS; //!< Tie on RMS
-		const bool preferLeftWindow     = wStart < bestWindowStartForN;                          //!< Deterministic tie-break (choose earlier window)
+		// 3.6 Select the best variant for this N using a composite objective:
+		//     objective = rms + lambdaGap * gapRms + lambdaMiss * missingLines + lambdaSpacing * |spacing - globalModeSpacing|.
+		// The spacing consistency term stabilizes selection when drop-one variants can overfit a subset.
+		static constexpr double RMS_EPS  = 1e-6; //!< Epsilon for floating comparisons
+		static constexpr double LAMBDA_G = 0.35; //!< Weight for adjacent-gap irregularity
+		static constexpr double LAMBDA_M = 2.00; //!< Weight per missing lattice line (N - inliers)
+		static constexpr double LAMBDA_S = 1.50; //!< Weight for spacing deviation from global mode spacing
 
-		if (betterInliers ||
-		    (equalInliers && (betterSpan || (equalSpan && (betterGapRms || (equalGapRms && (betterRms || (equalRms && preferLeftWindow)))))))) {
+		const double missCur        = static_cast<double>(N) - static_cast<double>(bestForWindow.inliers);
+		const double missBest       = static_cast<double>(N) - static_cast<double>(bestForN.inliers);
+		const double spacingDevCur  = std::isfinite(globalModeSpacing) ? std::abs(spacing - globalModeSpacing) : 0.0;
+		const double spacingDevBest = std::isfinite(globalModeSpacing) ? std::abs(bestSpacingForN - globalModeSpacing) : 0.0;
+		const double objectiveCur   = bestForWindow.rms + LAMBDA_G * gapRms + LAMBDA_M * missCur + LAMBDA_S * spacingDevCur;
+		const double objectiveBest  = bestForN.rms + LAMBDA_G * bestGapRmsForN + LAMBDA_M * missBest + LAMBDA_S * spacingDevBest;
+
+		const bool betterObjective  = objectiveCur + RMS_EPS < objectiveBest;
+		const bool equalObjective   = std::abs(objectiveCur - objectiveBest) <= RMS_EPS;
+		const bool betterInliers    = bestForWindow.inliers > bestForN.inliers;
+		const bool equalInliers     = bestForWindow.inliers == bestForN.inliers;
+		const bool betterSpan       = bestForWindow.span > bestForN.span;
+		const bool equalSpan        = bestForWindow.span == bestForN.span;
+		const bool betterGapRms     = gapRms + RMS_EPS < bestGapRmsForN;
+		const bool equalGapRms      = std::abs(gapRms - bestGapRmsForN) <= RMS_EPS;
+		const bool betterRms        = bestForWindow.rms + RMS_EPS < bestForN.rms;
+		const bool equalRms         = std::abs(bestForWindow.rms - bestForN.rms) <= RMS_EPS;
+		const bool betterSpacingDev = spacingDevCur + RMS_EPS < spacingDevBest;
+		const bool equalSpacingDev  = std::abs(spacingDevCur - spacingDevBest) <= RMS_EPS;
+		const bool preferLeftWindow = wStart < bestWindowStartForN;
+
+		const bool selectCurrent =
+		        betterObjective ||
+		        (equalObjective &&
+		         (betterInliers ||
+		          (equalInliers &&
+		           (betterSpan || (equalSpan && (betterGapRms || (equalGapRms && (betterRms || (equalRms && (betterSpacingDev ||
+		                                                                                                     (equalSpacingDev && preferLeftWindow)))))))))));
+
+		if (selectCurrent) {
 			bestForN            = bestForWindow;
 			bestStartForN       = bestStartForWindow;
 			bestSpacingForN     = spacing;
@@ -508,13 +560,11 @@ bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hC
 	if (!hasBest || best.N == 0)
 		return false;
 
-	// 4. Output grids. If an axis already has exactly N candidates, keep them as-is to avoid introducing
-	//    small phase shifts from refitting (stone detection is sensitive to intersection jitter).
-	//    Otherwise use the fitted lattice.
-	const bool vHasExact = (vCenters.size() == best.N); // keep original vCenters if already complete
-	const bool hHasExact = (hCenters.size() == best.N); // keep original hCenters if already complete
-	vGrid                = vHasExact ? vCenters : std::move(best.v);
-	hGrid                = hHasExact ? hCenters : std::move(best.h);
+	// 4. Output fitted lattices for both axes.
+	//    Even when detections happen to have exactly N candidates, one or more can still be a border artifact
+	//    replacing a true grid line. Always using the fitted lattice avoids locking onto that failure mode.
+	vGrid = std::move(best.v);
+	hGrid = std::move(best.h);
 
 	// 6. Ensure consistency.
 	return isValidN(vGrid.size()) && isValidN(hGrid.size()) && vGrid.size() == hGrid.size();
