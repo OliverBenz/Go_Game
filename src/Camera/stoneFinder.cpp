@@ -11,14 +11,10 @@
 
 #include <opencv2/opencv.hpp>
 
-namespace go::camera {
-
-/**
- * @file stoneFinder.cpp
- * @brief Classify Go stones (Black/White/Empty) at grid intersections on a rectified board image.
+/*! Classify Go stones (Black/White/Empty) at grid intersections on a rectified board image.
  *
  * The rectifier produces a perspective-corrected board image and the list of intersection coordinates
- * (in that rectified image). We classify stones by sampling small circular ROIs around each intersection
+ * (in that rectified image). We classify stones by sampling small circular ROIs (regions of interest) around each intersection
  * in Lab color space and comparing their lightness (L) to a local background estimate.
  *
  * Design notes (why this approach):
@@ -28,9 +24,9 @@ namespace go::camera {
  * - Robust statistics (median + MAD) avoid brittle global thresholds and reduce false positives.
  * - Chroma (a/b distance to neutral) helps reject wood grain / colored artifacts (stones are near-neutral).
  */
+namespace go::camera {
 
-/**
- * @brief Detect stones on a rectified Go board.
+/*! Detect stones on a rectified Go board.
  *
  * Major steps:
  *  1) Convert the input image to Lab and blur channels to suppress thin grid lines.
@@ -40,11 +36,11 @@ namespace go::camera {
  *  4) Classify each intersection using thresholds + local neighbor contrast; optionally refine borderline
  *     white candidates by searching a small pixel neighborhood (compensates for grid jitter).
  *
- * @param geometry Rectified board image + intersection points (in rectified coordinates).
- * @param debugger Optional visualizer (may be nullptr). When present, an overlay is drawn.
- * @return StoneResult with success flag and a list of detected stones (only non-empty entries are returned).
+ * \param [in]     geometry Rectified board image + intersection points (in rectified coordinates).
+ * \param [in,out] debugger Optional visualizer (may be nullptr). When present, an overlay is drawn.
+ * \return         StoneResult with success flag and a list of detected stones (only non-empty entries are returned).
  */
-StoneResult analyseBoard(const BoardGeometry& geometry, go::camera::DebugVisualizer* debugger) {
+StoneResult analyseBoard(const BoardGeometry& geometry, DebugVisualizer* debugger) {
 	// 0. Validate inputs.
 	if (geometry.image.empty()) {
 		std::cerr << "Failed to rectify image\n";
@@ -90,20 +86,20 @@ StoneResult analyseBoard(const BoardGeometry& geometry, go::camera::DebugVisuali
 	const int innerRadius = [&]() {
 		int r = 6; // fallback radius (px)
 		if (std::isfinite(geometry.spacing) && geometry.spacing > 0.0) {
-			r = static_cast<int>(std::lround(geometry.spacing * 0.28)); // ~stone radius fraction of grid spacing
+			r = static_cast<int>(std::lround(geometry.spacing * 0.28)); // Magic 28% to get all tests working...
 		}
 		r = std::max(r, 2);  // lower clamp: need at least a few pixels
 		r = std::min(r, 30); // upper clamp: keep runtime bounded for very large images
 		return r;
 	}();
-	const int bgRadius = std::clamp(innerRadius / 2, 2, 12); // background sample circle radius (px)
+	const int bgRadius = std::clamp(innerRadius / 2, 2, 12); //!< Background sample circle radius (px)
 
 	// 3. Blur to suppress thin grid lines (stones are much larger than line thickness).
 	cv::Mat Lblur; // blurred lightness
 	cv::Mat Ablur; // blurred a
 	cv::Mat Bblur; // blurred b
 	{
-		const double sigma = std::clamp(0.15 * static_cast<double>(innerRadius), 1.0, 4.0); // blur scale (px)
+		const double sigma = std::clamp(0.15 * static_cast<double>(innerRadius), 1.0, 4.0); //!< blur scale (px)
 		cv::GaussianBlur(L, Lblur, cv::Size(), sigma, sigma, cv::BORDER_REPLICATE);
 		cv::GaussianBlur(A, Ablur, cv::Size(), sigma, sigma, cv::BORDER_REPLICATE);
 		cv::GaussianBlur(B, Bblur, cv::Size(), sigma, sigma, cv::BORDER_REPLICATE);
@@ -113,9 +109,10 @@ StoneResult analyseBoard(const BoardGeometry& geometry, go::camera::DebugVisuali
 	auto makeCircleOffsets = [](int radius) {
 		std::vector<cv::Point> offsets; // integer (dx,dy) offsets inside a filled circle
 		offsets.reserve(static_cast<std::size_t>((2 * radius + 1) * (2 * radius + 1)));
-		const int r2 = radius * radius;                  // radius squared
-		for (int dy = -radius; dy <= radius; ++dy) {     // dy = y offset
-			for (int dx = -radius; dx <= radius; ++dx) { // dx = x offset
+		const int r2 = radius * radius;
+
+		for (int dy = -radius; dy <= radius; ++dy) {
+			for (int dx = -radius; dx <= radius; ++dx) {
 				if ((dx * dx + dy * dy) <= r2) {
 					offsets.emplace_back(dx, dy);
 				}
@@ -124,19 +121,20 @@ StoneResult analyseBoard(const BoardGeometry& geometry, go::camera::DebugVisuali
 		return offsets;
 	};
 
-	const std::vector<cv::Point> innerOffsets = makeCircleOffsets(innerRadius);                                         // ROI offsets
-	const std::vector<cv::Point> bgOffsets    = (bgRadius == innerRadius) ? innerOffsets : makeCircleOffsets(bgRadius); // background ROI offsets
+	const std::vector<cv::Point> innerOffsets = makeCircleOffsets(innerRadius);                                         //!< ROI offsets
+	const std::vector<cv::Point> bgOffsets    = (bgRadius == innerRadius) ? innerOffsets : makeCircleOffsets(bgRadius); //!< Background ROI offsets
 
 	// 5. Define fast sampling helpers (bounds-safe: out-of-image pixels are skipped).
-	const int rows = Lblur.rows; // image height
-	const int cols = Lblur.cols; // image width
+	const int rows = Lblur.rows; //!< Image height
+	const int cols = Lblur.cols; //!< Image width
 
 	auto sampleMeanL = [&](int cx, int cy, const std::vector<cv::Point>& offsets, float& outMean) -> bool {
-		std::uint32_t sum   = 0;         // sum of L values
-		std::uint32_t count = 0;         // number of in-bounds pixels
-		for (const auto& off: offsets) { // off = one (dx,dy) inside the circle
-			const int x = cx + off.x;    // pixel x
-			const int y = cy + off.y;    // pixel y
+		std::uint32_t sum   = 0;         //!< Sum of L values
+		std::uint32_t count = 0;         //!< Number of in-bounds pixels
+		
+		for (const auto& off: offsets) {
+			const int x = cx + off.x;    //!< Pixel x
+			const int y = cy + off.y;    //!< Pixel y
 			if (x < 0 || x >= cols || y < 0 || y >= rows) {
 				continue;
 			}
@@ -144,34 +142,39 @@ StoneResult analyseBoard(const BoardGeometry& geometry, go::camera::DebugVisuali
 			++count;
 		}
 
-		if (count == 0)
+		if (count == 0){
 			return false;
+		}
 		outMean = static_cast<float>(sum) / static_cast<float>(count);
 		return true;
 	};
 
 	auto sampleMeanLab = [&](int cx, int cy, const std::vector<cv::Point>& offsets, float& outL, float& outA, float& outB) -> bool {
-		std::uint32_t sumL  = 0;         // sum of L values
-		std::uint32_t sumA  = 0;         // sum of a values
-		std::uint32_t sumB  = 0;         // sum of b values
-		std::uint32_t count = 0;         // number of in-bounds pixels
-		for (const auto& off: offsets) { // off = one (dx,dy) inside the circle
-			const int x = cx + off.x;    // pixel x
-			const int y = cy + off.y;    // pixel y
+		std::uint32_t sumL  = 0;         //!< Sum of L values
+		std::uint32_t sumA  = 0;         //!< Sum of a values
+		std::uint32_t sumB  = 0;         //!< Sum of b values
+		std::uint32_t count = 0;         //!< Number of in-bounds pixels
+		
+		for (const auto& off: offsets) {
+			const int x = cx + off.x;    //!< Pixel x
+			const int y = cy + off.y;    //!< Pixel y
 			if (x < 0 || x >= cols || y < 0 || y >= rows) {
 				continue;
 			}
+
 			sumL += static_cast<std::uint32_t>(Lblur.ptr<std::uint8_t>(y)[x]);
 			sumA += static_cast<std::uint32_t>(Ablur.ptr<std::uint8_t>(y)[x]);
 			sumB += static_cast<std::uint32_t>(Bblur.ptr<std::uint8_t>(y)[x]);
 			++count;
 		}
 
-		if (count == 0)
+		if (count == 0){
 			return false;
+		}
 		outL = static_cast<float>(sumL) / static_cast<float>(count);
 		outA = static_cast<float>(sumA) / static_cast<float>(count);
 		outB = static_cast<float>(sumB) / static_cast<float>(count);
+
 		return true;
 	};
 
@@ -181,7 +184,7 @@ StoneResult analyseBoard(const BoardGeometry& geometry, go::camera::DebugVisuali
 	//    - darkFrac/brightFrac: fraction of ROI pixels that consistently support a stone hypothesis.
 	const int bgOffset = [&]() {
 		if (std::isfinite(geometry.spacing) && geometry.spacing > 0.0) {
-			const int d = static_cast<int>(std::lround(geometry.spacing * 0.48)); // background sample distance (px)
+			const int d = static_cast<int>(std::lround(geometry.spacing * 0.48)); //!< Background sample distance (px)
 			return std::max(d, innerRadius + 2);                                  // keep background samples outside the stone ROI
 		}
 		return innerRadius * 2 + 6; // fallback distance (px)
@@ -189,24 +192,29 @@ StoneResult analyseBoard(const BoardGeometry& geometry, go::camera::DebugVisuali
 
 	std::vector<float> deltaL; // per-intersection deltaL = L_inner - median(L_bg)
 	deltaL.reserve(geometry.intersections.size());
+
 	std::vector<float> chromaSq; // per-intersection chroma^2 = (a-128)^2 + (b-128)^2
 	chromaSq.reserve(geometry.intersections.size());
+
 	std::vector<float> darkFrac; // per-intersection fraction of ROI pixels significantly darker than bg
 	darkFrac.reserve(geometry.intersections.size());
+
 	std::vector<float> brightFrac; // per-intersection fraction of ROI pixels significantly brighter than bg
 	brightFrac.reserve(geometry.intersections.size());
+
 	std::vector<uint8_t> isValid; // per-intersection validity flag (sampling succeeded)
 	isValid.reserve(geometry.intersections.size());
+
 	std::vector<float> distribution; // valid deltaL values (for robust threshold estimation)
 	distribution.reserve(geometry.intersections.size());
 
-	for (const auto& p: geometry.intersections) {          // p = intersection point (rectified image coords)
-		const int cx = static_cast<int>(std::lround(p.x)); // center x (px)
-		const int cy = static_cast<int>(std::lround(p.y)); // center y (px)
+	for (const auto& p: geometry.intersections) {
+		const int cx = static_cast<int>(std::lround(p.x)); //!< Center x (px)
+		const int cy = static_cast<int>(std::lround(p.y)); //!< Center y (px)
 
-		float innerL = 0.0f; // mean L inside ROI
-		float innerA = 0.0f; // mean a inside ROI
-		float innerB = 0.0f; // mean b inside ROI
+		float innerL = 0.0f; //!< Mean L inside ROI
+		float innerA = 0.0f; //!< Mean a inside ROI
+		float innerB = 0.0f; //!< Mean b inside ROI
 		if (!sampleMeanLab(cx, cy, innerOffsets, innerL, innerA, innerB)) {
 			// Not enough in-bounds pixels (intersection too far outside the image).
 			deltaL.push_back(0.0f);
@@ -217,13 +225,13 @@ StoneResult analyseBoard(const BoardGeometry& geometry, go::camera::DebugVisuali
 			continue;
 		}
 
-		std::array<float, 8> bgVals{}; // background L means from 8 surrounding sample circles
-		int bgCount = 0;               // how many background samples succeeded (in-bounds)
+		std::array<float, 8> bgVals{}; //!< Background L means from 8 surrounding sample circles
+		int bgCount = 0;               //!< How many background samples succeeded (in-bounds)
 		{
-			const int dx = bgOffset; // background sample offset in x (px)
-			const int dy = bgOffset; // background sample offset in y (px)
+			const int dx = bgOffset; //!< Background sample offset in x (px)
+			const int dy = bgOffset; //!< Background sample offset in y (px)
+			float m = 0.0f; //!< Temporary mean-L accumulator
 
-			float m = 0.0f; // temporary mean-L accumulator
 			// Diagonals (reduce directional bias).
 			if (sampleMeanL(cx - dx, cy - dy, bgOffsets, m)) {
 				bgVals[static_cast<std::size_t>(bgCount++)] = m;
@@ -267,32 +275,37 @@ StoneResult analyseBoard(const BoardGeometry& geometry, go::camera::DebugVisuali
 		const float bgMedian = (bgCount % 2 == 1) ? bgVals[static_cast<std::size_t>(bgCount / 2)]
 		                                          : 0.5f * (bgVals[static_cast<std::size_t>(bgCount / 2 - 1)] + bgVals[static_cast<std::size_t>(bgCount / 2)]);
 
-		const float dMed = innerL - bgMedian; // local-normalized contrast (stone vs background)
+		const float dMed = innerL - bgMedian; //!< Local-normalized contrast (stone vs background)
 
 		deltaL.push_back(dMed);
-		const float da = innerA - 128.0f; // a offset from neutral
-		const float db = innerB - 128.0f; // b offset from neutral
+		const float da = innerA - 128.0f; //!< A offset from neutral
+		const float db = innerB - 128.0f; //!< B offset from neutral
 		chromaSq.push_back(da * da + db * db);
 
 		// Support fractions: stones cover most of the ROI with consistently darker/brighter pixels.
 		// This helps reject small features like star points or grid artifacts.
 		{
-			static constexpr float SUPPORT_DELTA = 10.0f; // L threshold (Lab units) relative to bgMedian
-			std::uint32_t total                  = 0;     // ROI pixel count
-			std::uint32_t dark                   = 0;     // #pixels with diff <= -SUPPORT_DELTA
-			std::uint32_t bright                 = 0;     // #pixels with diff >= +SUPPORT_DELTA
-			for (const auto& off: innerOffsets) {         // off = ROI offset inside the filled circle
-				const int x = cx + off.x;                 // pixel x
-				const int y = cy + off.y;                 // pixel y
-				if (x < 0 || x >= cols || y < 0 || y >= rows)
+			static constexpr float SUPPORT_DELTA = 10.0f; //!< L threshold (Lab units) relative to bgMedian
+			std::uint32_t total                  = 0;     //!< ROI pixel count
+			std::uint32_t dark                   = 0;     //!< #pixels with diff <= -SUPPORT_DELTA
+			std::uint32_t bright                 = 0;     //!< #pixels with diff >= +SUPPORT_DELTA
+			
+			// off = ROI offset inside the filled circle
+			for (const auto& off: innerOffsets) {
+				const int x = cx + off.x;                 //!< Pixel x
+				const int y = cy + off.y;                 //!< Pixel y
+				if (x < 0 || x >= cols || y < 0 || y >= rows){
 					continue;
-				const float v    = static_cast<float>(Lblur.ptr<std::uint8_t>(y)[x]); // L at pixel
-				const float diff = v - bgMedian;                                      // L - bgMedian
+				}
+				const float v    = static_cast<float>(Lblur.ptr<std::uint8_t>(y)[x]); //!< L at pixel
+				const float diff = v - bgMedian;                                      //!< L - bgMedian
 				++total;
-				if (diff <= -SUPPORT_DELTA)
+
+				if (diff <= -SUPPORT_DELTA){
 					++dark;
-				else if (diff >= SUPPORT_DELTA)
+				} else if (diff >= SUPPORT_DELTA) {
 					++bright;
+				}
 			}
 			if (total == 0) {
 				darkFrac.push_back(0.0f);
@@ -308,8 +321,7 @@ StoneResult analyseBoard(const BoardGeometry& geometry, go::camera::DebugVisuali
 	}
 
 	if (distribution.empty()) {
-		if (debugger)
-			debugger->endStage();
+		if (debugger) debugger->endStage();
 		return {false, {}};
 	}
 
@@ -317,32 +329,32 @@ StoneResult analyseBoard(const BoardGeometry& geometry, go::camera::DebugVisuali
 	//    Using median + MAD adapts to image noise and avoids brittle fixed thresholds.
 	std::vector<float> sortedD = distribution; // copy to sort (deltaL distribution)
 	std::sort(sortedD.begin(), sortedD.end());
-	const std::size_t n = sortedD.size();       // number of valid intersections
-	const float medianD = sortedD[(n - 1) / 2]; // median deltaL
+	const std::size_t n = sortedD.size();       //!< Number of valid intersections
+	const float medianD = sortedD[(n - 1) / 2]; //!< Median deltaL
 
-	std::vector<float> absDev; // absolute deviations from median
+	std::vector<float> absDev; //!< Absolute deviations from median
 	absDev.reserve(n);
 	for (float v: sortedD) { // v = one deltaL sample
 		absDev.push_back(std::abs(v - medianD));
 	}
 	std::sort(absDev.begin(), absDev.end());
-	const float mad       = absDev[(n - 1) / 2];           // median absolute deviation
-	const float robustStd = std::max(1.0f, 1.4826f * mad); // MAD->sigma (Gaussian) with floor
+	const float mad       = absDev[(n - 1) / 2];           //!< median absolute deviation
+	const float robustStd = std::max(1.0f, 1.4826f * mad); //!< MAD->sigma (Gaussian) with floor
 
-	static constexpr float MIN_ABS_CONTRAST_BLACK = 17.0f; // minimum |deltaL| for black stones (Lab L units)
-	static constexpr float MIN_ABS_CONTRAST_WHITE = 11.0f; // minimum |deltaL| for white stones (weaker contrast)
-	static constexpr float K_SIGMA                = 3.0f;  // noise multiplier for thresholding
+	static constexpr float MIN_ABS_CONTRAST_BLACK = 17.0f; //!< Minimum |deltaL| for black stones (Lab L units)
+	static constexpr float MIN_ABS_CONTRAST_WHITE = 11.0f; //!< Minimum |deltaL| for white stones (weaker contrast)
+	static constexpr float K_SIGMA                = 3.0f;  //!< Noise multiplier for thresholding
 
-	const float noiseThresh = K_SIGMA * robustStd;                           // noise-based contrast threshold
-	const float threshBlack = std::max(MIN_ABS_CONTRAST_BLACK, noiseThresh); // black contrast threshold
-	const float threshWhite = std::max(MIN_ABS_CONTRAST_WHITE, noiseThresh); // white contrast threshold
+	const float noiseThresh = K_SIGMA * robustStd;                           //!< Noise-based contrast threshold
+	const float threshBlack = std::max(MIN_ABS_CONTRAST_BLACK, noiseThresh); //!< Black contrast threshold
+	const float threshWhite = std::max(MIN_ABS_CONTRAST_WHITE, noiseThresh); //!< White contrast threshold
 
-	static constexpr float BLACK_BIAS = 6.0f;                                 // be stricter for black stones; avoids dark artifacts
-	const float baseBlack             = medianD - (threshBlack + BLACK_BIAS); // candidate-black if deltaL <= baseBlack
-	const float baseWhite             = medianD + threshWhite;                // candidate-white if deltaL >= baseWhite
+	static constexpr float BLACK_BIAS = 6.0f;                                 //!< Be stricter for black stones; avoids dark artifacts
+	const float baseBlack             = medianD - (threshBlack + BLACK_BIAS); //!< Candidate-black if deltaL <= baseBlack
+	const float baseWhite             = medianD + threshWhite;                //!< Candidate-white if deltaL >= baseWhite
 
-	const float neighborMargin = std::max(3.0f, 1.2f * robustStd);     // local contrast margin vs neighbor median
-	const int N                = static_cast<int>(geometry.boardSize); // board size (grid is N x N)
+	const float neighborMargin = std::max(3.0f, 1.2f * robustStd);     //!< Local contrast margin vs neighbor median
+	const int N                = static_cast<int>(geometry.boardSize); //!< Board size (grid is N x N)
 
 	// 8. Helper: local neighbor median of deltaL (acts as a local baseline; helps suppress illumination drift).
 	auto neighborMedianDelta = [&](int idx) -> float { // idx = flattened intersection index [0, N*N)
