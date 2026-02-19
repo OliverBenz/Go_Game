@@ -17,99 +17,107 @@ namespace go::camera {
 
 namespace {
 
-struct GeometryParams {
-	static constexpr int INNER_RADIUS_FALLBACK     = 6;
-	static constexpr double INNER_RADIUS_SPACING_K = 0.24;
-	static constexpr int INNER_RADIUS_MIN          = 2;
-	static constexpr int INNER_RADIUS_MAX          = 30;
+struct StoneDetectionConfig {
+	int innerRadiusFallback{6};
+	double innerRadiusSpacingK{0.24};
+	int innerRadiusMin{2};
+	int innerRadiusMax{30};
 
-	static constexpr int BG_RADIUS_MIN = 2;
-	static constexpr int BG_RADIUS_MAX = 12;
+	int bgRadiusMin{2};
+	int bgRadiusMax{12};
 
-	static constexpr double BG_OFFSET_SPACING_K = 0.48;
-	static constexpr int BG_OFFSET_MIN_EXTRA    = 2;
-	static constexpr int BG_OFFSET_FALLBACK_ADD = 6;
-	static constexpr int MIN_BG_SAMPLES         = 5;
+	double bgOffsetSpacingK{0.48};
+	int bgOffsetMinExtra{2};
+	int bgOffsetFallbackAdd{6};
+	int minBgSamples{5};
 
-	static constexpr float SUPPORT_DELTA = 18.0f;
+	float supportDelta{18.0f};
 
-	static constexpr float LAB_NEUTRAL          = 128.0f;
-	static constexpr double BLUR_SIGMA_RADIUS_K = 0.15;
-	static constexpr double BLUR_SIGMA_MIN      = 1.0;
-	static constexpr double BLUR_SIGMA_MAX      = 4.0;
-};
+	float labNeutral{128.0f};
+	double blurSigmaRadiusK{0.15};
+	double blurSigmaMin{1.0};
+	double blurSigmaMax{4.0};
 
-struct CalibrationParams {
-	static constexpr float MAD_TO_SIGMA                 = 1.4826f;
-	static constexpr float SIGMA_MIN                    = 5.0f;
-	static constexpr float EMPTY_BAND_SIGMA             = 1.80f;
-	static constexpr float LIKELY_EMPTY_SUPPORT_SUM_MAX = 0.35f;
-	static constexpr int CALIB_MIN_EMPTY_SAMPLES        = 8;
-	static constexpr float CALIB_MIN_EMPTY_FRACTION     = 0.10f;
-	static constexpr float CHROMA_T_FALLBACK            = 400.0f;
-	static constexpr float CHROMA_T_MIN                 = 100.0f;
-};
+	float madToSigma{1.4826f};
+	float sigmaMin{5.0f};
+	float emptyBandSigma{1.80f};
+	float likelyEmptySupportSumMax{0.35f};
+	int calibMinEmptySamples{8};
+	float calibMinEmptyFraction{0.10f};
+	float chromaTFallback{400.0f};
+	float chromaTMin{100.0f};
 
-struct ScoreParams {
-	static constexpr float W_DELTA                     = 1.0f;
-	static constexpr float W_SUPPORT                   = 0.2f;
-	static constexpr float W_CHROMA                    = 0.9f;
-	static constexpr float MARGIN0                     = 1.5f;
-	static constexpr float EDGE_PENALTY                = 0.20f;
-	static constexpr float CONF_CHROMA_DOWNWEIGHT      = 0.25f;
-	static constexpr float EMPTY_SCORE_BIAS            = 0.30f;
-	static constexpr float EMPTY_SCORE_Z_PENALTY       = 0.75f;
-	static constexpr float EMPTY_SCORE_SUPPORT_PENALTY = 0.15f;
+	float scoreWDelta{1.0f};
+	float scoreWSupport{0.2f};
+	float scoreWChroma{0.9f};
+	float margin0{1.5f};
+	float edgePenalty{0.20f};
+	float confChromaDownweight{0.25f};
+	float emptyScoreBias{0.30f};
+	float emptyScoreZPenalty{0.75f};
+	float emptyScoreSupportPenalty{0.15f};
 
-	static constexpr float MIN_Z_BLACK = 3.8f;
-	static constexpr float MIN_Z_WHITE = 0.6f;
+	float minZBlack{3.8f};
+	float minZBlackNearEdgeAdd{0.4f};
+	float minZBlackOnEdgeAdd{1.2f};
+	float minZWhite{0.6f};
 
-	static constexpr float MIN_SUPPORT_BLACK           = 0.50f;
-	static constexpr float MIN_SUPPORT_WHITE           = 0.08f;
-	static constexpr float MIN_SUPPORT_ADVANTAGE       = 0.08f;
-	static constexpr float MIN_SUPPORT_ADVANTAGE_WHITE = 0.03f;
+	float minSupportBlack{0.50f};
+	float minSupportWhite{0.08f};
+	float minSupportAdvantageBlack{0.08f};
+	float minSupportAdvantageWhite{0.03f};
 
-	static constexpr float MIN_NEIGHBOR_CONTRAST_BLACK = 14.0f;
-	static constexpr float MIN_NEIGHBOR_CONTRAST_WHITE = 0.0f;
+	float minNeighborContrastBlack{14.0f};
+	float minNeighborContrastWhite{0.0f};
 
-	static constexpr float WHITE_STRONG_ADV_MIN           = 0.08f;
-	static constexpr float WHITE_STRONG_NEIGHBOR_MIN      = 12.0f;
-	static constexpr float WHITE_LOW_CHROMA_MAX           = 55.0f;
-	static constexpr float WHITE_LOW_CHROMA_MAX_NEAR_EDGE = 35.0f;
-	static constexpr float WHITE_LOW_CHROMA_MIN_Z         = 1.0f;
-	static constexpr float WHITE_LOW_CHROMA_MIN_BRIGHT    = 0.10f;
+	float whiteStrongAdvMin{0.08f};
+	float whiteStrongNeighborMin{12.0f};
+	float whiteLowChromaMax{55.0f};
+	float whiteLowChromaMaxNearEdge{35.0f};
+	float whiteLowChromaMinZ{1.0f};
+	float whiteLowChromaMinBright{0.10f};
+	float whiteLowChromaMinBrightNearEdge{0.16f};
 
-	static constexpr float MIN_CONFIDENCE_BLACK = 0.90f;
-};
+	float edgeWhiteNearChromaSq{70.0f};
+	float edgeWhiteNearMinBrightFrac{0.22f};
+	float edgeWhiteNearWeakChromaSq{45.0f};
+	float edgeWhiteNearWeakBrightFrac{0.22f};
+	float edgeWhiteNearWeakMinConf{0.965f};
+	float edgeWhiteHighChromaSq{120.0f};
+	float edgeWhiteMinBrightFrac{0.35f};
 
-struct EdgeParams {
-	static constexpr float EDGE_WHITE_NEAR_CHROMA_SQ        = 70.0f;
-	static constexpr float EDGE_WHITE_NEAR_MIN_BRIGHT_FRAC  = 0.22f;
-	static constexpr float EDGE_WHITE_NEAR_WEAK_CHROMA_SQ   = 45.0f;
-	static constexpr float EDGE_WHITE_NEAR_WEAK_BRIGHT_FRAC = 0.22f;
-	static constexpr float EDGE_WHITE_NEAR_WEAK_MIN_CONF    = 0.965f;
-	static constexpr float EDGE_WHITE_HIGH_CHROMA_SQ        = 120.0f;
-	static constexpr float EDGE_WHITE_MIN_BRIGHT_FRAC       = 0.35f;
-};
+	float minConfidenceBlack{0.90f};
+	unsigned minConfidenceBlackBoardSize{13u};
 
-struct RefinementParams {
-	static constexpr float REFINE_TRIGGER_MULT      = 1.25f;
-	static constexpr double REFINE_EXTENT_SPACING_K = 0.09;
-	static constexpr int REFINE_EXTENT_FALLBACK     = 6;
-	static constexpr int REFINE_EXTENT_MIN          = 4;
-	static constexpr int REFINE_EXTENT_MAX          = 8;
-	static constexpr int REFINE_STEP_PX             = 2;
-	static constexpr float REFINE_ACCEPT_GAIN_MULT  = 0.20f;
+	float minBlackMarginMult{1.0f};
+	float minWhiteMarginMult{0.30f};
 
-	static constexpr float EMPTY_RESCUE_MIN_Z           = 0.35f;
-	static constexpr float EMPTY_RESCUE_MIN_BRIGHT      = 0.08f;
-	static constexpr float EMPTY_RESCUE_MIN_BRIGHT_ADV  = 0.02f;
-	static constexpr float EMPTY_RESCUE_MIN_MARGIN_MULT = 0.35f;
+	float refineTriggerMult{1.25f};
+	double refineExtentSpacingK{0.09};
+	int refineExtentFallback{6};
+	int refineExtentMin{4};
+	int refineExtentMax{8};
+	int refineStepPx{2};
+
+	float refineSkipStableEmptyMarginMult{0.80f};
+	float refineAcceptGainMult{0.20f};
+	float refineAcceptFromEmptyGainMult{0.10f};
+	float refinePromoteFromEmptyEps{1e-4f};
+
+	float emptyRescueMinZ{0.35f};
+	float emptyRescueMinBright{0.08f};
+	float emptyRescueMinBrightAdv{0.02f};
+	float emptyRescueMinMarginMult{0.35f};
+
+	float refineMinAbsZWhite{1.2f};
+	float refineMinAbsZBlack{2.0f};
+	float refineMinSupportAdvWhite{0.20f};
+	float refineMinSupportAdvBlack{0.35f};
 };
 
 struct Radii {
-	int innerRadius{GeometryParams::INNER_RADIUS_FALLBACK};
-	int bgRadius{GeometryParams::BG_RADIUS_MIN};
+	int innerRadius{0};
+	int bgRadius{0};
 	int bgOffset{0};
 };
 
@@ -143,12 +151,12 @@ struct Features {
 struct Model {
 	float medianEmpty{0.0f};
 	float sigmaEmpty{1.0f};
-	float wDelta{ScoreParams::W_DELTA};
-	float wSupport{ScoreParams::W_SUPPORT};
-	float wChroma{ScoreParams::W_CHROMA};
-	float tChromaSq{CalibrationParams::CHROMA_T_FALLBACK};
-	float margin0{ScoreParams::MARGIN0};
-	float edgePenalty{ScoreParams::EDGE_PENALTY};
+	float wDelta{0.0f};
+	float wSupport{0.0f};
+	float wChroma{0.0f};
+	float tChromaSq{0.0f};
+	float margin0{0.0f};
+	float edgePenalty{0.0f};
 };
 
 struct Scores {
@@ -168,11 +176,21 @@ struct Eval {
 	float confidence{0.0f};
 };
 
-struct ClassificationContext {
-	unsigned boardSize{0u};
-	double spacing{0.0};
+struct SpatialContext {
 	int edgeLevel{0};
 	float neighborMedian{0.0f};
+	unsigned boardSize{0u};
+};
+
+enum class RejectionReason {
+	None,
+	WeakZ,
+	LowConfidence,
+	WeakSupport,
+	WeakNeighborContrast,
+	EdgeArtifact,
+	MarginTooSmall,
+	Other,
 };
 
 struct DebugStats {
@@ -185,21 +203,21 @@ struct DebugStats {
 
 namespace GeometrySampling {
 
-static Radii chooseRadii(double spacing) {
+static Radii chooseRadii(double spacing, const StoneDetectionConfig& config) {
 	Radii radii{};
-	int innerRadius = GeometryParams::INNER_RADIUS_FALLBACK;
+	int innerRadius = config.innerRadiusFallback;
 	if (std::isfinite(spacing) && spacing > 0.0) {
-		innerRadius = static_cast<int>(std::lround(spacing * GeometryParams::INNER_RADIUS_SPACING_K));
+		innerRadius = static_cast<int>(std::lround(spacing * config.innerRadiusSpacingK));
 	}
 
-	radii.innerRadius = std::clamp(innerRadius, GeometryParams::INNER_RADIUS_MIN, GeometryParams::INNER_RADIUS_MAX);
-	radii.bgRadius    = std::clamp(radii.innerRadius / 2, GeometryParams::BG_RADIUS_MIN, GeometryParams::BG_RADIUS_MAX);
+	radii.innerRadius = std::clamp(innerRadius, config.innerRadiusMin, config.innerRadiusMax);
+	radii.bgRadius    = std::clamp(radii.innerRadius / 2, config.bgRadiusMin, config.bgRadiusMax);
 
 	if (std::isfinite(spacing) && spacing > 0.0) {
-		const int bgOffset = static_cast<int>(std::lround(spacing * GeometryParams::BG_OFFSET_SPACING_K));
-		radii.bgOffset     = std::max(bgOffset, radii.innerRadius + GeometryParams::BG_OFFSET_MIN_EXTRA);
+		const int bgOffset = static_cast<int>(std::lround(spacing * config.bgOffsetSpacingK));
+		radii.bgOffset     = std::max(bgOffset, radii.innerRadius + config.bgOffsetMinExtra);
 	} else {
-		radii.bgOffset = radii.innerRadius * 2 + GeometryParams::BG_OFFSET_FALLBACK_ADD;
+		radii.bgOffset = radii.innerRadius * 2 + config.bgOffsetFallbackAdd;
 	}
 	return radii;
 }
@@ -252,7 +270,7 @@ static bool convertToLab(const cv::Mat& image, cv::Mat& outLab) {
 	return false;
 }
 
-static bool prepareLabBlur(const cv::Mat& image, const Radii& radii, LabBlur& outBlur) {
+static bool prepareLabBlur(const cv::Mat& image, const Radii& radii, const StoneDetectionConfig& config, LabBlur& outBlur) {
 	cv::Mat labImage;
 	if (!convertToLab(image, labImage)) {
 		return false;
@@ -262,8 +280,7 @@ static bool prepareLabBlur(const cv::Mat& image, const Radii& radii, LabBlur& ou
 	cv::extractChannel(labImage, outBlur.A, 1);
 	cv::extractChannel(labImage, outBlur.B, 2);
 
-	const double sigma = std::clamp(GeometryParams::BLUR_SIGMA_RADIUS_K * static_cast<double>(radii.innerRadius), GeometryParams::BLUR_SIGMA_MIN,
-	                                GeometryParams::BLUR_SIGMA_MAX);
+	const double sigma = std::clamp(config.blurSigmaRadiusK * static_cast<double>(radii.innerRadius), config.blurSigmaMin, config.blurSigmaMax);
 
 	cv::GaussianBlur(outBlur.L, outBlur.L, cv::Size(), sigma, sigma, cv::BORDER_REPLICATE);
 	cv::GaussianBlur(outBlur.A, outBlur.A, cv::Size(), sigma, sigma, cv::BORDER_REPLICATE);
@@ -317,7 +334,8 @@ static bool sampleMeanLab(const SampleContext& context, int centerX, int centerY
 	return true;
 }
 
-static bool computeFeaturesAt(const SampleContext& context, const Offsets& offsets, const Radii& radii, int centerX, int centerY, Features& outFeatures) {
+static bool computeFeaturesAt(const SampleContext& context, const Offsets& offsets, const Radii& radii, const StoneDetectionConfig& config, int centerX,
+                              int centerY, Features& outFeatures) {
 	outFeatures = Features{};
 
 	float innerL = 0.0f;
@@ -340,7 +358,7 @@ static bool computeFeaturesAt(const SampleContext& context, const Offsets& offse
 			backgroundSamples[static_cast<std::size_t>(backgroundCount++)] = backgroundMean;
 		}
 	}
-	if (backgroundCount < GeometryParams::MIN_BG_SAMPLES) {
+	if (backgroundCount < config.minBgSamples) {
 		return false;
 	}
 
@@ -350,8 +368,8 @@ static bool computeFeaturesAt(const SampleContext& context, const Offsets& offse
 	                                                                    backgroundSamples[static_cast<std::size_t>(backgroundCount / 2)]);
 
 	outFeatures.deltaL   = innerL - backgroundMedian;
-	const float deltaA   = innerA - GeometryParams::LAB_NEUTRAL;
-	const float deltaB   = innerB - GeometryParams::LAB_NEUTRAL;
+	const float deltaA   = innerA - config.labNeutral;
+	const float deltaB   = innerB - config.labNeutral;
 	outFeatures.chromaSq = deltaA * deltaA + deltaB * deltaB;
 
 	std::uint32_t total  = 0u;
@@ -365,9 +383,9 @@ static bool computeFeaturesAt(const SampleContext& context, const Offsets& offse
 		}
 		const float diff = static_cast<float>(context.L.ptr<std::uint8_t>(y)[x]) - backgroundMedian;
 		++total;
-		if (diff <= -GeometryParams::SUPPORT_DELTA) {
+		if (diff <= -config.supportDelta) {
 			++dark;
-		} else if (diff >= GeometryParams::SUPPORT_DELTA) {
+		} else if (diff >= config.supportDelta) {
 			++bright;
 		}
 	}
@@ -382,12 +400,12 @@ static bool computeFeaturesAt(const SampleContext& context, const Offsets& offse
 }
 
 static std::vector<Features> computeFeatures(const std::vector<cv::Point2f>& intersections, const SampleContext& context, const Offsets& offsets,
-                                             const Radii& radii) {
+                                             const Radii& radii, const StoneDetectionConfig& config) {
 	std::vector<Features> allFeatures(intersections.size());
 	for (std::size_t index = 0; index < intersections.size(); ++index) {
 		const int centerX = static_cast<int>(std::lround(intersections[index].x));
 		const int centerY = static_cast<int>(std::lround(intersections[index].y));
-		computeFeaturesAt(context, offsets, radii, centerX, centerY, allFeatures[index]);
+		computeFeaturesAt(context, offsets, radii, config, centerX, centerY, allFeatures[index]);
 	}
 	return allFeatures;
 }
@@ -404,7 +422,7 @@ static float medianSorted(const std::vector<float>& sortedValues) {
 	return (count % 2u == 1u) ? sortedValues[(count - 1u) / 2u] : 0.5f * (sortedValues[count / 2u - 1u] + sortedValues[count / 2u]);
 }
 
-static bool robustMedianSigma(const std::vector<float>& values, float& outMedian, float& outSigma) {
+static bool robustMedianSigma(const std::vector<float>& values, const StoneDetectionConfig& config, float& outMedian, float& outSigma) {
 	if (values.empty()) {
 		return false;
 	}
@@ -421,11 +439,11 @@ static bool robustMedianSigma(const std::vector<float>& values, float& outMedian
 	std::sort(absoluteDeviation.begin(), absoluteDeviation.end());
 
 	const float mad = medianSorted(absoluteDeviation);
-	outSigma        = std::max(CalibrationParams::SIGMA_MIN, CalibrationParams::MAD_TO_SIGMA * mad);
+	outSigma        = std::max(config.sigmaMin, config.madToSigma * mad);
 	return true;
 }
 
-static bool calibrateModel(const std::vector<Features>& features, unsigned boardSize, Model& outModel) {
+static bool calibrateModel(const std::vector<Features>& features, unsigned boardSize, const StoneDetectionConfig& config, Model& outModel) {
 	std::vector<float> allDelta;
 	std::vector<float> allChroma;
 	allDelta.reserve(features.size());
@@ -442,12 +460,12 @@ static bool calibrateModel(const std::vector<Features>& features, unsigned board
 	}
 
 	float medianInitial = 0.0f;
-	float sigmaInitial  = CalibrationParams::SIGMA_MIN;
-	if (!robustMedianSigma(allDelta, medianInitial, sigmaInitial)) {
+	float sigmaInitial  = config.sigmaMin;
+	if (!robustMedianSigma(allDelta, config, medianInitial, sigmaInitial)) {
 		return false;
 	}
 
-	const float emptyBand = CalibrationParams::EMPTY_BAND_SIGMA * sigmaInitial;
+	const float emptyBand = config.emptyBandSigma * sigmaInitial;
 	std::vector<float> likelyEmptyDelta;
 	std::vector<float> likelyEmptyChroma;
 	likelyEmptyDelta.reserve(allDelta.size());
@@ -457,7 +475,7 @@ static bool calibrateModel(const std::vector<Features>& features, unsigned board
 			continue;
 		}
 		const bool inBand     = std::abs(feature.deltaL - medianInitial) <= emptyBand;
-		const bool lowSupport = (feature.darkFrac + feature.brightFrac) <= CalibrationParams::LIKELY_EMPTY_SUPPORT_SUM_MAX;
+		const bool lowSupport = (feature.darkFrac + feature.brightFrac) <= config.likelyEmptySupportSumMax;
 		if (inBand && lowSupport) {
 			likelyEmptyDelta.push_back(feature.deltaL);
 			likelyEmptyChroma.push_back(feature.chromaSq);
@@ -465,22 +483,22 @@ static bool calibrateModel(const std::vector<Features>& features, unsigned board
 	}
 
 	const std::size_t minEmptyCount = std::max<std::size_t>(
-	        static_cast<std::size_t>(CalibrationParams::CALIB_MIN_EMPTY_SAMPLES),
-	        static_cast<std::size_t>(std::lround(CalibrationParams::CALIB_MIN_EMPTY_FRACTION * static_cast<float>(boardSize) * static_cast<float>(boardSize))));
+	        static_cast<std::size_t>(config.calibMinEmptySamples),
+	        static_cast<std::size_t>(std::lround(config.calibMinEmptyFraction * static_cast<float>(boardSize) * static_cast<float>(boardSize))));
 
 	float medianFinal = medianInitial;
 	float sigmaFinal  = sigmaInitial;
 	if (likelyEmptyDelta.size() >= minEmptyCount) {
 		float medianLikely = 0.0f;
 		float sigmaLikely  = 0.0f;
-		if (robustMedianSigma(likelyEmptyDelta, medianLikely, sigmaLikely)) {
+		if (robustMedianSigma(likelyEmptyDelta, config, medianLikely, sigmaLikely)) {
 			medianFinal = medianLikely;
 			sigmaFinal  = sigmaLikely;
 		}
 	}
 
 	const std::vector<float>& chromaSource = likelyEmptyChroma.empty() ? allChroma : likelyEmptyChroma;
-	float chromaMedian                     = CalibrationParams::CHROMA_T_FALLBACK;
+	float chromaMedian                     = config.chromaTFallback;
 	if (!chromaSource.empty()) {
 		std::vector<float> sortedChroma = chromaSource;
 		std::sort(sortedChroma.begin(), sortedChroma.end());
@@ -488,13 +506,13 @@ static bool calibrateModel(const std::vector<Features>& features, unsigned board
 	}
 
 	outModel.medianEmpty = medianFinal;
-	outModel.sigmaEmpty  = std::max(CalibrationParams::SIGMA_MIN, sigmaFinal);
-	outModel.tChromaSq   = std::max(CalibrationParams::CHROMA_T_MIN, chromaMedian);
-	outModel.wDelta      = ScoreParams::W_DELTA;
-	outModel.wSupport    = ScoreParams::W_SUPPORT;
-	outModel.wChroma     = ScoreParams::W_CHROMA;
-	outModel.margin0     = ScoreParams::MARGIN0;
-	outModel.edgePenalty = ScoreParams::EDGE_PENALTY;
+	outModel.sigmaEmpty  = std::max(config.sigmaMin, sigmaFinal);
+	outModel.tChromaSq   = std::max(config.chromaTMin, chromaMedian);
+	outModel.wDelta      = config.scoreWDelta;
+	outModel.wSupport    = config.scoreWSupport;
+	outModel.wChroma     = config.scoreWChroma;
+	outModel.margin0     = config.margin0;
+	outModel.edgePenalty = config.edgePenalty;
 	return true;
 }
 
@@ -516,7 +534,7 @@ static int edgeLevel(std::size_t index, int boardSize) {
 	return nearEdge ? 1 : 0;
 }
 
-static Scores computeScores(const Features& feature, const Model& model) {
+static Scores computeScores(const Features& feature, const Model& model, const StoneDetectionConfig& config) {
 	Scores scores{};
 	scores.z                 = (feature.deltaL - model.medianEmpty) / model.sigmaEmpty;
 	const float supportBlack = feature.darkFrac - feature.brightFrac;
@@ -525,13 +543,13 @@ static Scores computeScores(const Features& feature, const Model& model) {
 
 	scores.black = model.wDelta * (-scores.z) + model.wSupport * supportBlack - model.wChroma * scores.chromaPenalty;
 	scores.white = model.wDelta * (scores.z) + model.wSupport * supportWhite - model.wChroma * scores.chromaPenalty;
-	scores.empty = ScoreParams::EMPTY_SCORE_BIAS - ScoreParams::EMPTY_SCORE_Z_PENALTY * std::abs(scores.z) -
-	               ScoreParams::EMPTY_SCORE_SUPPORT_PENALTY * (feature.darkFrac + feature.brightFrac);
+	scores.empty =
+	        config.emptyScoreBias - config.emptyScoreZPenalty * std::abs(scores.z) - config.emptyScoreSupportPenalty * (feature.darkFrac + feature.brightFrac);
 	return scores;
 }
 
-static Eval evaluate(const Features& feature, const Model& model, int edgeLevelValue) {
-	const Scores scores = computeScores(feature, model);
+static Eval evaluate(const Features& feature, const Model& model, int edgeLevelValue, const StoneDetectionConfig& config) {
+	const Scores scores = computeScores(feature, model, config);
 	std::array<std::pair<StoneState, float>, 3> ranked{
 	        std::pair<StoneState, float>{StoneState::Black, scores.black},
 	        std::pair<StoneState, float>{StoneState::White, scores.white},
@@ -546,7 +564,7 @@ static Eval evaluate(const Features& feature, const Model& model, int edgeLevelV
 	result.margin      = result.bestScore - result.secondScore;
 	result.required    = model.margin0 * (1.0f + model.edgePenalty * static_cast<float>(edgeLevelValue));
 	result.confidence  = std::clamp(result.margin / (result.required + 1e-6f), 0.0f, 1.0f);
-	result.confidence *= std::clamp(1.0f - ScoreParams::CONF_CHROMA_DOWNWEIGHT * scores.chromaPenalty, 0.0f, 1.0f);
+	result.confidence *= std::clamp(1.0f - config.confChromaDownweight * scores.chromaPenalty, 0.0f, 1.0f);
 	result.confidence = std::clamp(result.confidence, 0.0f, 1.0f);
 	return result;
 }
@@ -584,40 +602,55 @@ static float computeNeighborMedianDelta(const std::vector<Features>& features, i
 	                        : 0.5f * (neighborValues[static_cast<std::size_t>(count / 2 - 1)] + neighborValues[static_cast<std::size_t>(count / 2)]);
 }
 
+static std::vector<float> computeNeighborMedianMap(const std::vector<Features>& features, int boardSize, float fallback) {
+	std::vector<float> neighborMedianMap(features.size(), fallback);
+	if (boardSize <= 0) {
+		return neighborMedianMap;
+	}
+	for (std::size_t index = 0; index < features.size(); ++index) {
+		const int gridX          = static_cast<int>(index) / boardSize;
+		const int gridY          = static_cast<int>(index) - gridX * boardSize;
+		neighborMedianMap[index] = computeNeighborMedianDelta(features, gridX, gridY, boardSize, fallback);
+	}
+	return neighborMedianMap;
+}
+
+static int computeRefinementExtent(double spacing, const StoneDetectionConfig& config) {
+	int extent = config.refineExtentFallback;
+	if (std::isfinite(spacing) && spacing > 0.0) {
+		extent = static_cast<int>(std::lround(spacing * config.refineExtentSpacingK));
+	}
+	return std::clamp(extent, config.refineExtentMin, config.refineExtentMax);
+}
+
 class DecisionPolicy {
 public:
 	enum class RefinementPath { None, EmptyRescue, Standard };
 
-	Eval decide(const Features& feature, const Model& model, const ClassificationContext& context, const Eval& evaluated) const {
-		Eval decision = evaluated;
+	explicit DecisionPolicy(const StoneDetectionConfig& config) : config_(config) {
+	}
+
+	Eval decide(const Features& feature, const Model& model, const SpatialContext& context, const Eval& evaluated, RejectionReason* outReason = nullptr) const {
+		if (outReason != nullptr) {
+			*outReason = RejectionReason::None;
+		}
 		const float z = normalizedDelta(feature, model);
-
-		if (isWeakByZ(decision.state, z, context.edgeLevel)) {
-			clearDecision(decision);
+		RejectionReason rejectionReason{RejectionReason::None};
+		if (!passesStatistical(evaluated, z, context, &rejectionReason) || !passesSupport(evaluated, feature, z, context, &rejectionReason) ||
+		    !passesEdge(evaluated, feature, context, &rejectionReason) || !passesMargin(evaluated, &rejectionReason)) {
+			if (outReason != nullptr) {
+				*outReason = rejectionReason;
+			}
+			return rejected(evaluated);
 		}
-		if (decision.state == StoneState::Black && failsBlackConfidence(decision, context.boardSize)) {
-			clearDecision(decision);
-		}
-		if (decision.state == StoneState::Black && failsBlackSanity(feature, context)) {
-			clearDecision(decision);
-		}
-		if (decision.state == StoneState::White && failsWhiteSanity(feature, context, z, decision.confidence)) {
-			clearDecision(decision);
-		}
-		if (decision.state == StoneState::Black && decision.margin < decision.required) {
-			clearDecision(decision);
-		}
-		if (decision.state == StoneState::White && decision.margin < 0.30f * decision.required) {
-			clearDecision(decision);
-		}
-		return decision;
+		return evaluated;
 	}
 
-	Eval decide(const Features& feature, const Model& model, const ClassificationContext& context) const {
-		return decide(feature, model, context, Scoring::evaluate(feature, model, context.edgeLevel));
+	Eval decide(const Features& feature, const Model& model, const SpatialContext& context, RejectionReason* outReason = nullptr) const {
+		return decide(feature, model, context, Scoring::evaluate(feature, model, context.edgeLevel, config_), outReason);
 	}
 
-	RefinementPath refinementPath(const Features& feature, const Model& model, const ClassificationContext&, const Eval& evaluated) const {
+	RefinementPath refinementPath(const Features& feature, const Model& model, const SpatialContext&, const Eval& evaluated) const {
 		if (hasEmptyRescueHint(feature, model, evaluated)) {
 			return RefinementPath::EmptyRescue;
 		}
@@ -627,193 +660,243 @@ public:
 		return RefinementPath::None;
 	}
 
-	bool acceptRefinement(RefinementPath path, const Features& refinedFeature, const Eval& refinedEval) const {
-		if (path == RefinementPath::Standard) {
-			return true;
-		}
+	bool shouldRunRefinement(RefinementPath path, const Eval& evaluated) const {
 		if (path == RefinementPath::None) {
 			return false;
 		}
-		return refinedEval.state == StoneState::White && refinedEval.margin >= RefinementParams::EMPTY_RESCUE_MIN_MARGIN_MULT * refinedEval.required &&
-		       (refinedFeature.brightFrac - refinedFeature.darkFrac) >= ScoreParams::MIN_SUPPORT_ADVANTAGE_WHITE;
+		if (evaluated.state == StoneState::Empty) {
+			return evaluated.margin < config_.refineSkipStableEmptyMarginMult * evaluated.required;
+		}
+		return evaluated.margin < config_.refineTriggerMult * evaluated.required;
+	}
+
+	bool acceptsRefinement(RefinementPath path, const Eval& baseEval, const Features& refinedFeature, const Eval& refinedEval) const {
+		if (path == RefinementPath::None) {
+			return false;
+		}
+		if (path == RefinementPath::Standard) {
+			return refinedEval.margin > baseEval.margin + config_.refineAcceptGainMult * baseEval.required;
+		}
+		const float minGain = config_.refineAcceptFromEmptyGainMult * baseEval.required;
+		return refinedEval.state == StoneState::White && refinedEval.margin > baseEval.margin + minGain &&
+		       refinedEval.margin >= config_.emptyRescueMinMarginMult * refinedEval.required &&
+		       (refinedFeature.brightFrac - refinedFeature.darkFrac) >= config_.minSupportAdvantageWhite;
+	}
+
+	bool passesStatistical(const Eval& evaluated, float z, const SpatialContext& context, RejectionReason* outReason = nullptr) const {
+		if (isWeakByZ(evaluated.state, z, context.edgeLevel)) {
+			return fail(outReason, RejectionReason::WeakZ);
+		}
+		if (evaluated.state == StoneState::Black && failsBlackConfidence(evaluated, context.boardSize)) {
+			return fail(outReason, RejectionReason::LowConfidence);
+		}
+		return true;
+	}
+
+	bool passesSupport(const Eval& evaluated, const Features& feature, float z, const SpatialContext& context, RejectionReason* outReason = nullptr) const {
+		if (evaluated.state == StoneState::Black) {
+			const bool weakSupport  = feature.darkFrac < config_.minSupportBlack;
+			const bool weakContrast = (feature.darkFrac - feature.brightFrac) < config_.minSupportAdvantageBlack;
+			const bool weakNeighbor = (context.neighborMedian - feature.deltaL) < config_.minNeighborContrastBlack;
+			if (weakSupport || weakContrast) {
+				return fail(outReason, RejectionReason::WeakSupport);
+			}
+			if (weakNeighbor) {
+				return fail(outReason, RejectionReason::WeakNeighborContrast);
+			}
+		}
+		if (evaluated.state == StoneState::White && failsWhiteSupport(feature, context, z)) {
+			return fail(outReason, RejectionReason::WeakSupport);
+		}
+		return true;
+	}
+
+	bool passesEdge(const Eval& evaluated, const Features& feature, const SpatialContext& context, RejectionReason* outReason = nullptr) const {
+		if (evaluated.state == StoneState::White && failsWhiteEdgeSanity(feature, context, evaluated.confidence)) {
+			return fail(outReason, RejectionReason::EdgeArtifact);
+		}
+		return true;
+	}
+
+	bool passesMargin(const Eval& evaluated, RejectionReason* outReason = nullptr) const {
+		if (evaluated.state == StoneState::Black && evaluated.margin < config_.minBlackMarginMult * evaluated.required) {
+			return fail(outReason, RejectionReason::MarginTooSmall);
+		}
+		if (evaluated.state == StoneState::White && evaluated.margin < config_.minWhiteMarginMult * evaluated.required) {
+			return fail(outReason, RejectionReason::MarginTooSmall);
+		}
+		return true;
 	}
 
 private:
+	const StoneDetectionConfig& config_;
+
+	static Eval rejected(const Eval& decision) {
+		Eval rejectedDecision       = decision;
+		rejectedDecision.state      = StoneState::Empty;
+		rejectedDecision.confidence = 0.0f;
+		return rejectedDecision;
+	}
+
+	static bool fail(RejectionReason* outReason, RejectionReason reason) {
+		if (outReason != nullptr) {
+			*outReason = reason;
+		}
+		return false;
+	}
+
 	static float normalizedDelta(const Features& feature, const Model& model) {
 		return (feature.deltaL - model.medianEmpty) / model.sigmaEmpty;
 	}
 
-	static void clearDecision(Eval& decision) {
-		decision.state      = StoneState::Empty;
-		decision.confidence = 0.0f;
+	bool isWeakByZ(StoneState state, float z, int edgeLevelValue) const {
+		const float minBlackZ =
+		        config_.minZBlack + (edgeLevelValue == 1 ? config_.minZBlackNearEdgeAdd : (edgeLevelValue == 2 ? config_.minZBlackOnEdgeAdd : 0.0f));
+		return (state == StoneState::Black && (-z) < minBlackZ) || (state == StoneState::White && z < config_.minZWhite);
 	}
 
-	static bool isWeakByZ(StoneState state, float z, int edgeLevelValue) {
-		const float minBlackZ = ScoreParams::MIN_Z_BLACK + (edgeLevelValue == 1 ? 0.4f : (edgeLevelValue == 2 ? 1.2f : 0.0f));
-		return (state == StoneState::Black && (-z) < minBlackZ) || (state == StoneState::White && z < ScoreParams::MIN_Z_WHITE);
-	}
-
-	static bool failsBlackConfidence(const Eval& decision, unsigned boardSize) {
-		const float threshold = (boardSize >= 13u) ? ScoreParams::MIN_CONFIDENCE_BLACK : 0.0f;
+	bool failsBlackConfidence(const Eval& decision, unsigned boardSize) const {
+		const float threshold = (boardSize >= config_.minConfidenceBlackBoardSize) ? config_.minConfidenceBlack : 0.0f;
 		return decision.confidence < threshold;
 	}
 
-	static bool failsBlackSanity(const Features& feature, const ClassificationContext& context) {
-		const bool weakSupport  = feature.darkFrac < ScoreParams::MIN_SUPPORT_BLACK;
-		const bool weakContrast = (feature.darkFrac - feature.brightFrac) < ScoreParams::MIN_SUPPORT_ADVANTAGE;
-		const bool weakNeighbor = (context.neighborMedian - feature.deltaL) < ScoreParams::MIN_NEIGHBOR_CONTRAST_BLACK;
-		return weakSupport || weakContrast || weakNeighbor;
-	}
-
-	static bool hasStrongWhiteSupport(const Features& feature, const ClassificationContext& context) {
+	bool hasStrongWhiteSupport(const Features& feature, const SpatialContext& context) const {
 		const float brightAdvantage  = feature.brightFrac - feature.darkFrac;
 		const float neighborContrast = feature.deltaL - context.neighborMedian;
-		return brightAdvantage >= ScoreParams::WHITE_STRONG_ADV_MIN && neighborContrast >= ScoreParams::WHITE_STRONG_NEIGHBOR_MIN;
+		return brightAdvantage >= config_.whiteStrongAdvMin && neighborContrast >= config_.whiteStrongNeighborMin;
 	}
 
-	static bool qualifiesLowChromaRescue(const Features& feature, const ClassificationContext& context, float z) {
-		const float chromaCap = (context.edgeLevel == 1) ? ScoreParams::WHITE_LOW_CHROMA_MAX_NEAR_EDGE : ScoreParams::WHITE_LOW_CHROMA_MAX;
-		const float minBright = (context.edgeLevel == 1) ? 0.16f : ScoreParams::WHITE_LOW_CHROMA_MIN_BRIGHT;
-		return feature.chromaSq <= chromaCap && z >= ScoreParams::WHITE_LOW_CHROMA_MIN_Z && feature.brightFrac >= minBright;
+	bool qualifiesLowChromaRescue(const Features& feature, const SpatialContext& context, float z) const {
+		const float chromaCap = (context.edgeLevel == 1) ? config_.whiteLowChromaMaxNearEdge : config_.whiteLowChromaMax;
+		const float minBright = (context.edgeLevel == 1) ? config_.whiteLowChromaMinBrightNearEdge : config_.whiteLowChromaMinBright;
+		return feature.chromaSq <= chromaCap && z >= config_.whiteLowChromaMinZ && feature.brightFrac >= minBright;
 	}
 
-	static bool isNearEdgeColorArtifact(const Features& feature, const ClassificationContext& context) {
-		return context.edgeLevel == 1 && feature.chromaSq >= EdgeParams::EDGE_WHITE_NEAR_CHROMA_SQ &&
-		       feature.brightFrac < EdgeParams::EDGE_WHITE_NEAR_MIN_BRIGHT_FRAC;
+	bool failsWhiteSupport(const Features& feature, const SpatialContext& context, float z) const {
+		if (feature.brightFrac < config_.minSupportWhite) {
+			return true;
+		}
+		return !hasStrongWhiteSupport(feature, context) && !qualifiesLowChromaRescue(feature, context, z);
 	}
 
-	static bool isOnEdgeColorArtifact(const Features& feature, const ClassificationContext& context) {
-		return context.edgeLevel >= 2 && feature.chromaSq >= EdgeParams::EDGE_WHITE_HIGH_CHROMA_SQ &&
-		       feature.brightFrac < EdgeParams::EDGE_WHITE_MIN_BRIGHT_FRAC;
+	bool isNearEdgeColorArtifact(const Features& feature, const SpatialContext& context) const {
+		return context.edgeLevel == 1 && feature.chromaSq >= config_.edgeWhiteNearChromaSq && feature.brightFrac < config_.edgeWhiteNearMinBrightFrac;
 	}
 
-	static bool isEdgeColorArtifact(const Features& feature, const ClassificationContext& context) {
+	bool isOnEdgeColorArtifact(const Features& feature, const SpatialContext& context) const {
+		return context.edgeLevel >= 2 && feature.chromaSq >= config_.edgeWhiteHighChromaSq && feature.brightFrac < config_.edgeWhiteMinBrightFrac;
+	}
+
+	bool isEdgeColorArtifact(const Features& feature, const SpatialContext& context) const {
 		return isNearEdgeColorArtifact(feature, context) || isOnEdgeColorArtifact(feature, context);
 	}
 
-	static bool isNearEdgeUnstableWhite(const Features& feature, const ClassificationContext& context, float confidence) {
-		return context.edgeLevel == 1 && feature.chromaSq >= EdgeParams::EDGE_WHITE_NEAR_WEAK_CHROMA_SQ &&
-		       feature.brightFrac < EdgeParams::EDGE_WHITE_NEAR_WEAK_BRIGHT_FRAC && confidence < EdgeParams::EDGE_WHITE_NEAR_WEAK_MIN_CONF;
+	bool isNearEdgeUnstableWhite(const Features& feature, const SpatialContext& context, float confidence) const {
+		return context.edgeLevel == 1 && feature.chromaSq >= config_.edgeWhiteNearWeakChromaSq && feature.brightFrac < config_.edgeWhiteNearWeakBrightFrac &&
+		       confidence < config_.edgeWhiteNearWeakMinConf;
 	}
 
-	static bool failsWhiteSanity(const Features& feature, const ClassificationContext& context, float z, float confidence) {
-		if (feature.brightFrac < ScoreParams::MIN_SUPPORT_WHITE) {
-			return true;
-		}
-		if (!hasStrongWhiteSupport(feature, context) && !qualifiesLowChromaRescue(feature, context, z)) {
-			return true;
-		}
+	bool failsWhiteEdgeSanity(const Features& feature, const SpatialContext& context, float confidence) const {
 		return isEdgeColorArtifact(feature, context) || isNearEdgeUnstableWhite(feature, context, confidence);
 	}
 
-	static bool hasEmptyRescueHint(const Features& feature, const Model& model, const Eval& evaluated) {
+	bool hasEmptyRescueHint(const Features& feature, const Model& model, const Eval& evaluated) const {
 		if (evaluated.state != StoneState::Empty) {
 			return false;
 		}
 		const float z               = normalizedDelta(feature, model);
 		const float brightAdvantage = feature.brightFrac - feature.darkFrac;
-		return z >= RefinementParams::EMPTY_RESCUE_MIN_Z && feature.brightFrac >= RefinementParams::EMPTY_RESCUE_MIN_BRIGHT &&
-		       brightAdvantage >= RefinementParams::EMPTY_RESCUE_MIN_BRIGHT_ADV;
+		return z >= config_.emptyRescueMinZ && feature.brightFrac >= config_.emptyRescueMinBright && brightAdvantage >= config_.emptyRescueMinBrightAdv;
 	}
 
-	static bool hasStandardRefineHint(const Features& feature, const Model& model, const Eval& evaluated) {
+	bool hasStandardRefineHint(const Features& feature, const Model& model, const Eval& evaluated) const {
 		if (evaluated.state == StoneState::Empty) {
 			return false;
 		}
 		const float baseSupportAdv = (evaluated.state == StoneState::Black) ? (feature.darkFrac - feature.brightFrac) : (feature.brightFrac - feature.darkFrac);
-		const float minAbsZ        = (evaluated.state == StoneState::White) ? 1.2f : 2.0f;
-		const float minSupportAdv  = (evaluated.state == StoneState::White) ? 0.20f : 0.35f;
+		const float minAbsZ        = (evaluated.state == StoneState::White) ? config_.refineMinAbsZWhite : config_.refineMinAbsZBlack;
+		const float minSupportAdv  = (evaluated.state == StoneState::White) ? config_.refineMinSupportAdvWhite : config_.refineMinSupportAdvBlack;
 		const bool allowed         = std::abs(normalizedDelta(feature, model)) >= minAbsZ && baseSupportAdv >= minSupportAdv;
-		return allowed && evaluated.margin < RefinementParams::REFINE_TRIGGER_MULT * evaluated.required;
+		return allowed && evaluated.margin < config_.refineTriggerMult * evaluated.required;
 	}
 };
 
 class RefinementEngine {
 public:
-	bool tryRefine(const cv::Point2f& intersection, const SampleContext& sampleContext, const Offsets& offsets, const Radii& radii, const Model& model,
-	               const ClassificationContext& context, const Eval& baseEval, Features& inOutFeature, Eval& outEval) const {
-		if (skipStableStone(baseEval) || skipStableEmpty(baseEval)) {
-			outEval = baseEval;
-			return false;
-		}
-
-		const int extent  = refinementExtent(context.spacing);
+	bool searchBest(const cv::Point2f& intersection, const SampleContext& sampleContext, const Offsets& offsets, const Radii& radii,
+	                const StoneDetectionConfig& config, const Model& model, const SpatialContext& context, double spacing, const DecisionPolicy& policy,
+	                const Features& baseFeature, const Eval& baseEval, Features& outFeature, Eval& outEval) const {
+		const int extent  = computeRefinementExtent(spacing, config);
 		const int centerX = static_cast<int>(std::lround(intersection.x));
 		const int centerY = static_cast<int>(std::lround(intersection.y));
 
-		Eval bestEval        = baseEval;
-		Features bestFeature = inOutFeature;
-		for (int offsetY = -extent; offsetY <= extent; offsetY += RefinementParams::REFINE_STEP_PX) {
-			for (int offsetX = -extent; offsetX <= extent; offsetX += RefinementParams::REFINE_STEP_PX) {
+		bool sampledAny      = false;
+		Eval bestEval        = policy.decide(baseFeature, model, context, baseEval);
+		Features bestFeature = baseFeature;
+		for (int offsetY = -extent; offsetY <= extent; offsetY += config.refineStepPx) {
+			for (int offsetX = -extent; offsetX <= extent; offsetX += config.refineStepPx) {
 				if (offsetX == 0 && offsetY == 0) {
 					continue;
 				}
 				Features candidateFeature{};
-				if (!FeatureExtraction::computeFeaturesAt(sampleContext, offsets, radii, centerX + offsetX, centerY + offsetY, candidateFeature)) {
+				if (!FeatureExtraction::computeFeaturesAt(sampleContext, offsets, radii, config, centerX + offsetX, centerY + offsetY, candidateFeature)) {
 					continue;
 				}
-				const Eval candidateEval = Scoring::evaluate(candidateFeature, model, context.edgeLevel);
-				if (isBetterCandidate(bestEval, candidateEval)) {
+				sampledAny               = true;
+				const Eval candidateRaw  = Scoring::evaluate(candidateFeature, model, context.edgeLevel, config);
+				const Eval candidateEval = policy.decide(candidateFeature, model, context, candidateRaw);
+				if (isBetterCandidate(bestEval, candidateEval, config)) {
 					bestEval    = candidateEval;
 					bestFeature = candidateFeature;
 				}
 			}
 		}
-
-		if (baseEval.state == StoneState::Empty) {
-			return acceptFromEmpty(baseEval, bestEval, bestFeature, inOutFeature, outEval);
-		}
-		return acceptFromStone(baseEval, bestEval, bestFeature, inOutFeature, outEval);
+		outFeature = bestFeature;
+		outEval    = bestEval;
+		return sampledAny;
 	}
 
 private:
-	static bool skipStableStone(const Eval& baseEval) {
-		return baseEval.state != StoneState::Empty && baseEval.margin >= RefinementParams::REFINE_TRIGGER_MULT * baseEval.required;
-	}
-
-	static bool skipStableEmpty(const Eval& baseEval) {
-		return baseEval.state == StoneState::Empty && baseEval.margin >= 0.80f * baseEval.required;
-	}
-
-	static int refinementExtent(double spacing) {
-		int extent = RefinementParams::REFINE_EXTENT_FALLBACK;
-		if (std::isfinite(spacing) && spacing > 0.0) {
-			extent = static_cast<int>(std::lround(spacing * RefinementParams::REFINE_EXTENT_SPACING_K));
-		}
-		return std::clamp(extent, RefinementParams::REFINE_EXTENT_MIN, RefinementParams::REFINE_EXTENT_MAX);
-	}
-
-	static bool isBetterCandidate(const Eval& currentBest, const Eval& candidate) {
-		const bool betterMargin = candidate.margin > currentBest.margin;
-		const bool promotesFromEmpty =
-		        (currentBest.state == StoneState::Empty) && (candidate.state != StoneState::Empty) && (candidate.margin + 1e-4f >= currentBest.margin);
+	static bool isBetterCandidate(const Eval& currentBest, const Eval& candidate, const StoneDetectionConfig& config) {
+		const bool betterMargin      = candidate.margin > currentBest.margin;
+		const bool promotesFromEmpty = (currentBest.state == StoneState::Empty) && (candidate.state != StoneState::Empty) &&
+		                               (candidate.margin + config.refinePromoteFromEmptyEps >= currentBest.margin);
 		return betterMargin || promotesFromEmpty;
-	}
-
-	static bool acceptFromEmpty(const Eval& baseEval, const Eval& bestEval, const Features& bestFeature, Features& inOutFeature, Eval& outEval) {
-		const float minGain = 0.10f * baseEval.required;
-		if (bestEval.state != StoneState::Empty && bestEval.margin > baseEval.margin + minGain) {
-			inOutFeature = bestFeature;
-			outEval      = bestEval;
-			return true;
-		}
-		outEval = baseEval;
-		return false;
-	}
-
-	static bool acceptFromStone(const Eval& baseEval, const Eval& bestEval, const Features& bestFeature, Features& inOutFeature, Eval& outEval) {
-		const float requiredGain = RefinementParams::REFINE_ACCEPT_GAIN_MULT * baseEval.required;
-		if (bestEval.margin > baseEval.margin + requiredGain) {
-			inOutFeature = bestFeature;
-			outEval      = bestEval;
-			return true;
-		}
-		outEval = baseEval;
-		return false;
 	}
 };
 
 namespace Debugging {
+
+static bool isRuntimeDebugEnabled() {
+	const char* debugEnv = std::getenv("GO_STONE_DEBUG");
+	if (debugEnv == nullptr) {
+		return false;
+	}
+	const std::string_view debugFlag(debugEnv);
+	return debugFlag == "1" || debugFlag == "2";
+}
+
+static const char* rejectionReasonLabel(RejectionReason reason) {
+	switch (reason) {
+	case RejectionReason::None:
+		return "None";
+	case RejectionReason::WeakZ:
+		return "WeakZ";
+	case RejectionReason::LowConfidence:
+		return "LowConfidence";
+	case RejectionReason::WeakSupport:
+		return "WeakSupport";
+	case RejectionReason::WeakNeighborContrast:
+		return "WeakNeighborContrast";
+	case RejectionReason::EdgeArtifact:
+		return "EdgeArtifact";
+	case RejectionReason::MarginTooSmall:
+		return "MarginTooSmall";
+	case RejectionReason::Other:
+		return "Other";
+	}
+	return "Other";
+}
 
 static cv::Mat drawOverlay(const cv::Mat& image, const std::vector<cv::Point2f>& intersections, const std::vector<StoneState>& states, int radius) {
 	cv::Mat overlay = image.clone();
@@ -848,9 +931,9 @@ static cv::Mat renderStatsTile(const Model& model, const DebugStats& stats) {
 }
 
 static void emitRuntimeDebug(const BoardGeometry& geometry, const std::vector<Features>& features, const Model& model, const std::vector<StoneState>& states,
-                             const std::vector<float>& confidence, const DebugStats& stats) {
+                             const std::vector<float>& confidence, const DebugStats& stats, const std::vector<RejectionReason>* rejectionReasons = nullptr) {
 	const char* debugEnv = std::getenv("GO_STONE_DEBUG");
-	if (debugEnv == nullptr) {
+	if (!isRuntimeDebugEnabled()) {
 		return;
 	}
 
@@ -940,52 +1023,81 @@ static void emitRuntimeDebug(const BoardGeometry& geometry, const std::vector<Fe
 			          << " z=" << z << " d=" << feature.darkFrac << " b=" << feature.brightFrac << " c=" << feature.chromaSq << '\n';
 		}
 	}
+
+	if (rejectionReasons != nullptr && rejectionReasons->size() == states.size()) {
+		std::array<int, 8> reasonCounts{};
+		for (std::size_t index = 0; index < states.size(); ++index) {
+			if (states[index] != StoneState::Empty) {
+				continue;
+			}
+			const std::size_t reasonIndex = static_cast<std::size_t>((*rejectionReasons)[index]);
+			if (reasonIndex < reasonCounts.size()) {
+				++reasonCounts[reasonIndex];
+			}
+		}
+		std::cerr << "[stone-debug] rejections";
+		for (std::size_t index = 0; index < reasonCounts.size(); ++index) {
+			std::cerr << " " << rejectionReasonLabel(static_cast<RejectionReason>(index)) << "=" << reasonCounts[index];
+		}
+		std::cerr << '\n';
+	}
 }
 
 } // namespace Debugging
 
 static void classifyAll(const std::vector<cv::Point2f>& intersections, const SampleContext& sampleContext, const Offsets& offsets, const Radii& radii,
-                        const std::vector<Features>& features, const Model& model, unsigned boardSize, double spacing, std::vector<StoneState>& outStates,
-                        std::vector<float>& outConfidence, DebugStats& outStats) {
+                        const std::vector<Features>& features, const Model& model, unsigned boardSize, double spacing, const StoneDetectionConfig& config,
+                        std::vector<StoneState>& outStates, std::vector<float>& outConfidence, DebugStats& outStats,
+                        std::vector<RejectionReason>* outRejectionReasons = nullptr) {
 	outStates.assign(intersections.size(), StoneState::Empty);
 	outConfidence.assign(intersections.size(), 0.0f);
 	outStats = DebugStats{};
+	if (outRejectionReasons != nullptr) {
+		outRejectionReasons->assign(intersections.size(), RejectionReason::None);
+	}
 
-	const int boardSizeInt = static_cast<int>(boardSize);
-	const DecisionPolicy policy{};
+	const int boardSizeInt                     = static_cast<int>(boardSize);
+	const std::vector<float> neighborMedianMap = computeNeighborMedianMap(features, boardSizeInt, model.medianEmpty);
+	const DecisionPolicy policy(config);
 	const RefinementEngine refinementEngine{};
 
 	for (std::size_t index = 0; index < intersections.size(); ++index) {
 		if (!features[index].valid) {
+			if (outRejectionReasons != nullptr) {
+				(*outRejectionReasons)[index] = RejectionReason::Other;
+			}
 			++outStats.emptyCount;
 			continue;
 		}
 
 		Features feature = features[index];
-		const int gridX  = static_cast<int>(index) / boardSizeInt;
-		const int gridY  = static_cast<int>(index) - gridX * boardSizeInt;
-		const ClassificationContext context{boardSize, spacing, Scoring::edgeLevel(index, boardSizeInt),
-		                                    computeNeighborMedianDelta(features, gridX, gridY, boardSizeInt, model.medianEmpty)};
+		const SpatialContext context{Scoring::edgeLevel(index, boardSizeInt), neighborMedianMap[index], boardSize};
 
-		const Eval baseEval = Scoring::evaluate(feature, model, context.edgeLevel);
-		Eval decision       = policy.decide(feature, model, context, baseEval);
+		const Eval baseEval = Scoring::evaluate(feature, model, context.edgeLevel, config);
+		RejectionReason rejectionReason{RejectionReason::None};
+		Eval decision = policy.decide(feature, model, context, baseEval, outRejectionReasons != nullptr ? &rejectionReason : nullptr);
 
 		const DecisionPolicy::RefinementPath path = policy.refinementPath(feature, model, context, baseEval);
 		if (path != DecisionPolicy::RefinementPath::None) {
 			++outStats.refinedTried;
-			Features refinedFeature = feature;
-			Eval refinedEval{};
-			const bool refined =
-			        refinementEngine.tryRefine(intersections[index], sampleContext, offsets, radii, model, context, baseEval, refinedFeature, refinedEval);
-			if (refined && policy.acceptRefinement(path, refinedFeature, refinedEval)) {
-				feature  = refinedFeature;
-				decision = policy.decide(feature, model, context, refinedEval);
-				++outStats.refinedAccepted;
+			if (policy.shouldRunRefinement(path, baseEval)) {
+				Features refinedFeature = feature;
+				Eval refinedEval{};
+				const bool refined = refinementEngine.searchBest(intersections[index], sampleContext, offsets, radii, config, model, context, spacing, policy,
+				                                                 feature, baseEval, refinedFeature, refinedEval);
+				if (refined && policy.acceptsRefinement(path, baseEval, refinedFeature, refinedEval)) {
+					feature  = refinedFeature;
+					decision = policy.decide(feature, model, context, refinedEval, outRejectionReasons != nullptr ? &rejectionReason : nullptr);
+					++outStats.refinedAccepted;
+				}
 			}
 		}
 
 		outStates[index]     = decision.state;
 		outConfidence[index] = decision.confidence;
+		if (outRejectionReasons != nullptr) {
+			(*outRejectionReasons)[index] = (decision.state == StoneState::Empty) ? rejectionReason : RejectionReason::None;
+		}
 		if (decision.state == StoneState::Black) {
 			++outStats.blackCount;
 		} else if (decision.state == StoneState::White) {
@@ -1013,11 +1125,12 @@ StoneResult analyseBoardV2(const BoardGeometry& geometry, DebugVisualizer* debug
 		debugger->add("Input", geometry.image);
 	}
 
-	const Radii radii     = GeometrySampling::chooseRadii(geometry.spacing);
+	const StoneDetectionConfig config{};
+	const Radii radii     = GeometrySampling::chooseRadii(geometry.spacing, config);
 	const Offsets offsets = GeometrySampling::precomputeOffsets(radii);
 
 	LabBlur blurredLab{};
-	if (!FeatureExtraction::prepareLabBlur(geometry.image, radii, blurredLab)) {
+	if (!FeatureExtraction::prepareLabBlur(geometry.image, radii, config, blurredLab)) {
 		if (debugger) {
 			debugger->endStage();
 		}
@@ -1026,10 +1139,10 @@ StoneResult analyseBoardV2(const BoardGeometry& geometry, DebugVisualizer* debug
 	}
 	const SampleContext sampleContext{blurredLab.L, blurredLab.A, blurredLab.B, blurredLab.L.rows, blurredLab.L.cols};
 
-	const std::vector<Features> features = FeatureExtraction::computeFeatures(geometry.intersections, sampleContext, offsets, radii);
+	const std::vector<Features> features = FeatureExtraction::computeFeatures(geometry.intersections, sampleContext, offsets, radii, config);
 
 	Model model{};
-	if (!ModelCalibration::calibrateModel(features, geometry.boardSize, model)) {
+	if (!ModelCalibration::calibrateModel(features, geometry.boardSize, config, model)) {
 		if (debugger) {
 			debugger->endStage();
 		}
@@ -1041,9 +1154,12 @@ StoneResult analyseBoardV2(const BoardGeometry& geometry, DebugVisualizer* debug
 	std::vector<StoneState> states;
 	std::vector<float> confidence;
 	DebugStats stats{};
-	classifyAll(geometry.intersections, sampleContext, offsets, radii, features, model, geometry.boardSize, geometry.spacing, states, confidence, stats);
+	std::vector<RejectionReason> rejectionReasons;
+	const bool collectRejections = Debugging::isRuntimeDebugEnabled();
+	classifyAll(geometry.intersections, sampleContext, offsets, radii, features, model, geometry.boardSize, geometry.spacing, config, states, confidence, stats,
+	            collectRejections ? &rejectionReasons : nullptr);
 
-	Debugging::emitRuntimeDebug(geometry, features, model, states, confidence, stats);
+	Debugging::emitRuntimeDebug(geometry, features, model, states, confidence, stats, collectRejections ? &rejectionReasons : nullptr);
 
 	if (debugger) {
 		debugger->add("Stone Overlay", Debugging::drawOverlay(geometry.image, geometry.intersections, states, radii.innerRadius));
