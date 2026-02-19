@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 #include <opencv2/opencv.hpp>
 
+#include <algorithm>
 #include <filesystem>
 
 namespace go::camera::gtest {
@@ -18,6 +19,8 @@ struct TestResult {
 
 //! Run the stone detection pipeline. Ensure intermediate steps are generally valid. Return test result.
 TestResult runPipeline(const std::filesystem::path& imgPath) {
+    std::cout << "Running test: " << imgPath.string() << '\n'; 
+
 	cv::Mat image = cv::imread(imgPath.string());
     EXPECT_FALSE(image.empty());
 
@@ -41,6 +44,16 @@ TestResult runPipeline(const std::filesystem::path& imgPath) {
     return {warped, geometry, stoneRes};
 }
 
+//! Count how many black stones are present in a StoneState list.
+std::size_t blackStoneCount(const std::vector<StoneState>& stones) {
+    return static_cast<std::size_t>(std::count(stones.begin(), stones.end(), StoneState::Black));
+}
+
+//! Count how many white stones are present in a StoneState list.
+std::size_t whiteStoneCount(const std::vector<StoneState>& stones) {
+    return static_cast<std::size_t>(std::count(stones.begin(), stones.end(), StoneState::White));
+}
+
 // Test the full image processing pipeline with stone detection at the end.
 TEST(Process, Game_Simple_Size9) {
     const auto TEST_PATH = std::filesystem::path(PATH_TEST_IMG) / "game_simple/size_9";
@@ -59,6 +72,8 @@ TEST(Process, Game_Simple_Size9) {
 
         EXPECT_TRUE(result.stoneStep.success);
         EXPECT_EQ(result.stoneStep.stones.size(), i);
+        EXPECT_EQ(blackStoneCount(result.stoneStep.stones), std::floor(static_cast<double>(i)/2.));
+        EXPECT_EQ(whiteStoneCount(result.stoneStep.stones), std::ceil(static_cast<double>(i)/2.));
 
         // TODO: Check number of black&white stones and coordinates
     }
@@ -87,7 +102,8 @@ TEST(Process, Game_Simple_Size13) {
 
         EXPECT_TRUE(result.stoneStep.success);
         EXPECT_EQ(result.stoneStep.stones.size(), i);
-
+        EXPECT_EQ(blackStoneCount(result.stoneStep.stones), std::ceil(static_cast<double>(i)/2.));
+        EXPECT_EQ(whiteStoneCount(result.stoneStep.stones), std::floor(static_cast<double>(i)/2.));
         // TODO: Check number of black&white stones and coordinates
     }
     // TODO: Check number of black&white stones and coordinates
