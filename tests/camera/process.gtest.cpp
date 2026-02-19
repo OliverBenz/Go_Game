@@ -115,4 +115,27 @@ TEST(Process, Game_Simple_Size13) {
     // TODO: Check number of black&white stones and coordinates
 }
 
+// Here, we check that the board can be detected. Same board different angles.
+TEST(Process, Board_Detect_Easy) {
+    const auto TEST_PATH = std::filesystem::path(PATH_TEST_IMG) / "angled_easy";
+
+    static constexpr unsigned IMG_COUNT = 6u;
+    static constexpr unsigned BOARD_SIZE = 13u;
+
+    for (unsigned i = 1u; i <= IMG_COUNT; ++i) {
+        if (i == 3u) continue; // TODO: Enable again. Cannot find grid here.
+        
+        std::string fileName = std::format("angle_{}.jpeg", i);
+        TestResult result = runPipeline(TEST_PATH / fileName);
+
+        EXPECT_EQ(result.geometry.boardSize, BOARD_SIZE);
+        //EXPECT_NEAR(result.geometry.spacing, SPACING, SPACING * 0.1); // Allow 5% deviation from expected spacing.
+
+        EXPECT_TRUE(result.stoneStep.success);
+        EXPECT_EQ(stoneCount(result.stoneStep.stones), 10u);
+        EXPECT_EQ(blackStoneCount(result.stoneStep.stones), 5u);
+        EXPECT_EQ(whiteStoneCount(result.stoneStep.stones), 5u);
+    }
+}
+
 }

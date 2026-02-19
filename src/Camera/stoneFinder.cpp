@@ -674,7 +674,19 @@ private:
 	bool qualifiesLowChromaRescue(const Features& feature, const SpatialContext& context, float z) const {
 		const float chromaCap = (context.edgeLevel == 1) ? decisionConfig_.whiteLowChromaMaxNearEdge : decisionConfig_.whiteLowChromaMax;
 		const float minBright = (context.edgeLevel == 1) ? decisionConfig_.whiteLowChromaMinBrightNearEdge : decisionConfig_.whiteLowChromaMinBright;
-		return feature.chromaSq <= chromaCap && z >= decisionConfig_.whiteLowChromaMinZ && feature.brightFrac >= minBright;
+		if (feature.chromaSq > chromaCap || z < decisionConfig_.whiteLowChromaMinZ || feature.brightFrac < minBright) {
+			return false;
+		}
+		constexpr float LOW_CHROMA_BAND_MAX = 90.0f;
+		const bool inLowBand                = feature.chromaSq <= LOW_CHROMA_BAND_MAX;
+		const bool inHighBand               = feature.chromaSq >= (0.75f * chromaCap);
+		if (!inLowBand && !inHighBand) {
+			return false;
+		}
+		if (context.edgeLevel == 1) {
+			return inHighBand;
+		}
+		return true;
 	}
 
 	bool failsWhiteSupport(const Features& feature, const SpatialContext& context, float z) const {
@@ -870,6 +882,12 @@ static void emitRuntimeDebug(const BoardGeometry& geometry, const std::vector<Fe
 	const auto zForIndex       = [&](std::size_t index, const Features& feature) {
         return hasEvaluations ? evaluations[index].z : (feature.deltaL - model.medianEmpty) / model.sigmaEmpty;
 	};
+	const auto rawStateForIndex = [&](std::size_t index) {
+		if (!hasEvaluations) {
+			return StoneState::Empty;
+		}
+		return evaluations[index].state;
+	};
 	const auto neighborForIndex = [&](std::size_t index) {
 		if (hasNeighborMeds) {
 			return neighborMedianMap[index];
@@ -880,7 +898,8 @@ static void emitRuntimeDebug(const BoardGeometry& geometry, const std::vector<Fe
 	};
 
 	std::cerr << "[stone-debug] N=" << geometry.boardSize << " black=" << stats.blackCount << " white=" << stats.whiteCount << " empty=" << stats.emptyCount
-	          << " median=" << model.medianEmpty << " sigma=" << model.sigmaEmpty << " chromaT=" << model.tChromaSq << '\n';
+	          << " median=" << model.medianEmpty << " sigma=" << model.sigmaEmpty << " chromaT=" << model.tChromaSq << " refineTried=" << stats.refinedTried
+	          << " refineAccepted=" << stats.refinedAccepted << '\n';
 
 	for (std::size_t index = 0; index < states.size(); ++index) {
 		if (states[index] == StoneState::Empty) {
@@ -917,12 +936,50 @@ static void emitRuntimeDebug(const BoardGeometry& geometry, const std::vector<Fe
 		std::sort(emptyRows.begin(), emptyRows.end(), [](const EmptyRow& left, const EmptyRow& right) { return left.z > right.z; });
 		const std::size_t limit = std::min<std::size_t>(20, emptyRows.size());
 		for (std::size_t row = 0; row < limit; ++row) {
-			const std::size_t index = emptyRows[row].idx;
-			const std::size_t gridX = index / geometry.boardSize;
-			const std::size_t gridY = index % geometry.boardSize;
+			const std::size_t index      = emptyRows[row].idx;
+			const std::size_t gridX      = index / geometry.boardSize;
+			const std::size_t gridY      = index % geometry.boardSize;
+			const StoneState rawState    = rawStateForIndex(index);
+			const float rawMargin        = hasEvaluations ? evaluations[index].margin : 0.0f;
+			const float rawRequired      = hasEvaluations ? evaluations[index].required : 0.0f;
+			const float rawConf          = hasEvaluations ? evaluations[index].confidence : 0.0f;
+			const float neighborMedian   = neighborForIndex(index);
+			const float neighborContrast = features[index].deltaL - neighborMedian;
 			std::cerr << "  empty-cand idx=" << index << " (" << gridX << "," << gridY << ")"
 			          << " z=" << emptyRows[row].z << " d=" << features[index].darkFrac << " b=" << features[index].brightFrac
-			          << " c=" << features[index].chromaSq << '\n';
+			          << " c=" << features[index].chromaSq << " raw=" << (rawState == StoneState::Black ? "B" : (rawState == StoneState::White ? "W" : "E"))
+			          << " m=" << rawMargin << "/" << rawRequired << " conf=" << rawConf << " nc=" << neighborContrast << '\n';
+		}
+
+		struct BrightRow {
+			std::size_t idx{0};
+			float bright{0.0f};
+		};
+		std::vector<BrightRow> brightRows;
+		brightRows.reserve(features.size());
+		for (std::size_t index = 0; index < features.size(); ++index) {
+			if (!features[index].valid || states[index] != StoneState::Empty) {
+				continue;
+			}
+			brightRows.push_back({index, features[index].brightFrac});
+		}
+		std::sort(brightRows.begin(), brightRows.end(), [](const BrightRow& left, const BrightRow& right) { return left.bright > right.bright; });
+		const std::size_t brightLimit = std::min<std::size_t>(20, brightRows.size());
+		for (std::size_t row = 0; row < brightLimit; ++row) {
+			const std::size_t index      = brightRows[row].idx;
+			const std::size_t gridX      = index / geometry.boardSize;
+			const std::size_t gridY      = index % geometry.boardSize;
+			const float z                = zForIndex(index, features[index]);
+			const StoneState rawState    = rawStateForIndex(index);
+			const float rawMargin        = hasEvaluations ? evaluations[index].margin : 0.0f;
+			const float rawRequired      = hasEvaluations ? evaluations[index].required : 0.0f;
+			const float rawConf          = hasEvaluations ? evaluations[index].confidence : 0.0f;
+			const float neighborMedian   = neighborForIndex(index);
+			const float neighborContrast = features[index].deltaL - neighborMedian;
+			std::cerr << "  bright-cand idx=" << index << " (" << gridX << "," << gridY << ")"
+			          << " b=" << brightRows[row].bright << " z=" << z << " d=" << features[index].darkFrac << " c=" << features[index].chromaSq
+			          << " raw=" << (rawState == StoneState::Black ? "B" : (rawState == StoneState::White ? "W" : "E")) << " m=" << rawMargin << "/"
+			          << rawRequired << " conf=" << rawConf << " nc=" << neighborContrast << '\n';
 		}
 	}
 
@@ -1032,7 +1089,7 @@ static void classifyAll(const std::vector<cv::Point2f>& intersections, const std
 		outStates[index]     = decision.state;
 		outConfidence[index] = decision.confidence;
 		if (outEvaluations != nullptr) {
-			(*outEvaluations)[index] = decision;
+			(*outEvaluations)[index] = baseEval;
 		}
 		if (outRejectionReasons != nullptr) {
 			(*outRejectionReasons)[index] = (decision.state == StoneState::Empty) ? rejectionReason : RejectionReason::None;
