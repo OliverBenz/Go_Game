@@ -40,6 +40,7 @@ TestResult runPipeline(const std::filesystem::path& imgPath) {
 	// Find the stones on the board.
 	StoneResult stoneRes = analyseBoard(geometry);
     EXPECT_TRUE(stoneRes.success);
+    EXPECT_EQ(stoneRes.stones.size(), geometry.intersections.size());
 
     return {warped, geometry, stoneRes};
 }
@@ -52,6 +53,11 @@ std::size_t blackStoneCount(const std::vector<StoneState>& stones) {
 //! Count how many white stones are present in a StoneState list.
 std::size_t whiteStoneCount(const std::vector<StoneState>& stones) {
     return static_cast<std::size_t>(std::count(stones.begin(), stones.end(), StoneState::White));
+}
+
+//! Count how many stones are present in a StoneState list (black + white).
+std::size_t stoneCount(const std::vector<StoneState>& stones) {
+    return blackStoneCount(stones) + whiteStoneCount(stones);
 }
 
 // Test the full image processing pipeline with stone detection at the end.
@@ -71,7 +77,7 @@ TEST(Process, Game_Simple_Size9) {
         //EXPECT_NEAR(result.geometry.spacing, SPACING, SPACING * 0.1); // Allow 5% deviation from expected spacing.
 
         EXPECT_TRUE(result.stoneStep.success);
-        EXPECT_EQ(result.stoneStep.stones.size(), i);
+        EXPECT_EQ(stoneCount(result.stoneStep.stones), i);
         EXPECT_EQ(blackStoneCount(result.stoneStep.stones), std::floor(static_cast<double>(i)/2.));
         EXPECT_EQ(whiteStoneCount(result.stoneStep.stones), std::ceil(static_cast<double>(i)/2.));
 
@@ -80,7 +86,7 @@ TEST(Process, Game_Simple_Size9) {
 
     TestResult result = runPipeline(TEST_PATH / "move_13_captured.png"); // One stone captured.
     EXPECT_TRUE(result.stoneStep.success);
-    EXPECT_EQ(result.stoneStep.stones.size(), 12);
+    EXPECT_EQ(stoneCount(result.stoneStep.stones), 12);
     // TODO: Check number of black&white stones and coordinates
 }
 
@@ -101,7 +107,7 @@ TEST(Process, Game_Simple_Size13) {
         //EXPECT_NEAR(result.geometry.spacing, SPACING, SPACING * 0.1); // Allow 5% deviation from expected spacing.
 
         EXPECT_TRUE(result.stoneStep.success);
-        EXPECT_EQ(result.stoneStep.stones.size(), i);
+        EXPECT_EQ(stoneCount(result.stoneStep.stones), i);
         EXPECT_EQ(blackStoneCount(result.stoneStep.stones), std::ceil(static_cast<double>(i)/2.));
         EXPECT_EQ(whiteStoneCount(result.stoneStep.stones), std::floor(static_cast<double>(i)/2.));
         // TODO: Check number of black&white stones and coordinates
