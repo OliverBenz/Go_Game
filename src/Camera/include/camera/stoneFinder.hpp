@@ -25,4 +25,11 @@ struct StoneResult {
  */
 StoneResult analyseBoard(const BoardGeometry& geometry, DebugVisualizer* debugger = nullptr);
 
+/*! Detect stones using score-based self-calibrating v2 classifier.
+ * \param [in]     geometry Rectified board geometry.
+ * \param [in,out] debugger Optional debug visualizer for overlays.
+ * \return         StoneResult where `stones[i]`/`confidence[i]` map to `geometry.intersections[i]`.
+ */
+StoneResult analyseBoardV2(const BoardGeometry& geometry, DebugVisualizer* debugger = nullptr);
+
 } // namespace go::camera
