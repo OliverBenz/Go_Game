@@ -41,7 +41,7 @@ static void drawStone(BoardGeometry& g, unsigned gx, unsigned gy, StoneState s) 
 	const unsigned idx = gx * g.boardSize + gy;
 	ASSERT_LT(idx, g.intersections.size());
 
-	const int r = static_cast<int>(std::lround(g.spacing * 0.40)); //!< < 0.5*spacing to avoid overlap
+	const int r          = static_cast<int>(std::lround(g.spacing * 0.40)); //!< < 0.5*spacing to avoid overlap
 	const cv::Scalar col = (s == StoneState::Black) ? cv::Scalar(0, 0, 0) : cv::Scalar(255, 255, 255);
 	cv::circle(g.image, g.intersections[idx], r, col, cv::FILLED, cv::LINE_AA);
 }
@@ -115,4 +115,3 @@ TEST(StoneFinderUnit, BlackStone_WithMildGlare_NotWhite) {
 }
 
 } // namespace go::camera::gtest
-
