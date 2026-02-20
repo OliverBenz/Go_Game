@@ -225,9 +225,10 @@ BoardGeometry rectifyImage(const cv::Mat& originalImg, const WarpResult& input, 
 #ifndef NDEBUG
 		// Debug: Verify if the grid is found with a second algorithm.
 		std::vector<double> vGridTest{}, hGridTest{};
-		assert(findGrid(vGrid, hGrid, vGridTest, hGridTest));
-		assert(vGridTest.size() == hGridTest.size());
-		assert(vGridTest.size() == vGrid.size() && hGridTest.size() == hGrid.size());
+		if (!findGrid(vGrid, hGrid, vGridTest, hGridTest) || vGridTest.size() != hGridTest.size() || vGridTest.size() != vGrid.size() || hGridTest.size() != hGrid.size()) {
+			std::cerr << "DEBUG: Could not validate the detected grid with the second algorithm.\n";
+			return {};
+		}
 #endif
 	} else {
 		std::cout << "Could not detect the board size trivially. Performing further steps.\n";
