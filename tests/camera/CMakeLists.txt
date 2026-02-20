@@ -5,6 +5,7 @@ set(targetName "camera.gtest")
 add_executable(${targetName}
     "${CMAKE_CURRENT_LIST_DIR}/rectifier.gtest.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/process.gtest.cpp"
+	"${CMAKE_CURRENT_LIST_DIR}/boardFinder.gtest.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/stoneFinder.gtest.cpp"
 )
 

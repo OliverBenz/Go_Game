@@ -81,13 +81,13 @@ TEST(Process, Game_Simple_Size9) {
 		EXPECT_EQ(blackStoneCount(result.stoneStep.stones), std::floor(static_cast<double>(i) / 2.));
 		EXPECT_EQ(whiteStoneCount(result.stoneStep.stones), std::ceil(static_cast<double>(i) / 2.));
 
-		// TODO: Check number of black&white stones and coordinates
+		// TODO: Check coordinates
 	}
 
 	TestResult result = runPipeline(TEST_PATH / "move_13_captured.png"); // One stone captured.
 	EXPECT_TRUE(result.stoneStep.success);
 	EXPECT_EQ(stoneCount(result.stoneStep.stones), 12);
-	// TODO: Check number of black&white stones and coordinates
+	// TODO: Check coordinates
 }
 
 // Test the full image processing pipeline with stone detection at the end.
@@ -110,12 +110,11 @@ TEST(Process, Game_Simple_Size13) {
 		EXPECT_EQ(stoneCount(result.stoneStep.stones), i);
 		EXPECT_EQ(blackStoneCount(result.stoneStep.stones), std::ceil(static_cast<double>(i) / 2.));
 		EXPECT_EQ(whiteStoneCount(result.stoneStep.stones), std::floor(static_cast<double>(i) / 2.));
-		// TODO: Check number of black&white stones and coordinates
+		// TODO: Check and coordinates
 	}
-	// TODO: Check number of black&white stones and coordinates
 }
 
-// Here, we check that the board can be detected. Same board different angles.
+// TODO: Add stone finder for angled_hard
 TEST(Process, Board_Detect_Easy) {
 	const auto TEST_PATH = std::filesystem::path(PATH_TEST_IMG) / "angled_easy";
 
@@ -136,26 +135,4 @@ TEST(Process, Board_Detect_Easy) {
 	}
 }
 
-
-// TODO: These already fail at the board finder step. Harden implementation.
-// Here, we check that the board can be detected. Same board different angles.
-// TEST(Process, Board_Detect_Hard) {
-//     const auto TEST_PATH = std::filesystem::path(PATH_TEST_IMG) / "angled_hard";
-
-//     static constexpr unsigned IMG_COUNT = 6u;
-//     static constexpr unsigned BOARD_SIZE = 13u;
-
-//     for (unsigned i = 1u; i <= IMG_COUNT; ++i) {
-//         std::string fileName = std::format("angle_{}.jpeg", i);
-//         TestResult result = runPipeline(TEST_PATH / fileName);
-
-//         EXPECT_EQ(result.geometry.boardSize, BOARD_SIZE);
-//         //EXPECT_NEAR(result.geometry.spacing, SPACING, SPACING * 0.1); // Allow 5% deviation from expected spacing.
-
-//         EXPECT_TRUE(result.stoneStep.success);
-//         EXPECT_EQ(stoneCount(result.stoneStep.stones), 10u);
-//         EXPECT_EQ(blackStoneCount(result.stoneStep.stones), 5u);
-//         EXPECT_EQ(whiteStoneCount(result.stoneStep.stones), 5u);
-//     }
-// }
 } // namespace go::camera::gtest
