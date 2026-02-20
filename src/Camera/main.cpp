@@ -113,7 +113,7 @@ int main(int argc, char** argv) {
 		}
 
 	} else {
-		const auto exampleImage = std::filesystem::path(PATH_TEST_IMG) / "angled_easy/angle_6.jpeg";
+		const auto exampleImage = std::filesystem::path(PATH_TEST_IMG) / "angled_easy/angle_3.jpeg";
 
 		if (go::camera::process(exampleImage, &debug)) {
 			const auto mosaic = debug.buildMosaic();

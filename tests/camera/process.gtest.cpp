@@ -123,9 +123,6 @@ TEST(Process, Board_Detect_Easy) {
 	static constexpr unsigned BOARD_SIZE = 13u;
 
 	for (unsigned i = 1u; i <= IMG_COUNT; ++i) {
-		if (i == 3u)
-			continue; // TODO: Enable again. Cannot find grid here.
-
 		std::string fileName = std::format("angle_{}.jpeg", i);
 		TestResult result    = runPipeline(TEST_PATH / fileName);
 
