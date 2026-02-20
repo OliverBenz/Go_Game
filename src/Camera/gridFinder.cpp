@@ -463,7 +463,8 @@ static bool selectGridByLatticeFit(const std::vector<double>& centersSorted, con
 	return true;
 }
 
-bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hCenters, std::vector<double>& vGrid, std::vector<double>& hGrid) {
+bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hCenters, std::vector<double>& vGrid, std::vector<double>& hGrid,
+              const std::vector<std::size_t>& candidateNs) {
 	auto isValidN = [](std::size_t n) { // helper: is n a legal board size?
 		return n == 9u || n == 13u || n == 19u;
 	};
@@ -480,17 +481,59 @@ bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hC
 	std::cout << "DEBUG: Estimated spacing s=" << s << "\n";
 #endif
 
-	const std::vector<std::size_t> NsAll = {19, 13, 9}; //!< Candidate board sizes (try larger first, scoring will decide).
+	std::vector<std::size_t> NsAll; //!< Candidate board sizes to evaluate.
+	NsAll.reserve(candidateNs.size());
+	for (const auto n: candidateNs) {
+		if (isValidN(n)) {
+			NsAll.push_back(n);
+		}
+	}
+	if (NsAll.empty()) {
+		return false;
+	}
 
 	// Jointly select N using both axes. This avoids locking onto a wrong N when one axis happens to
-	//    have an exact valid count due to missing detections (e.g., 13x13 board with 9 detected lines).
+	// have an exact valid count due to missing detections (e.g., 13x13 board with 9 detected lines).
 	struct JointCandidate {
 		std::size_t N{0u};                                   //!< Board size
 		std::size_t inliersTotal{0u};                        //!< ScoreV.inliers + scoreH.inliers
-		double ratio{0.0};                                   //!< InliersTotal / (2*N)
+		double completeness{0.0};                            //!< InliersTotal / (2*N)
+		double coverage{0.0};                                //!< InliersTotal / (vCenters+hCenters)
+		double balanced{0.0};                                //!< Harmonic mean of completeness+coverage
 		double rms{std::numeric_limits<double>::infinity()}; //!< Combined weighted RMS (px)
 		std::vector<double> v;                               //!< Fitted vertical grid for this N
 		std::vector<double> h;                               //!< Fitted horizontal grid for this N
+	};
+
+	auto safeRatio = [](const std::size_t num, const std::size_t den) -> double {
+		return den == 0u ? 0.0 : static_cast<double>(num) / static_cast<double>(den);
+	};
+
+	auto harmonicMean = [](const double a, const double b) -> double {
+		const double sum = a + b;
+		return (sum <= 0.0) ? 0.0 : (2.0 * a * b) / sum;
+	};
+
+	auto isBetterJointCandidate = [](const JointCandidate& lhs, const JointCandidate& rhs) -> bool {
+		static constexpr double SCORE_EPS = 1e-12; //!< Epsilon for score comparisons.
+		static constexpr double RMS_EPS   = 1e-6;  //!< Epsilon for RMS comparisons.
+
+		const bool betterBalanced = lhs.balanced > rhs.balanced + SCORE_EPS;                    //!< Prefer jointly balanced fit quality.
+		const bool equalBalanced  = std::abs(lhs.balanced - rhs.balanced) <= SCORE_EPS;         //!< Tie on balanced score.
+		const bool betterComp     = lhs.completeness > rhs.completeness + SCORE_EPS;            //!< Prefer covering required lattice lines.
+		const bool equalComp      = std::abs(lhs.completeness - rhs.completeness) <= SCORE_EPS; //!< Tie on completeness.
+		const bool betterCover    = lhs.coverage > rhs.coverage + SCORE_EPS;                    //!< Prefer explaining observed detections.
+		const bool equalCover     = std::abs(lhs.coverage - rhs.coverage) <= SCORE_EPS;         //!< Tie on coverage.
+		const bool betterRms      = lhs.rms + RMS_EPS < rhs.rms;                                //!< Prefer smaller alignment error.
+		const bool equalRms       = std::abs(lhs.rms - rhs.rms) <= RMS_EPS;                     //!< Tie on RMS.
+		const bool betterInliers  = lhs.inliersTotal > rhs.inliersTotal;                        //!< Prefer more absolute inliers.
+		const bool equalInliers   = lhs.inliersTotal == rhs.inliersTotal;                       //!< Tie on inliers.
+		const bool preferSmallerN = (rhs.N == 0u) ? true : (lhs.N < rhs.N);                     //!< Deterministic tie-break.
+
+		return betterBalanced ||
+		       (equalBalanced &&
+		        (betterComp ||
+		         (equalComp && (betterCover || (equalCover && (betterRms || (equalRms && (betterInliers || (equalInliers && preferSmallerN)))))))));
 	};
 
 	JointCandidate best{}; // best joint candidate so far
@@ -525,34 +568,28 @@ bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hC
 		if (!evaluateLatticeOffset(hCenters, hStart, hSpacing, N, scoreH))
 			continue;
 
-		const auto totalInliers = scoreV.inliers + scoreH.inliers;                                //!< Total explained lines
-		const double ratio      = static_cast<double>(totalInliers) / static_cast<double>(2 * N); //!< Completeness ratio
-		const double rms        = (totalInliers > 0)                                              //!< Combined weighted RMS (px)
-		                                  ? std::sqrt((scoreV.rms * scoreV.rms * static_cast<double>(scoreV.inliers) +
+		const auto totalInliers   = scoreV.inliers + scoreH.inliers;                            //!< Total explained lines
+		const double completeness = safeRatio(totalInliers, 2u * N);                            //!< Fraction of lattice lines explained.
+		const double coverage     = safeRatio(totalInliers, vCenters.size() + hCenters.size()); //!< Fraction of detections explained.
+		const double balanced     = harmonicMean(completeness, coverage);                       //!< Joint quality (avoid N-size bias).
+		const double rms          = (totalInliers > 0)                                          //!< Combined weighted RMS (px)
+		                                    ? std::sqrt((scoreV.rms * scoreV.rms * static_cast<double>(scoreV.inliers) +
                                                 scoreH.rms * scoreH.rms * static_cast<double>(scoreH.inliers)) /
-		                                              static_cast<double>(totalInliers))
-		                                  : std::numeric_limits<double>::infinity();
+		                                                static_cast<double>(totalInliers))
+		                                    : std::numeric_limits<double>::infinity();
+		JointCandidate current{};
+		current.N            = N;
+		current.inliersTotal = totalInliers;
+		current.completeness = completeness;
+		current.coverage     = coverage;
+		current.balanced     = balanced;
+		current.rms          = rms;
+		current.v            = std::move(vTmp);
+		current.h            = std::move(hTmp);
 
-		static constexpr double RATIO_EPS = 1e-12; //!< Epsilon for ratio comparisons
-		static constexpr double RMS_EPS   = 1e-6;  //!< Epsilon for RMS comparisons
-
-		const bool betterInliers  = totalInliers > best.inliersTotal;          //!< Prefer more explained lines (both axes)
-		const bool equalInliers   = totalInliers == best.inliersTotal;         //!< Tie on inliers
-		const bool betterRatio    = ratio > best.ratio + RATIO_EPS;            //!< Prefer higher completeness ratio
-		const bool equalRatio     = std::abs(ratio - best.ratio) <= RATIO_EPS; //!< Tie on ratio
-		const bool betterRms      = rms + RMS_EPS < best.rms;                  //!< Prefer smaller combined RMS error
-		const bool equalRms       = std::abs(rms - best.rms) <= RMS_EPS;       //!< Tie on RMS
-		const bool preferSmallerN = (best.N == 0) ? true : (N < best.N);       //!< Deterministic tie-break
-
-		if (!hasBest || betterInliers || (equalInliers && (betterRatio || (equalRatio && (betterRms || (equalRms && preferSmallerN)))))) {
-			// Update best joint candidate.
-			hasBest           = true;
-			best.N            = N;
-			best.inliersTotal = totalInliers;
-			best.ratio        = ratio;
-			best.rms          = rms;
-			best.v.swap(vTmp);
-			best.h.swap(hTmp);
+		if (!hasBest || isBetterJointCandidate(current, best)) {
+			hasBest = true;
+			best    = std::move(current);
 		}
 	}
 
@@ -568,6 +605,11 @@ bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hC
 
 	// 6. Ensure consistency.
 	return isValidN(vGrid.size()) && isValidN(hGrid.size()) && vGrid.size() == hGrid.size();
+}
+
+bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hCenters, std::vector<double>& vGrid, std::vector<double>& hGrid) {
+	static const std::vector<std::size_t> kDefaultNs = {19u, 13u, 9u};
+	return findGrid(vCenters, hCenters, vGrid, hGrid, kDefaultNs);
 }
 
 } // namespace go::camera

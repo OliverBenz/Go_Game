@@ -599,6 +599,9 @@ public:
 		if (evaluated.state == StoneState::Black && failsBlackConfidence(evaluated, context.boardSize)) {
 			return fail(outReason, RejectionReason::LowConfidence);
 		}
+		if (evaluated.state == StoneState::White && failsWhiteConfidence(evaluated, context.boardSize)) {
+			return fail(outReason, RejectionReason::LowConfidence);
+		}
 		return true;
 	}
 
@@ -665,6 +668,11 @@ private:
 		return decision.confidence < threshold;
 	}
 
+	bool failsWhiteConfidence(const Eval& decision, unsigned boardSize) const {
+		const float threshold = (boardSize >= decisionConfig_.minConfidenceWhiteBoardSize) ? decisionConfig_.minConfidenceWhite : 0.0f;
+		return decision.confidence < threshold;
+	}
+
 	bool hasStrongWhiteSupport(const Features& feature, const SpatialContext& context) const {
 		const float brightAdvantage  = feature.brightFrac - feature.darkFrac;
 		const float neighborContrast = feature.deltaL - context.neighborMedian;
@@ -690,6 +698,10 @@ private:
 	}
 
 	bool failsWhiteSupport(const Features& feature, const SpatialContext& context, float z) const {
+		const float brightAdvantage = feature.brightFrac - feature.darkFrac;
+		if (brightAdvantage < decisionConfig_.minSupportAdvantageWhiteFloor) {
+			return true;
+		}
 		if (feature.brightFrac < decisionConfig_.minSupportWhite) {
 			return true;
 		}
