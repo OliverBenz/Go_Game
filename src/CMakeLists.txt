@@ -12,6 +12,6 @@ add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/net/network")   # Library: Go game n
 
 # Runtime + Apps
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/apps/runtime")   # Library:     Runtime/Orchestration
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/apps/gui")       # Application: The actual game (GUI wrapper of runtime)
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/apps/tengen")    # Application: The actual game (GUI wrapper of runtime)
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/apps/server/")   # Application: Server
 
