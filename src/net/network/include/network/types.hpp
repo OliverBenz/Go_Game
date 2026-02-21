@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace go::network {
+namespace tengen::network {
 
 using SessionId = std::uint32_t;
 
@@ -33,4 +33,4 @@ inline constexpr bool isPlayer(Seat seat) {
 	return seat == Seat::Black || seat == Seat::White;
 }
 
-} // namespace go::network
+} // namespace tengen::network

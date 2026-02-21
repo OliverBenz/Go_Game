@@ -1,6 +1,6 @@
 #pragma once
 
-namespace go {
+namespace tengen {
 
 //! Coordinate pair for the board.
 struct Coord {
@@ -8,4 +8,4 @@ struct Coord {
 	unsigned y;
 };
 
-} // namespace go
+} // namespace tengen

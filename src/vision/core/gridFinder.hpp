@@ -2,7 +2,7 @@
 
 #include <vector>
 
-namespace go::vision::core {
+namespace tengen::vision::core {
 
 /*! Reconstruct the NxN Go board grid from candidate line-center detections.
  *  The rectified board image provides sorted candidate line centers per axis.
@@ -30,4 +30,4 @@ bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hC
 bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hCenters, std::vector<double>& vGrid, std::vector<double>& hGrid,
               const std::vector<std::size_t>& candidateNs);
 
-} // namespace go::vision::core
+} // namespace tengen::vision::core

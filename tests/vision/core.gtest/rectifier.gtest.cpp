@@ -5,7 +5,7 @@
 
 #include <filesystem>
 
-namespace go::vision::core {
+namespace tengen::vision::core {
 namespace gtest {
 
 TEST(Rectifier, RectifyImage) {
@@ -21,4 +21,4 @@ TEST(Rectifier, RectifyImage) {
 
 
 } // namespace gtest
-} // namespace go::vision::core
+} // namespace tengen::vision::core

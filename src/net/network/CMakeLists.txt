@@ -19,7 +19,7 @@ set(sources
 
 
 add_library(${targetName} STATIC ${headers} ${sources})
-add_library(go::net::gameNet ALIAS ${targetName})
+add_library(tengen::net::gameNet ALIAS ${targetName})
 
 target_include_directories(${targetName}
     PUBLIC
@@ -28,9 +28,9 @@ target_include_directories(${targetName}
 
 target_link_libraries(${targetName}
     PUBLIC
-        go::game::model
+        tengen::game::model
     PRIVATE
-        go::net::core
+        tengen::net::core
         nlohmann_json::nlohmann_json
 )
 

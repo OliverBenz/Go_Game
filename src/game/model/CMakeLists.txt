@@ -2,10 +2,10 @@ set(targetName gameModel)
 
 # Get files to build
 set(headers
-    "${CMAKE_CURRENT_LIST_DIR}/include/data/player.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/include/data/coordinate.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/include/data/board.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/include/data/gameStatus.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/model/player.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/model/coordinate.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/model/board.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/model/gameStatus.hpp"
 )
 set(sources
     "${CMAKE_CURRENT_LIST_DIR}/board.cpp"
@@ -13,7 +13,7 @@ set(sources
 
 # Create target
 add_library(${targetName} STATIC ${headers} ${sources})
-add_library(go::game::model ALIAS ${targetName})
+add_library(tengen::game::model ALIAS ${targetName})
 
 target_include_directories(${targetName}
     PUBLIC

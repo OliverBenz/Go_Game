@@ -3,7 +3,7 @@
 #include <gtest/gtest.h>
 #include <thread>
 
-namespace go::gtest {
+namespace tengen::gtest {
 
 // TODO: Verify board state after every place
 TEST(Game, BoardUpdate) {
@@ -39,4 +39,4 @@ TEST(Game, BoardUpdate) {
 	gameThread.join();
 }
 
-} // namespace go::gtest
+} // namespace tengen::gtest

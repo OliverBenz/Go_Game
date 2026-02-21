@@ -9,7 +9,7 @@
 #include <array>
 #include <optional>
 
-namespace go::network::core {
+namespace tengen::network::core {
 
 class TcpClient::Implementation {
 public:
@@ -179,4 +179,4 @@ Message TcpClient::read() {
 	return m_pimpl->read();
 }
 
-} // namespace go::network::core
+} // namespace tengen::network::core

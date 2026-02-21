@@ -12,7 +12,7 @@ add_executable(${targetName}
 # Link to required libraries
 target_link_libraries(${targetName}
     PRIVATE
-        go::net::gameNet
+        tengen::net::gameNet
         GTest::gtest_main
         nlohmann_json::nlohmann_json
 )

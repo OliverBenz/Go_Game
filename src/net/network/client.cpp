@@ -6,7 +6,7 @@
 #include <cstring>
 #include <thread>
 
-namespace go::network {
+namespace tengen::network {
 
 class Client::Implementation {
 public:
@@ -182,4 +182,4 @@ SessionId Client::sessionId() const {
 	return m_pimpl->sessionId();
 }
 
-} // namespace go::network
+} // namespace tengen::network

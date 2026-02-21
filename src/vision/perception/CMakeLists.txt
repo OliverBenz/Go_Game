@@ -1,6 +1,6 @@
 set(targetName visionPerception)
 
-# TODO: We still need this if go::vision::core links OpenCV privately?
+# TODO: We still need this if tengen::vision::core links OpenCV privately?
 find_package(OpenCV REQUIRED)
 
 # Get files to build
@@ -8,14 +8,14 @@ set(headers)
 set(sources)
 
 add_library(${targetName} STATIC ${headers} ${sources})
-add_library(go::vision::perception ALIAS ${targetName})
+add_library(tengen::vision::perception ALIAS ${targetName})
 
 target_include_directories(${targetName}
 	PRIVATE
         "${CMAKE_CURRENT_LIST_DIR}/include"
 )
 target_link_libraries(${targetName}
-	PRIVATE go::vision::core
+	PRIVATE tengen::vision::core
 )
 
 # Setup project settings

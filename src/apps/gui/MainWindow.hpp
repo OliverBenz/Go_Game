@@ -4,7 +4,7 @@
 
 #include <QMainWindow>
 
-namespace go::gui {
+namespace tengen::gui {
 
 class MainWindow : public QMainWindow {
 	Q_OBJECT
@@ -29,4 +29,4 @@ private:
 	QWidget* m_gameWidget;
 };
 
-} // namespace go::gui
+} // namespace tengen::gui

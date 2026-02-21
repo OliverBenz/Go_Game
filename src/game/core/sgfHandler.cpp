@@ -1,6 +1,6 @@
 #include "core/sgfHandler.hpp"
 
-namespace go {
+namespace tengen {
 
 Coord fromSGF(const std::string& s) {
 	return {static_cast<unsigned>(s[0u] - 'a'), static_cast<unsigned>(s[1u] - 'a')};
@@ -10,4 +10,4 @@ std::string toSGF(const Coord c) {
 	return {char('a' + c.x), char('a' + c.y)};
 }
 
-} // namespace go
+} // namespace tengen

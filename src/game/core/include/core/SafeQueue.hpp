@@ -5,7 +5,7 @@
 #include <deque>
 #include <mutex>
 
-namespace go {
+namespace tengen {
 
 //! Thread safe queue with a blocking Pop function.
 template <class Entry>
@@ -76,4 +76,4 @@ void SafeQueue<Entry>::Release() {
 	m_condition.notify_all();
 }
 
-} // namespace go
+} // namespace tengen

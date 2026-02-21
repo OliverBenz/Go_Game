@@ -13,7 +13,7 @@
 #include <unordered_map>
 #include <utility>
 
-namespace go::network::core {
+namespace tengen::network::core {
 
 static ConnectionId CONN_ID = 1u;
 
@@ -224,4 +224,4 @@ void TcpServer::reject(ConnectionId connectionId) {
 }
 
 
-} // namespace go::network::core
+} // namespace tengen::network::core

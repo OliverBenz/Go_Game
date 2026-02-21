@@ -9,7 +9,7 @@
 #include <functional>
 #include <memory>
 
-namespace go::network::core {
+namespace tengen::network::core {
 
 //! Transportation primitive. Handles read/write from a single client connection.
 //! \note Internals are async and run on the server IO thread.
@@ -48,4 +48,4 @@ private:
 	bool m_writeInProgress{false};
 };
 
-} // namespace go::network::core
+} // namespace tengen::network::core

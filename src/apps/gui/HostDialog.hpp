@@ -4,7 +4,7 @@
 
 class QPushButton;
 
-namespace go::gui {
+namespace tengen::gui {
 
 class HostDialog : public QDialog {
 	Q_OBJECT
@@ -20,4 +20,4 @@ private:
 	QPushButton* m_btn19;
 };
 
-} // namespace go::gui
+} // namespace tengen::gui

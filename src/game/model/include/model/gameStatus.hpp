@@ -1,6 +1,6 @@
 #pragma once
 
-namespace go {
+namespace tengen {
 
 enum class GameStatus {
 	Idle,   //!< Nothing happening.
@@ -9,4 +9,4 @@ enum class GameStatus {
 	Done    //!< Game over.
 };
 
-} // namespace go
+} // namespace tengen

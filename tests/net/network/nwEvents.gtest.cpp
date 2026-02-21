@@ -5,7 +5,7 @@
 #include <nlohmann/json.hpp>
 #include <optional>
 
-namespace go::gtest {
+namespace tengen::gtest {
 
 TEST(GameNetMessages, ClientToMessage) {
 	using nlohmann::json;
@@ -214,4 +214,4 @@ TEST(GameNetMessages, ServerDeltaMissingXYSerialization) {
 }
 #endif
 
-} // namespace go::gtest
+} // namespace tengen::gtest

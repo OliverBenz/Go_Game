@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace go::vision::core {
+namespace tengen::vision::core {
 
 //! Each step in the algorithm.
 struct DebugStep {
@@ -44,4 +44,4 @@ private:
 	std::vector<DebugStage> m_stages{}; //!< Collection of debug info for all stages.
 };
 
-} // namespace go::vision::core
+} // namespace tengen::vision::core

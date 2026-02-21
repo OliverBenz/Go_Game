@@ -6,7 +6,7 @@
 #include <opencv2/core/mat.hpp>
 #include <vector>
 
-namespace go::vision::core {
+namespace tengen::vision::core {
 
 //! Stone state at a single grid intersection.
 enum class StoneState { Empty, Black, White };
@@ -146,4 +146,4 @@ StoneResult analyseBoard(const BoardGeometry& geometry, DebugVisualizer* debugge
  */
 StoneResult analyseBoardV2(const BoardGeometry& geometry, DebugVisualizer* debugger = nullptr, const StoneDetectionConfig& config = StoneDetectionConfig{});
 
-} // namespace go::vision::core
+} // namespace tengen::vision::core

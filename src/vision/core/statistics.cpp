@@ -6,7 +6,7 @@
 #include <numeric>
 
 // TODO: Check all this
-namespace go::vision::core {
+namespace tengen::vision::core {
 
 double mean(const std::vector<double>& v) {
 	if (v.empty()) {
@@ -52,4 +52,4 @@ double median(std::vector<double> values) {
 }
 
 
-} // namespace go::vision::core
+} // namespace tengen::vision::core

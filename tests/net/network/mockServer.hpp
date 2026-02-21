@@ -4,7 +4,7 @@
 #include "network/server.hpp"
 #include <gtest/gtest.h>
 
-namespace go::gtest {
+namespace tengen::gtest {
 
 class MockServer : public network::IServerHandler {
 public:
@@ -30,4 +30,4 @@ private:
 	unsigned m_turn{0u};
 };
 
-} // namespace go::gtest
+} // namespace tengen::gtest

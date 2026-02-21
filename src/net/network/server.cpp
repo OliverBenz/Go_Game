@@ -8,7 +8,7 @@
 #include <atomic>
 #include <thread>
 
-namespace go::network {
+namespace tengen::network {
 
 class Server::Implementation {
 public:
@@ -280,4 +280,4 @@ Seat Server::getSeat(SessionId sessionId) const {
 	return m_pimpl->getSeat(sessionId);
 }
 
-} // namespace go::network
+} // namespace tengen::network

@@ -2,7 +2,7 @@
 
 #include <format>
 
-namespace go::gtest {
+namespace tengen::gtest {
 
 MockServer::MockServer() {
 	EXPECT_TRUE(m_network.registerHandler(this));
@@ -81,4 +81,4 @@ network::Seat MockServer::nextSeat(network::Seat seat) const {
 }
 
 
-} // namespace go::gtest
+} // namespace tengen::gtest

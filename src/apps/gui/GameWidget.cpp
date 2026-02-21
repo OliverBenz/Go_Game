@@ -7,7 +7,7 @@
 #include <format>
 #include <iostream>
 
-namespace go::gui {
+namespace tengen::gui {
 
 GameWidget::GameWidget(app::SessionManager& game, QWidget* parent) : QWidget(parent), m_game{game} {
 	// Setup Window
@@ -165,4 +165,4 @@ void GameWidget::onSendChat() {
 	m_chatInput->clear();
 }
 
-} // namespace go::gui
+} // namespace tengen::gui

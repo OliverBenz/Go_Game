@@ -10,7 +10,7 @@
 #include <mutex>
 #include <thread>
 
-namespace go::gtest {
+namespace tengen::gtest {
 
 class TestClientHandler final : public network::IClientHandler {
 public:
@@ -142,4 +142,4 @@ TEST(Networking, ServerDeltaFromPutStone) {
 	server.stop();
 }
 
-} // namespace go::gtest
+} // namespace tengen::gtest

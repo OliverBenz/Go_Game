@@ -12,7 +12,7 @@
 
 #include <opencv2/opencv.hpp>
 
-namespace go::vision::core {
+namespace tengen::vision::core {
 
 namespace {
 
@@ -1185,4 +1185,4 @@ StoneResult analyseBoard(const BoardGeometry& geometry, DebugVisualizer* debugge
 	return analyseBoardV2(geometry, debugger, config);
 }
 
-} // namespace go::vision::core
+} // namespace tengen::vision::core

@@ -5,7 +5,7 @@
 #include "model/player.hpp"
 #include "network/nwEvents.hpp"
 
-namespace go::app {
+namespace tengen::app {
 
 class Position {
 public:
@@ -30,4 +30,4 @@ private:
 	Board m_board{9u};
 };
 
-} // namespace go::app
+} // namespace tengen::app

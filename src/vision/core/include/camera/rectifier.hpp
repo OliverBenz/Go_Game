@@ -12,7 +12,7 @@
 //   1) We detect a rough outline of the board (function warpToBoard) and warp to top-down view. Here, it's not yet clear if the border of the produced image is
 //   correct. 2) We fine-tune this board detection (function rectifyImage). Using the projected board image, we detect grid lines, crop the image to the edge
 //   grid lines + padding of a half stone.
-namespace go::vision::core {
+namespace tengen::vision::core {
 
 //! Final
 struct BoardGeometry {
@@ -29,4 +29,4 @@ struct BoardGeometry {
 //! the edges).
 BoardGeometry rectifyImage(const cv::Mat& originalImg, const WarpResult& input, DebugVisualizer* debugger = nullptr);
 
-} // namespace go::vision::core
+} // namespace tengen::vision::core

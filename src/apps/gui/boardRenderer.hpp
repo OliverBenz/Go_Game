@@ -5,7 +5,7 @@
 #include <QImage>
 #include <QPainter>
 
-namespace go::gui {
+namespace tengen::gui {
 
 class BoardRenderer {
 public:
@@ -50,4 +50,4 @@ private:
 	bool m_ready = false; //!< Textures have been loaded.
 };
 
-} // namespace go::gui
+} // namespace tengen::gui

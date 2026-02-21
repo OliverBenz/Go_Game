@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <cassert>
 
-namespace go::app {
+namespace tengen::app {
 
 SessionManager::SessionManager() {
 	m_network.registerHandler(this);
@@ -225,4 +225,4 @@ void SessionManager::onDisconnected() {
 	m_eventHub.signal(AS_StateChange);
 }
 
-} // namespace go::app
+} // namespace tengen::app

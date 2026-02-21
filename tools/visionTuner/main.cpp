@@ -10,7 +10,7 @@
 #include "camera/rectifier.hpp"
 #include "camera/stoneFinder.hpp"
 
-namespace go::vision::core {
+namespace tengen::vision::core {
 // Notes and Findings:
 // - Board Detection
 //   - Easy Straight Dataset
@@ -87,7 +87,7 @@ bool process(const std::filesystem::path& path, DebugVisualizer* debugger = null
 	return process(image, debugger);
 }
 
-} // namespace go::vision::core
+} // namespace tengen::vision::core
 
 // 3 steps
 // 1) Find board in image and rectify (find largest plausible board contour, dont care if its physical board or outer grid contour)
@@ -99,14 +99,14 @@ bool process(const std::filesystem::path& path, DebugVisualizer* debugger = null
 // - Output: Board cropped + Board size. Expect stable
 // 3) Detect grid lines again and stones.
 int main(int argc, char** argv) {
-	go::vision::core::DebugVisualizer debug;
+	tengen::vision::core::DebugVisualizer debug;
 	debug.setInteractive(false);
 
 	// If a path is passed here then use this image. Else do test images.
 	if (argc > 1) {
 		std::filesystem::path inputPath = argv[1]; // Path from command line.
 
-		if (go::vision::core::process(inputPath, &debug)) {
+		if (tengen::vision::core::process(inputPath, &debug)) {
 			cv::Mat mosaic = debug.buildMosaic();
 			if (!mosaic.empty()) {
 				cv::imshow("Debug Mosaic", mosaic);
@@ -130,7 +130,7 @@ int main(int argc, char** argv) {
 		// 		return -1;
 		// 	}
 
-		// 	if(go::camera::process(image, &debug)) {
+		// 	if(tengen::camera::process(image, &debug)) {
 		// 		// const auto mosaic = debug.buildMosaic();
 		// 		// cv::imshow("", mosaic);
 		// 	} else {
@@ -150,7 +150,7 @@ int main(int argc, char** argv) {
 
 
 		const auto exampleImage = std::filesystem::path(PATH_TEST_IMG) / "angled_hard/angle_1.jpeg";
-		if (go::vision::core::process(exampleImage, &debug)) {
+		if (tengen::vision::core::process(exampleImage, &debug)) {
 			const auto mosaic = debug.buildMosaic();
 			// cv::imshow("", mosaic);
 			// cv::waitKey(0);

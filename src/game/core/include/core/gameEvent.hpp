@@ -8,7 +8,7 @@
 #include <variant>
 #include <vector>
 
-namespace go {
+namespace tengen {
 
 struct PutStoneEvent {
 	Player player;
@@ -45,4 +45,4 @@ struct GameDelta {
 	bool gameActive;             //!< Game active after the move.
 };
 
-} // namespace go
+} // namespace tengen

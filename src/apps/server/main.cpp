@@ -3,7 +3,7 @@
 #include <iostream>
 
 int main(int, char**) {
-	go::app::GameServer server;
+	tengen::app::GameServer server;
 	server.start();
 
 	// NOTE: Can extend to allow more commands

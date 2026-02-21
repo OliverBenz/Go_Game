@@ -4,7 +4,7 @@
 
 #include <opencv2/core/mat.hpp>
 
-namespace go::vision::core {
+namespace tengen::vision::core {
 
 struct WarpResult {
 	cv::Mat image; //!< Image warped to fit the rough board contour.
@@ -17,4 +17,4 @@ struct WarpResult {
 WarpResult warpToBoard(const cv::Mat& image, DebugVisualizer* debugger = nullptr);
 
 
-} // namespace go::vision::core
+} // namespace tengen::vision::core

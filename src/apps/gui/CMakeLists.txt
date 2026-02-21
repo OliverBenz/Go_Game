@@ -16,7 +16,7 @@ add_executable(${targetName}
 target_link_libraries(${targetName} 
     PRIVATE
         Logger::Logger
-        go::runtime
+        tengen::runtime
         Qt6::Widgets
 )
 
