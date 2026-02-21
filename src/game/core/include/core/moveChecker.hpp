@@ -2,13 +2,11 @@
 
 #include "core/IZobristHash.hpp"
 #include "core/position.hpp"
-#include "data/board.hpp"
-#include "data/player.hpp"
+#include "model/board.hpp"
+#include "model/player.hpp"
 
 #include <cstdint>
-#include <optional>
 #include <unordered_set>
-#include <vector>
 
 namespace go {
 

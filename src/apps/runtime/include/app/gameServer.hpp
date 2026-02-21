@@ -2,7 +2,7 @@
 
 #include "core/IGameStateListener.hpp"
 #include "core/game.hpp"
-#include "data/player.hpp"
+#include "model/player.hpp"
 #include "network/server.hpp"
 
 #include <string>

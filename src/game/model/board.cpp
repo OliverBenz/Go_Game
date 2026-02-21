@@ -1,4 +1,4 @@
-#include "data/board.hpp"
+#include "model/board.hpp"
 
 #include <cassert>
 

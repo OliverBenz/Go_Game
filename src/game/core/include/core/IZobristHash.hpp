@@ -1,7 +1,7 @@
 #pragma once
 
-#include "data/board.hpp"
-#include "data/player.hpp"
+#include "model/coordinate.hpp"
+#include "model/player.hpp"
 
 #include <cstdint>
 

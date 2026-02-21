@@ -1,8 +1,8 @@
 #pragma once
 
 #include "core/IZobristHash.hpp"
-#include "data/board.hpp"
-#include "data/player.hpp"
+#include "model/board.hpp"
+#include "model/player.hpp"
 
 namespace go {
 

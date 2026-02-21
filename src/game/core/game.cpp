@@ -1,6 +1,5 @@
 #include "core/game.hpp"
 #include "core/moveChecker.hpp"
-
 #include "zobristHash.hpp"
 
 namespace go {
