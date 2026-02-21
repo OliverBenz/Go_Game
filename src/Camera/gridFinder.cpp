@@ -472,7 +472,9 @@ bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hC
 #ifndef NDEBUG
 	// Estimate a spacing from the vertical axis for logging / sanity checks.
 	std::vector<double> gaps; // Gap size between candidate vertical lines (px)
-	gaps.reserve(vCenters.size() - 1);
+	if (vCenters.size() > 1u) {
+		gaps.reserve(vCenters.size() - 1u);
+	}
 	for (size_t i = 0; i + 1 < vCenters.size(); ++i) { // i = index into vCenters
 		gaps.push_back(vCenters[i + 1] - vCenters[i]);
 	}

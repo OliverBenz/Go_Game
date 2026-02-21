@@ -35,6 +35,10 @@ struct Line1D {
 	double weight; // e.g. segment length
 };
 
+static bool isValidBoardSize(std::size_t n) {
+	return n == 9u || n == 13u || n == 19u;
+}
+
 static std::vector<double> clusterWeighted1D(std::vector<Line1D> values, double eps) {
 	if (values.empty()) {
 		return {};
@@ -62,7 +66,9 @@ static std::vector<double> clusterWeighted1D(std::vector<Line1D> values, double 
 }
 
 static double computeMedianSpacing(const std::vector<double>& grid) {
-	assert(grid.size() >= 2);
+	if (grid.size() < 2u) {
+		return 0.0;
+	}
 
 	std::vector<double> diffs;
 	diffs.reserve(grid.size() - 1);
@@ -75,6 +81,11 @@ static double computeMedianSpacing(const std::vector<double>& grid) {
 //! Transform an image that contains a Go Board such that the final image is a top-down projection of the board.
 //! \note The border of the image is the outermost grid line + tolerance for the edge stones.
 BoardGeometry rectifyImage(const cv::Mat& originalImg, const WarpResult& input, DebugVisualizer* debugger) {
+	if (input.image.empty() || input.H.empty()) {
+		std::cerr << "Invalid warp result for rectification.\n";
+		return {};
+	}
+
 	if (debugger) {
 		debugger->beginStage("Rectify Image");
 		debugger->add("Input", input.image);
@@ -248,6 +259,11 @@ BoardGeometry rectifyImage(const cv::Mat& originalImg, const WarpResult& input, 
 	}
 
 	// Starting here, we assume grid found
+	if (vGrid.size() != hGrid.size() || !isValidBoardSize(vGrid.size())) {
+		std::cerr << "Invalid grid size after fitting.\n";
+		return {};
+	}
+
 	// 4. Warp image with stone buffer at edge (want to detect full stone at edge)
 	double spacingX = computeMedianSpacing(vGrid);
 	double spacingY = computeMedianSpacing(hGrid);
