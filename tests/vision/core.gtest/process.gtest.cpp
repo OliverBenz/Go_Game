@@ -67,7 +67,7 @@ TEST(Process, Game_Simple_Size9) {
 
 	// Game Information
 	static constexpr unsigned MOVES      = 13;  //!< This game image series has 13 moves (+ a captures image).
-	static constexpr double SPACING      = 76.; //!< Pixels between grid lines. Manually checked for this series.
+	// static constexpr double SPACING      = 76.; //!< Pixels between grid lines. Manually checked for this series.
 	static constexpr unsigned BOARD_SIZE = 9u;  //!< Board size of this game.
 
 	for (unsigned i = 0; i <= MOVES; ++i) {
@@ -97,7 +97,7 @@ TEST(Process, Game_Simple_Size13) {
 
 	// Game Information
 	static constexpr unsigned MOVES      = 27;  //!< This game image series has 27 moves.
-	static constexpr double SPACING      = 72.; //!< Pixels between grid lines. Manually checked for this series.
+	// static constexpr double SPACING      = 72.; //!< Pixels between grid lines. Manually checked for this series.
 	static constexpr unsigned BOARD_SIZE = 13u; //!< Board size of this game.
 
 	for (unsigned i = 0; i <= MOVES; ++i) {
