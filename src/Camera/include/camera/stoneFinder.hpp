@@ -72,7 +72,7 @@ struct DecisionConfig {
 	float minSupportWhite{0.08f};
 	float minSupportAdvantageBlack{0.08f};
 	float minSupportAdvantageWhite{0.03f};
-	float minSupportAdvantageWhiteFloor{-0.12f};
+	float minSupportAdvantageWhiteFloor{-0.13f};
 	float minNeighborContrastBlack{14.0f};
 	float minNeighborContrastWhite{0.0f};
 	float whiteStrongAdvMin{0.06f};
@@ -80,7 +80,7 @@ struct DecisionConfig {
 	float whiteLowChromaMax{420.0f};
 	float whiteLowChromaMaxNearEdge{420.0f};
 	float whiteLowChromaMinZ{0.57f};
-	float whiteLowChromaMinBright{0.10f};
+	float whiteLowChromaMinBright{0.095f};
 	float whiteLowChromaMinBrightNearEdge{0.11f};
 	float edgeWhiteNearChromaSq{70.0f};
 	float edgeWhiteNearMinBrightFrac{0.11f};

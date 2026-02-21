@@ -38,8 +38,8 @@ TEST(Process, Find_Board_Easy) {
 }
 
 // TODO: These do not work yet.
-// TEST(Process, Find_Board_Hard) {
-// 	runTest("angled_hard");
-// }
+TEST(Process, Find_Board_Hard) {
+	runTest("angled_hard");
+}
 
 } // namespace go::camera::gtest
