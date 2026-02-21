@@ -8,6 +8,7 @@
 
 namespace go {
 namespace network {
+namespace core {
 
 //! Connection manager that runs an async accept loop on a dedicated IO thread.
 //! \note    This is a thin wrapper: all heavy lifting is in Connection (async read/write).
@@ -42,3 +43,4 @@ private:
 
 } // namespace network
 } // namespace go
+}

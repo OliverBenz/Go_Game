@@ -5,10 +5,8 @@
 
 #include <array>
 #include <memory>
-#include <string>
-#include <utility>
 
-namespace go::network {
+namespace go::network::core {
 
 Connection::Connection(asio::ip::tcp::socket socket, ConnectionId connectionId, Callbacks callbacks)
     : m_socket(std::move(socket)), m_strand(m_socket.get_executor()), m_connectionId(connectionId), m_callbacks(std::move(callbacks)) {

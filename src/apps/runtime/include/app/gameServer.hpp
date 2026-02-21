@@ -13,7 +13,7 @@ namespace go {
 namespace app {
 
 
-class GameServer : public gameNet::IServerHandler, public IGameStateListener {
+class GameServer : public network::IServerHandler, public IGameStateListener {
 public:
 	explicit GameServer(std::size_t boardSize = 9u);
 	~GameServer();
@@ -22,19 +22,19 @@ public:
 	void stop();  //!< Signal shutdown to the server loop and stop the network listener.
 
 	// IServerHandler overrides
-	void onClientConnected(gameNet::SessionId sessionId, gameNet::Seat seat) override;
-	void onClientDisconnected(gameNet::SessionId sessionId) override;
-	void onNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientEvent& event) override;
+	void onClientConnected(network::SessionId sessionId, network::Seat seat) override;
+	void onClientDisconnected(network::SessionId sessionId) override;
+	void onNetworkEvent(network::SessionId sessionId, const network::ClientEvent& event) override;
 
 	// IGameStateListener overrides
 	void onGameDelta(const GameDelta& delta) override;
 
 private:
 	// Processing of the network events that are sent in the server event message payload.
-	void handleNetworkEvent(Player player, const gameNet::ClientPutStone& event);
-	void handleNetworkEvent(Player player, const gameNet::ClientPass& event);
-	void handleNetworkEvent(Player player, const gameNet::ClientResign& event);
-	void handleNetworkEvent(Player player, const gameNet::ClientChat& event);
+	void handleNetworkEvent(Player player, const network::ClientPutStone& event);
+	void handleNetworkEvent(Player player, const network::ClientPass& event);
+	void handleNetworkEvent(Player player, const network::ClientResign& event);
+	void handleNetworkEvent(Player player, const network::ClientChat& event);
 
 	struct ChatEntry {
 		Player player;
@@ -45,10 +45,10 @@ private:
 	Game m_game;
 	std::thread m_gameThread; //!< Runs the game loop.
 
-	std::unordered_map<Player, gameNet::SessionId> m_players;
+	std::unordered_map<Player, network::SessionId> m_players;
 	std::vector<ChatEntry> m_chatHistory;
 
-	gameNet::Server m_server{};
+	network::Server m_server{};
 };
 
 } // namespace app

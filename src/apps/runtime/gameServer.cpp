@@ -44,12 +44,12 @@ void GameServer::stop() {
 	m_players.clear();
 }
 
-void GameServer::onClientConnected(gameNet::SessionId sessionId, gameNet::Seat seat) {
-	if (!gameNet::isPlayer(seat)) {
+void GameServer::onClientConnected(network::SessionId sessionId, network::Seat seat) {
+	if (!network::isPlayer(seat)) {
 		return;
 	}
 
-	const auto player = seat == gameNet::Seat::Black ? Player::Black : Player::White;
+	const auto player = seat == network::Seat::Black ? Player::Black : Player::White;
 	if (m_game.isActive()) {
 		return; // TODO: Reconnect?
 	}
@@ -64,7 +64,7 @@ void GameServer::onClientConnected(gameNet::SessionId sessionId, gameNet::Seat s
 		m_gameThread = std::thread([this] { m_game.run(); });
 
 		// TODO: Komi and timer not yet implemented.
-		m_server.broadcast(gameNet::ServerGameConfig{
+		m_server.broadcast(network::ServerGameConfig{
 		        .boardSize   = static_cast<unsigned>(m_game.boardSize()),
 		        .komi        = 6.5,
 		        .timeSeconds = 0u,
@@ -72,7 +72,7 @@ void GameServer::onClientConnected(gameNet::SessionId sessionId, gameNet::Seat s
 	}
 }
 
-void GameServer::onClientDisconnected(gameNet::SessionId sessionId) {
+void GameServer::onClientDisconnected(network::SessionId sessionId) {
 	// Not handled for now. No timing in game.
 	Logger().Log(Logging::LogLevel::Info, std::format("[GameServer] Client '{}' disconnected.", sessionId));
 	for (auto it = m_players.begin(); it != m_players.end(); ++it) {
@@ -83,50 +83,50 @@ void GameServer::onClientDisconnected(gameNet::SessionId sessionId) {
 	}
 }
 
-void GameServer::onNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientEvent& event) {
+void GameServer::onNetworkEvent(network::SessionId sessionId, const network::ClientEvent& event) {
 	std::visit(
 	        [&](const auto& e) {
 		        const auto seat = m_server.getSeat(sessionId);
-		        if (!gameNet::isPlayer(seat)) {
+		        if (!network::isPlayer(seat)) {
 			        Logger().Log(Logging::LogLevel::Warning, std::format("[GameServer] Ignoring event from non-player seat for session '{}'.", sessionId));
 			        return;
 		        }
 
-		        const auto player = seat == gameNet::Seat::Black ? Player::Black : Player::White;
+		        const auto player = seat == network::Seat::Black ? Player::Black : Player::White;
 		        handleNetworkEvent(player, e);
 	        },
 	        event);
 }
 
 void GameServer::onGameDelta(const GameDelta& delta) {
-	gameNet::ServerAction action = gameNet::ServerAction::Pass;
+	network::ServerAction action = network::ServerAction::Pass;
 	switch (delta.action) {
 	case GameAction::Place:
-		action = gameNet::ServerAction::Place;
+		action = network::ServerAction::Place;
 		break;
 	case GameAction::Pass:
-		action = gameNet::ServerAction::Pass;
+		action = network::ServerAction::Pass;
 		break;
 	case GameAction::Resign:
-		action = gameNet::ServerAction::Resign;
+		action = network::ServerAction::Resign;
 		break;
 	}
 
 	// TODO: Game status: Core cannot count territory yet so game not active is signaled as draw.
-	gameNet::ServerDelta updateEvent{
+	network::ServerDelta updateEvent{
 	        .turn     = delta.moveId,
-	        .seat     = delta.player == Player::Black ? gameNet::Seat::Black : gameNet::Seat::White,
+	        .seat     = delta.player == Player::Black ? network::Seat::Black : network::Seat::White,
 	        .action   = action,
 	        .coord    = delta.coord,
 	        .captures = delta.captures,
-	        .next     = delta.nextPlayer == Player::Black ? gameNet::Seat::Black : gameNet::Seat::White,
-	        .status   = delta.gameActive ? gameNet::GameStatus::Active : gameNet::GameStatus::Draw,
+	        .next     = delta.nextPlayer == Player::Black ? network::Seat::Black : network::Seat::White,
+	        .status   = delta.gameActive ? network::GameStatus::Active : network::GameStatus::Draw,
 	};
 
 	m_server.broadcast(updateEvent);
 }
 
-void GameServer::handleNetworkEvent(Player player, const gameNet::ClientPutStone& event) {
+void GameServer::handleNetworkEvent(Player player, const network::ClientPutStone& event) {
 	if (!m_game.isActive()) {
 		Logger().Log(Logging::LogLevel::Warning, "[GameServer] Rejecting PutStone: game is not active.");
 		return;
@@ -138,7 +138,7 @@ void GameServer::handleNetworkEvent(Player player, const gameNet::ClientPutStone
 	Logger().Log(Logging::LogLevel::Info, std::format(LOG_REC_PUT, static_cast<int>(player), move.x, move.y));
 }
 
-void GameServer::handleNetworkEvent(Player player, const gameNet::ClientPass&) {
+void GameServer::handleNetworkEvent(Player player, const network::ClientPass&) {
 	if (!m_game.isActive()) {
 		Logger().Log(Logging::LogLevel::Warning, "[GameServer] Rejecting Pass: game is not active.");
 		return;
@@ -148,7 +148,7 @@ void GameServer::handleNetworkEvent(Player player, const gameNet::ClientPass&) {
 	Logger().Log(Logging::LogLevel::Info, std::format(LOG_REC_PASS, static_cast<int>(player)));
 }
 
-void GameServer::handleNetworkEvent(Player player, const gameNet::ClientResign&) {
+void GameServer::handleNetworkEvent(Player player, const network::ClientResign&) {
 	if (!m_game.isActive()) {
 		Logger().Log(Logging::LogLevel::Warning, "[GameServer] Rejecting Resign: game already inactive.");
 		return;
@@ -158,9 +158,9 @@ void GameServer::handleNetworkEvent(Player player, const gameNet::ClientResign&)
 	Logger().Log(Logging::LogLevel::Info, std::format(LOG_REC_RESIGN, static_cast<int>(player)));
 }
 
-void GameServer::handleNetworkEvent(Player player, const gameNet::ClientChat& event) {
+void GameServer::handleNetworkEvent(Player player, const network::ClientChat& event) {
 	m_chatHistory.emplace_back(ChatEntry{player, event.message});
-	m_server.broadcast(gameNet::ServerChat{player, static_cast<unsigned>(m_chatHistory.size()), event.message});
+	m_server.broadcast(network::ServerChat{player, static_cast<unsigned>(m_chatHistory.size()), event.message});
 }
 
 } // namespace go::app

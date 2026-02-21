@@ -6,7 +6,7 @@
 #include <cstring>
 #include <thread>
 
-namespace go::gameNet {
+namespace go::network {
 
 class Client::Implementation {
 public:
@@ -34,7 +34,7 @@ private:
 	void handleNetworkEvent(const ServerChat& event);
 
 private:
-	network::TcpClient m_client;
+	core::TcpClient m_client;
 	std::atomic<bool> m_running{false}; //!< Read thread running.
 	std::thread m_readThread;
 
@@ -159,7 +159,7 @@ bool Client::registerHandler(IClientHandler* handler) {
 }
 
 bool Client::connect(const std::string& host) {
-	return m_pimpl->connect(host, network::DEFAULT_PORT);
+	return m_pimpl->connect(host, core::DEFAULT_PORT);
 }
 
 bool Client::connect(const std::string& host, std::uint16_t port) {

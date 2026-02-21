@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace go::gameNet {
+namespace go::network {
 
 using SessionId = std::uint32_t;
 

@@ -8,7 +8,7 @@
 #include <atomic>
 #include <thread>
 
-namespace go::gameNet {
+namespace go::network {
 
 class Server::Implementation {
 public:
@@ -31,9 +31,9 @@ private:
 
 private:
 	// Network callbacks (run on libNetwork threads) just enqueue events.
-	void onClientConnected(network::ConnectionId connectionId);
-	void onClientMessage(network::ConnectionId connectionId, const network::Message& payload);
-	void onClientDisconnected(network::ConnectionId connectionId);
+	void onClientConnected(core::ConnectionId connectionId);
+	void onClientMessage(core::ConnectionId connectionId, const core::Message& payload);
+	void onClientDisconnected(core::ConnectionId connectionId);
 
 private:
 	// Processing of server events.
@@ -47,7 +47,7 @@ private:
 	std::thread m_serverThread;
 
 	SessionManager m_sessionManager;
-	network::TcpServer m_network;
+	core::TcpServer m_network;
 
 	IServerHandler* m_handler{nullptr};       //!< The class that will handle server events.
 	SafeQueue<ServerQueueEvent> m_eventQueue; //!< Event queue between network threads and server thread.
@@ -55,10 +55,10 @@ private:
 
 Server::Implementation::Implementation(std::uint16_t port) : m_network{port} {
 	// Wire up network callbacks but keep them thin: they only enqueue events.
-	network::TcpServer::Callbacks callbacks;
-	callbacks.onConnect    = [this](network::ConnectionId connectionId) { return onClientConnected(connectionId); };
-	callbacks.onMessage    = [this](network::ConnectionId connectionId, const network::Message& payload) { return onClientMessage(connectionId, payload); };
-	callbacks.onDisconnect = [this](network::ConnectionId connectionId) { onClientDisconnected(connectionId); };
+	core::TcpServer::Callbacks callbacks;
+	callbacks.onConnect    = [this](core::ConnectionId connectionId) { return onClientConnected(connectionId); };
+	callbacks.onMessage    = [this](core::ConnectionId connectionId, const core::Message& payload) { return onClientMessage(connectionId, payload); };
+	callbacks.onDisconnect = [this](core::ConnectionId connectionId) { onClientDisconnected(connectionId); };
 	m_network.connect(callbacks);
 }
 
@@ -133,11 +133,11 @@ Seat Server::Implementation::getSeat(SessionId sessionId) const {
 	return m_sessionManager.getSeat(sessionId);
 }
 
-void Server::Implementation::onClientConnected(network::ConnectionId connectionId) {
+void Server::Implementation::onClientConnected(core::ConnectionId connectionId) {
 	m_eventQueue.Push(ServerQueueEvent{.type = ServerQueueEventType::ClientConnected, .connectionId = connectionId});
 }
 
-void Server::Implementation::onClientMessage(network::ConnectionId connectionId, const network::Message& payload) {
+void Server::Implementation::onClientMessage(core::ConnectionId connectionId, const core::Message& payload) {
 	m_eventQueue.Push(ServerQueueEvent{
 	        .type         = ServerQueueEventType::ClientMessage,
 	        .connectionId = connectionId,
@@ -145,7 +145,7 @@ void Server::Implementation::onClientMessage(network::ConnectionId connectionId,
 	});
 }
 
-void Server::Implementation::onClientDisconnected(network::ConnectionId connectionId) {
+void Server::Implementation::onClientDisconnected(core::ConnectionId connectionId) {
 	m_eventQueue.Push(ServerQueueEvent{.type = ServerQueueEventType::ClientDisconnected, .connectionId = connectionId});
 }
 
@@ -205,7 +205,7 @@ void Server::Implementation::processClientMessage(const ServerQueueEvent& event)
 	}
 
 	// Server event message contains a network event. Parse and handle.
-	const auto networkEvent = gameNet::fromClientMessage(event.payload);
+	const auto networkEvent = network::fromClientMessage(event.payload);
 	if (!networkEvent) {
 		return;
 	}
@@ -246,7 +246,7 @@ Seat Server::Implementation::freeSeat() const {
 }
 
 
-Server::Server() : m_pimpl(std::make_unique<Implementation>(network::DEFAULT_PORT)) {
+Server::Server() : m_pimpl(std::make_unique<Implementation>(core::DEFAULT_PORT)) {
 }
 
 Server::Server(std::uint16_t port) : m_pimpl(std::make_unique<Implementation>(port)) {

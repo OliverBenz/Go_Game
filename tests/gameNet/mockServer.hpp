@@ -6,27 +6,27 @@
 
 namespace go::gtest {
 
-class MockServer : public gameNet::IServerHandler {
+class MockServer : public network::IServerHandler {
 public:
 	MockServer();
 	~MockServer();
 
-	void onClientConnected(gameNet::SessionId sessionId, gameNet::Seat seat) override;
-	void onClientDisconnected(gameNet::SessionId sessionId) override;
-	void onNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientEvent& event) override;
+	void onClientConnected(network::SessionId sessionId, network::Seat seat) override;
+	void onClientDisconnected(network::SessionId sessionId) override;
+	void onNetworkEvent(network::SessionId sessionId, const network::ClientEvent& event) override;
 
 	// Handlers for onNetworkEvent
 private:
-	void handleNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientPutStone& event);
-	void handleNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientPass&);
-	void handleNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientResign&);
-	void handleNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientChat& event);
+	void handleNetworkEvent(network::SessionId sessionId, const network::ClientPutStone& event);
+	void handleNetworkEvent(network::SessionId sessionId, const network::ClientPass&);
+	void handleNetworkEvent(network::SessionId sessionId, const network::ClientResign&);
+	void handleNetworkEvent(network::SessionId sessionId, const network::ClientChat& event);
 
 private:
-	gameNet::Seat nextSeat(gameNet::Seat seat) const;
+	network::Seat nextSeat(network::Seat seat) const;
 
 private:
-	gameNet::Server m_network;
+	network::Server m_network;
 	unsigned m_turn{0u};
 };
 

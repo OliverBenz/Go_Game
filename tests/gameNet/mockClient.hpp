@@ -4,7 +4,7 @@
 
 namespace go::gtest {
 
-class MockClient : public gameNet::IClientHandler {
+class MockClient : public network::IClientHandler {
 public:
 	MockClient();
 	~MockClient();
@@ -14,13 +14,13 @@ public:
 	void tryPlace(unsigned x, unsigned y);
 
 public:
-	void onGameUpdate(const gameNet::ServerDelta& event) override;
-	void onGameConfig(const gameNet::ServerGameConfig& event) override;
-	void onChatMessage(const gameNet::ServerChat& event) override;
+	void onGameUpdate(const network::ServerDelta& event) override;
+	void onGameConfig(const network::ServerGameConfig& event) override;
+	void onChatMessage(const network::ServerChat& event) override;
 	void onDisconnected() override;
 
 private:
-	gameNet::Client m_network;
+	network::Client m_network;
 };
 
 } // namespace go::gtest

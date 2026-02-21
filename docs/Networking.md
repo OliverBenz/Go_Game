@@ -11,8 +11,8 @@ The server is authoritative. Clients send intent; server sends facts.
 
 ### Components
 
-- **Server**: `gameNet::Server` running in the server executable. Forwards client events to the game loop and broadcasts deltas/updates to clients.
-- **Clients**: `gameNet::Client` used by the GUI. Sends move intents and applies server updates.
+- **Server**: `network::Server` running in the server executable. Forwards client events to the game loop and broadcasts deltas/updates to clients.
+- **Clients**: `network::Client` used by the GUI. Sends move intents and applies server updates.
 - **Observers**: same client type, just a different seat.
 
 ### Data Flow (happy path)

@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <memory>
 
-namespace go::gameNet {
+namespace go::network {
 
 //! Callback interface invoked on the server's processing thread.
 //! \note Keep handlers lightweight.

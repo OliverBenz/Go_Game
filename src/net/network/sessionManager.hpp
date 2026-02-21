@@ -6,10 +6,10 @@
 #include <functional>
 #include <unordered_map>
 
-namespace go::gameNet {
+namespace go::network {
 
 struct SessionContext {
-	network::ConnectionId connectionId; //!< Identify connection on network layer.
+	core::ConnectionId connectionId; //!< Identify connection on network layer.
 	SessionId sessionId;                //!< Identify connection on application layer.
 
 	Seat seat;     //!< Role in the game.
@@ -18,12 +18,12 @@ struct SessionContext {
 
 class SessionManager {
 public:
-	SessionId add(network::ConnectionId connectionId); //!< Register a new session.
+	SessionId add(core::ConnectionId connectionId); //!< Register a new session.
 	void remove(SessionId sessionId);                  //!< Remove a session context.
 
-	SessionId getSessionId(network::ConnectionId connectionId) const; //!< Get sessionId connected with a connection.
-	network::ConnectionId getConnectionId(SessionId sessionId) const; //!< Get connectionId connected with a sessionId.
-	network::ConnectionId getConnectionIdBySeat(Seat seat) const;     //!< Get connectionId for an active seat.
+	SessionId getSessionId(core::ConnectionId connectionId) const; //!< Get sessionId connected with a connection.
+	core::ConnectionId getConnectionId(SessionId sessionId) const; //!< Get connectionId connected with a sessionId.
+	core::ConnectionId getConnectionIdBySeat(Seat seat) const;     //!< Get connectionId for an active seat.
 
 	Seat getSeat(SessionId sessionId) const;
 	void setSeat(SessionId sessionId, Seat seat); //!< Set the seat of a session.
@@ -38,7 +38,7 @@ private:
 private:
 	// Note: This manager is used from the server processing thread only.
 	std::unordered_map<SessionId, SessionContext> m_sessions;
-	std::unordered_map<network::ConnectionId, SessionId> m_connectionToSession;
+	std::unordered_map<core::ConnectionId, SessionId> m_connectionToSession;
 };
 
 } // namespace go::gameNet

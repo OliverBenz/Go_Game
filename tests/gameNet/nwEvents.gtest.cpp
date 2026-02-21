@@ -10,118 +10,118 @@ namespace go::gtest {
 TEST(GameNetMessages, ClientToMessage) {
 	using nlohmann::json;
 
-	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ClientPutStone{.c = {1u, 2u}})), json({{"type", "put"}, {"x", 1u}, {"y", 2u}}));
-	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ClientPass{})), json({{"type", "pass"}}));
-	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ClientResign{})), json({{"type", "resign"}}));
-	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ClientChat{"hello"})), json({{"type", "chat"}, {"message", "hello"}}));
+	EXPECT_EQ(json::parse(network::toMessage(network::ClientPutStone{.c = {1u, 2u}})), json({{"type", "put"}, {"x", 1u}, {"y", 2u}}));
+	EXPECT_EQ(json::parse(network::toMessage(network::ClientPass{})), json({{"type", "pass"}}));
+	EXPECT_EQ(json::parse(network::toMessage(network::ClientResign{})), json({{"type", "resign"}}));
+	EXPECT_EQ(json::parse(network::toMessage(network::ClientChat{"hello"})), json({{"type", "chat"}, {"message", "hello"}}));
 }
 
 TEST(GameNetMessages, ClientFromMessageValid) {
-	const auto put = gameNet::fromClientMessage(R"({"type":"put","x":3,"y":4})");
+	const auto put = network::fromClientMessage(R"({"type":"put","x":3,"y":4})");
 	ASSERT_TRUE(put.has_value());
-	ASSERT_TRUE(std::holds_alternative<gameNet::ClientPutStone>(*put));
-	const auto putEvent = std::get<gameNet::ClientPutStone>(*put);
+	ASSERT_TRUE(std::holds_alternative<network::ClientPutStone>(*put));
+	const auto putEvent = std::get<network::ClientPutStone>(*put);
 	EXPECT_EQ(putEvent.c.x, 3u);
 	EXPECT_EQ(putEvent.c.y, 4u);
 
-	const auto pass = gameNet::fromClientMessage(R"({"type":"pass"})");
+	const auto pass = network::fromClientMessage(R"({"type":"pass"})");
 	ASSERT_TRUE(pass.has_value());
-	EXPECT_TRUE(std::holds_alternative<gameNet::ClientPass>(*pass));
+	EXPECT_TRUE(std::holds_alternative<network::ClientPass>(*pass));
 
-	const auto resign = gameNet::fromClientMessage(R"({"type":"resign"})");
+	const auto resign = network::fromClientMessage(R"({"type":"resign"})");
 	ASSERT_TRUE(resign.has_value());
-	EXPECT_TRUE(std::holds_alternative<gameNet::ClientResign>(*resign));
+	EXPECT_TRUE(std::holds_alternative<network::ClientResign>(*resign));
 
-	const auto chat = gameNet::fromClientMessage(R"({"type":"chat","message":"hello"})");
+	const auto chat = network::fromClientMessage(R"({"type":"chat","message":"hello"})");
 	ASSERT_TRUE(chat.has_value());
-	ASSERT_TRUE(std::holds_alternative<gameNet::ClientChat>(*chat));
-	EXPECT_EQ(std::get<gameNet::ClientChat>(*chat).message, "hello");
+	ASSERT_TRUE(std::holds_alternative<network::ClientChat>(*chat));
+	EXPECT_EQ(std::get<network::ClientChat>(*chat).message, "hello");
 }
 
 TEST(GameNetMessages, ClientFromMessageInvalid) {
-	EXPECT_FALSE(gameNet::fromClientMessage(R"({"type":"put","x":1})").has_value());
-	EXPECT_FALSE(gameNet::fromClientMessage(R"({"type":"put","x":"1","y":2})").has_value());
-	EXPECT_FALSE(gameNet::fromClientMessage(R"({"type":"chat"})").has_value());
-	EXPECT_FALSE(gameNet::fromClientMessage(R"({"type":"unknown"})").has_value());
-	EXPECT_FALSE(gameNet::fromClientMessage("not-json").has_value());
+	EXPECT_FALSE(network::fromClientMessage(R"({"type":"put","x":1})").has_value());
+	EXPECT_FALSE(network::fromClientMessage(R"({"type":"put","x":"1","y":2})").has_value());
+	EXPECT_FALSE(network::fromClientMessage(R"({"type":"chat"})").has_value());
+	EXPECT_FALSE(network::fromClientMessage(R"({"type":"unknown"})").has_value());
+	EXPECT_FALSE(network::fromClientMessage("not-json").has_value());
 }
 
 TEST(GameNetMessages, ServerToMessage) {
 	using nlohmann::json;
 
-	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ServerSessionAssign{1u})), json({{"type", "session"}, {"sessionId", 1u}}));
+	EXPECT_EQ(json::parse(network::toMessage(network::ServerSessionAssign{1u})), json({{"type", "session"}, {"sessionId", 1u}}));
 
-	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ServerGameConfig{.boardSize = 19u, .komi = 6.5, .timeSeconds = 0u})),
+	EXPECT_EQ(json::parse(network::toMessage(network::ServerGameConfig{.boardSize = 19u, .komi = 6.5, .timeSeconds = 0u})),
 	          json({{"type", "config"}, {"boardSize", 19u}, {"komi", 6.5}, {"time", 0u}}));
 
-	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ServerDelta{
+	EXPECT_EQ(json::parse(network::toMessage(network::ServerDelta{
 	                  .turn     = 42u,
-	                  .seat     = gameNet::Seat::Black,
-	                  .action   = gameNet::ServerAction::Place,
+	                  .seat     = network::Seat::Black,
+	                  .action   = network::ServerAction::Place,
 	                  .coord    = Coord{3u, 4u},
 	                  .captures = {Coord{1u, 2u}, Coord{5u, 6u}},
-	                  .next     = gameNet::Seat::White,
-	                  .status   = gameNet::GameStatus::Active,
+	                  .next     = network::Seat::White,
+	                  .status   = network::GameStatus::Active,
 	          })),
 	          json({{"type", "delta"},
 	                {"turn", 42u},
-	                {"seat", static_cast<unsigned>(gameNet::Seat::Black)},
-	                {"action", static_cast<unsigned>(gameNet::ServerAction::Place)},
-	                {"next", static_cast<unsigned>(gameNet::Seat::White)},
-	                {"status", static_cast<unsigned>(gameNet::GameStatus::Active)},
+	                {"seat", static_cast<unsigned>(network::Seat::Black)},
+	                {"action", static_cast<unsigned>(network::ServerAction::Place)},
+	                {"next", static_cast<unsigned>(network::Seat::White)},
+	                {"status", static_cast<unsigned>(network::GameStatus::Active)},
 	                {"x", 3u},
 	                {"y", 4u},
 	                {"captures", json::array({json::array({1u, 2u}), json::array({5u, 6u})})}}));
 
-	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ServerDelta{
+	EXPECT_EQ(json::parse(network::toMessage(network::ServerDelta{
 	                  .turn     = 43u,
-	                  .seat     = gameNet::Seat::White,
-	                  .action   = gameNet::ServerAction::Pass,
+	                  .seat     = network::Seat::White,
+	                  .action   = network::ServerAction::Pass,
 	                  .coord    = std::nullopt,
 	                  .captures = {},
-	                  .next     = gameNet::Seat::Black,
-	                  .status   = gameNet::GameStatus::Active,
+	                  .next     = network::Seat::Black,
+	                  .status   = network::GameStatus::Active,
 	          })),
 	          json({{"type", "delta"},
 	                {"turn", 43u},
-	                {"seat", static_cast<unsigned>(gameNet::Seat::White)},
-	                {"action", static_cast<unsigned>(gameNet::ServerAction::Pass)},
-	                {"next", static_cast<unsigned>(gameNet::Seat::Black)},
-	                {"status", static_cast<unsigned>(gameNet::GameStatus::Active)}}));
+	                {"seat", static_cast<unsigned>(network::Seat::White)},
+	                {"action", static_cast<unsigned>(network::ServerAction::Pass)},
+	                {"next", static_cast<unsigned>(network::Seat::Black)},
+	                {"status", static_cast<unsigned>(network::GameStatus::Active)}}));
 
-	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ServerDelta{
+	EXPECT_EQ(json::parse(network::toMessage(network::ServerDelta{
 	                  .turn     = 44u,
-	                  .seat     = gameNet::Seat::Black,
-	                  .action   = gameNet::ServerAction::Resign,
+	                  .seat     = network::Seat::Black,
+	                  .action   = network::ServerAction::Resign,
 	                  .coord    = std::nullopt,
 	                  .captures = {},
-	                  .next     = gameNet::Seat::White,
-	                  .status   = gameNet::GameStatus::WhiteWin,
+	                  .next     = network::Seat::White,
+	                  .status   = network::GameStatus::WhiteWin,
 	          })),
 	          json({{"type", "delta"},
 	                {"turn", 44u},
-	                {"seat", static_cast<unsigned>(gameNet::Seat::Black)},
-	                {"action", static_cast<unsigned>(gameNet::ServerAction::Resign)},
-	                {"next", static_cast<unsigned>(gameNet::Seat::White)},
-	                {"status", static_cast<unsigned>(gameNet::GameStatus::WhiteWin)}}));
+	                {"seat", static_cast<unsigned>(network::Seat::Black)},
+	                {"action", static_cast<unsigned>(network::ServerAction::Resign)},
+	                {"next", static_cast<unsigned>(network::Seat::White)},
+	                {"status", static_cast<unsigned>(network::GameStatus::WhiteWin)}}));
 
-	EXPECT_EQ(json::parse(gameNet::toMessage(gameNet::ServerChat{Player::White, 0u, "hi"})),
+	EXPECT_EQ(json::parse(network::toMessage(network::ServerChat{Player::White, 0u, "hi"})),
 	          json({{"type", "chat"}, {"player", static_cast<unsigned>(Player::White)}, {"messageId", 0}, {"message", "hi"}}));
 }
 
 TEST(GameNetMessages, ServerFromMessageValid) {
-	const auto session = gameNet::fromServerMessage(R"({"type":"session","sessionId":42})");
+	const auto session = network::fromServerMessage(R"({"type":"session","sessionId":42})");
 	ASSERT_TRUE(session.has_value());
-	ASSERT_TRUE(std::holds_alternative<gameNet::ServerSessionAssign>(*session));
-	EXPECT_EQ(std::get<gameNet::ServerSessionAssign>(*session).sessionId, 42u);
+	ASSERT_TRUE(std::holds_alternative<network::ServerSessionAssign>(*session));
+	EXPECT_EQ(std::get<network::ServerSessionAssign>(*session).sessionId, 42u);
 
-	const auto delta = gameNet::fromServerMessage(R"({"type":"delta","turn":7,"seat":2,"action":0,"x":1,"y":2,"captures":[[3,4],[5,6]],"next":4,"status":0})");
+	const auto delta = network::fromServerMessage(R"({"type":"delta","turn":7,"seat":2,"action":0,"x":1,"y":2,"captures":[[3,4],[5,6]],"next":4,"status":0})");
 	ASSERT_TRUE(delta.has_value());
-	ASSERT_TRUE(std::holds_alternative<gameNet::ServerDelta>(*delta));
-	const auto deltaEvent = std::get<gameNet::ServerDelta>(*delta);
+	ASSERT_TRUE(std::holds_alternative<network::ServerDelta>(*delta));
+	const auto deltaEvent = std::get<network::ServerDelta>(*delta);
 	EXPECT_EQ(deltaEvent.turn, 7u);
-	EXPECT_EQ(deltaEvent.seat, gameNet::Seat::Black);
-	EXPECT_EQ(deltaEvent.action, gameNet::ServerAction::Place);
+	EXPECT_EQ(deltaEvent.seat, network::Seat::Black);
+	EXPECT_EQ(deltaEvent.action, network::ServerAction::Place);
 	ASSERT_TRUE(deltaEvent.coord.has_value());
 	EXPECT_EQ(deltaEvent.coord->x, 1u);
 	EXPECT_EQ(deltaEvent.coord->y, 2u);
@@ -130,66 +130,66 @@ TEST(GameNetMessages, ServerFromMessageValid) {
 	EXPECT_EQ(deltaEvent.captures[0].y, 4u);
 	EXPECT_EQ(deltaEvent.captures[1].x, 5u);
 	EXPECT_EQ(deltaEvent.captures[1].y, 6u);
-	EXPECT_EQ(deltaEvent.next, gameNet::Seat::White);
-	EXPECT_EQ(deltaEvent.status, gameNet::GameStatus::Active);
+	EXPECT_EQ(deltaEvent.next, network::Seat::White);
+	EXPECT_EQ(deltaEvent.status, network::GameStatus::Active);
 
-	const auto passDelta = gameNet::fromServerMessage(R"({"type":"delta","turn":8,"seat":4,"action":1,"next":2,"status":0})");
+	const auto passDelta = network::fromServerMessage(R"({"type":"delta","turn":8,"seat":4,"action":1,"next":2,"status":0})");
 	ASSERT_TRUE(passDelta.has_value());
-	ASSERT_TRUE(std::holds_alternative<gameNet::ServerDelta>(*passDelta));
-	const auto passEvent = std::get<gameNet::ServerDelta>(*passDelta);
-	EXPECT_EQ(passEvent.action, gameNet::ServerAction::Pass);
+	ASSERT_TRUE(std::holds_alternative<network::ServerDelta>(*passDelta));
+	const auto passEvent = std::get<network::ServerDelta>(*passDelta);
+	EXPECT_EQ(passEvent.action, network::ServerAction::Pass);
 	EXPECT_FALSE(passEvent.coord.has_value());
 	EXPECT_TRUE(passEvent.captures.empty());
 
-	const auto chat = gameNet::fromServerMessage(R"({"type":"chat","player":2,"messageId":0,"message":"hello,world"})");
+	const auto chat = network::fromServerMessage(R"({"type":"chat","player":2,"messageId":0,"message":"hello,world"})");
 	ASSERT_TRUE(chat.has_value());
-	ASSERT_TRUE(std::holds_alternative<gameNet::ServerChat>(*chat));
-	const auto chatEvent = std::get<gameNet::ServerChat>(*chat);
+	ASSERT_TRUE(std::holds_alternative<network::ServerChat>(*chat));
+	const auto chatEvent = std::get<network::ServerChat>(*chat);
 	EXPECT_EQ(chatEvent.player, Player::White);
 	EXPECT_EQ(chatEvent.messageId, 0u);
 	EXPECT_EQ(chatEvent.message, "hello,world");
 
-	const auto config = gameNet::fromServerMessage(R"({"type":"config","boardSize":13,"komi":6.5,"time":300})");
+	const auto config = network::fromServerMessage(R"({"type":"config","boardSize":13,"komi":6.5,"time":300})");
 	ASSERT_TRUE(config.has_value());
-	ASSERT_TRUE(std::holds_alternative<gameNet::ServerGameConfig>(*config));
-	const auto configEvent = std::get<gameNet::ServerGameConfig>(*config);
+	ASSERT_TRUE(std::holds_alternative<network::ServerGameConfig>(*config));
+	const auto configEvent = std::get<network::ServerGameConfig>(*config);
 	EXPECT_EQ(configEvent.boardSize, 13u);
 	EXPECT_DOUBLE_EQ(configEvent.komi, 6.5);
 	EXPECT_EQ(configEvent.timeSeconds, 300u);
 }
 
 TEST(GameNetMessages, ServerFromMessageInvalid) {
-	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"session"})").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"config","boardSize":9,"komi":"bad","time":0})").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"config","boardSize":9,"komi":6.5})").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"config","komi":6.5,"time":0})").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":0,"next":4,"status":0})").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":0,"x":1,"y":"2","next":4,"status":0})").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":99,"next":4,"status":0})").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":0,"x":1,"y":2,"captures":"bad","next":4,"status":0})").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":0,"x":1,"y":2,"captures":[[1]],"next":4,"status":0})").has_value());
+	EXPECT_FALSE(network::fromServerMessage(R"({"type":"session"})").has_value());
+	EXPECT_FALSE(network::fromServerMessage(R"({"type":"config","boardSize":9,"komi":"bad","time":0})").has_value());
+	EXPECT_FALSE(network::fromServerMessage(R"({"type":"config","boardSize":9,"komi":6.5})").has_value());
+	EXPECT_FALSE(network::fromServerMessage(R"({"type":"config","komi":6.5,"time":0})").has_value());
+	EXPECT_FALSE(network::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":0,"next":4,"status":0})").has_value());
+	EXPECT_FALSE(network::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":0,"x":1,"y":"2","next":4,"status":0})").has_value());
+	EXPECT_FALSE(network::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":99,"next":4,"status":0})").has_value());
+	EXPECT_FALSE(network::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":0,"x":1,"y":2,"captures":"bad","next":4,"status":0})").has_value());
+	EXPECT_FALSE(network::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":0,"x":1,"y":2,"captures":[[1]],"next":4,"status":0})").has_value());
 	EXPECT_FALSE(
-	        gameNet::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":0,"x":1,"y":2,"captures":[[1,"a"]],"next":4,"status":0})").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":1,"x":1,"next":4,"status":0})").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":1,"captures":[[1,1]],"next":4,"status":0})").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":1,"next":4,"status":99})").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"delta","turn":1,"seat":0,"action":1,"next":4,"status":0})").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":1,"next":0,"status":0})").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage(R"({"type":"chat","seat":0,"message":"hi"})").has_value());
-	EXPECT_FALSE(gameNet::fromServerMessage("not-json").has_value());
+	        network::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":0,"x":1,"y":2,"captures":[[1,"a"]],"next":4,"status":0})").has_value());
+	EXPECT_FALSE(network::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":1,"x":1,"next":4,"status":0})").has_value());
+	EXPECT_FALSE(network::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":1,"captures":[[1,1]],"next":4,"status":0})").has_value());
+	EXPECT_FALSE(network::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":1,"next":4,"status":99})").has_value());
+	EXPECT_FALSE(network::fromServerMessage(R"({"type":"delta","turn":1,"seat":0,"action":1,"next":4,"status":0})").has_value());
+	EXPECT_FALSE(network::fromServerMessage(R"({"type":"delta","turn":1,"seat":2,"action":1,"next":0,"status":0})").has_value());
+	EXPECT_FALSE(network::fromServerMessage(R"({"type":"chat","seat":0,"message":"hi"})").has_value());
+	EXPECT_FALSE(network::fromServerMessage("not-json").has_value());
 }
 
 TEST(GameNetMessages, ServerDeltaOmitsEmptyFields) {
 	using nlohmann::json;
 
-	const auto message = gameNet::toMessage(gameNet::ServerDelta{
+	const auto message = network::toMessage(network::ServerDelta{
 	        .turn     = 9u,
-	        .seat     = gameNet::Seat::Black,
-	        .action   = gameNet::ServerAction::Pass,
+	        .seat     = network::Seat::Black,
+	        .action   = network::ServerAction::Pass,
 	        .coord    = std::nullopt,
 	        .captures = {},
-	        .next     = gameNet::Seat::White,
-	        .status   = gameNet::GameStatus::Active,
+	        .next     = network::Seat::White,
+	        .status   = network::GameStatus::Active,
 	});
 	const auto j       = json::parse(message);
 	EXPECT_FALSE(j.contains("x"));
@@ -200,14 +200,14 @@ TEST(GameNetMessages, ServerDeltaOmitsEmptyFields) {
 #if GTEST_HAS_DEATH_TEST
 TEST(GameNetMessages, ServerDeltaMissingXYSerialization) {
 	const auto build = [] {
-		gameNet::toMessage(gameNet::ServerDelta{
+		network::toMessage(network::ServerDelta{
 		        .turn     = 1u,
-		        .seat     = gameNet::Seat::Black,
-		        .action   = gameNet::ServerAction::Place,
+		        .seat     = network::Seat::Black,
+		        .action   = network::ServerAction::Place,
 		        .coord    = std::nullopt,
 		        .captures = {},
-		        .next     = gameNet::Seat::White,
-		        .status   = gameNet::GameStatus::Active,
+		        .next     = network::Seat::White,
+		        .status   = network::GameStatus::Active,
 		});
 	};
 	EXPECT_DEATH(build(), "ServerDelta::Place requires coord");

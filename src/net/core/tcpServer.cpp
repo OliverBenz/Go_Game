@@ -13,7 +13,7 @@
 #include <unordered_map>
 #include <utility>
 
-namespace go::network {
+namespace go::network::core {
 
 static ConnectionId CONN_ID = 1u;
 

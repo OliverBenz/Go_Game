@@ -12,9 +12,9 @@
 
 namespace go::gtest {
 
-class TestClientHandler final : public gameNet::IClientHandler {
+class TestClientHandler final : public network::IClientHandler {
 public:
-	void onGameUpdate(const gameNet::ServerDelta& event) override {
+	void onGameUpdate(const network::ServerDelta& event) override {
 		{
 			std::lock_guard<std::mutex> lock(m_mutex);
 			m_lastDelta = event;
@@ -22,10 +22,10 @@ public:
 		m_cv.notify_all();
 	}
 
-	void onGameConfig(const gameNet::ServerGameConfig&) override {
+	void onGameConfig(const network::ServerGameConfig&) override {
 	}
 
-	void onChatMessage(const gameNet::ServerChat&) override {
+	void onChatMessage(const network::ServerChat&) override {
 	}
 
 	void onDisconnected() override {
@@ -34,7 +34,7 @@ public:
 		m_cv.notify_all();
 	}
 
-	bool waitForDelta(std::chrono::milliseconds timeout, gameNet::ServerDelta& out) {
+	bool waitForDelta(std::chrono::milliseconds timeout, network::ServerDelta& out) {
 		std::unique_lock<std::mutex> lock(m_mutex);
 		if (!m_cv.wait_for(lock, timeout, [&] { return m_lastDelta.has_value() || m_disconnected; })) {
 			return false;
@@ -49,66 +49,66 @@ public:
 private:
 	std::mutex m_mutex;
 	std::condition_variable m_cv;
-	std::optional<gameNet::ServerDelta> m_lastDelta;
+	std::optional<network::ServerDelta> m_lastDelta;
 	bool m_disconnected{false};
 };
 
-class TestServerHandler final : public gameNet::IServerHandler {
+class TestServerHandler final : public network::IServerHandler {
 public:
-	explicit TestServerHandler(gameNet::Server& server) : m_server(server) {
+	explicit TestServerHandler(network::Server& server) : m_server(server) {
 	}
 
-	void onClientConnected(gameNet::SessionId, gameNet::Seat) override {
+	void onClientConnected(network::SessionId, network::Seat) override {
 	}
 
-	void onClientDisconnected(gameNet::SessionId) override {
+	void onClientDisconnected(network::SessionId) override {
 	}
 
-	void onNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientEvent& event) override {
+	void onNetworkEvent(network::SessionId sessionId, const network::ClientEvent& event) override {
 		std::visit([&](const auto& e) { handleEvent(sessionId, e); }, event);
 	}
 
 private:
-	void handleEvent(gameNet::SessionId sessionId, const gameNet::ClientPutStone& event) {
+	void handleEvent(network::SessionId sessionId, const network::ClientPutStone& event) {
 		const auto seat = m_server.getSeat(sessionId);
-		if (!gameNet::isPlayer(seat)) {
+		if (!network::isPlayer(seat)) {
 			return;
 		}
 
 		const auto moveId = ++m_turn;
-		const auto next   = seat == gameNet::Seat::Black ? gameNet::Seat::White : gameNet::Seat::Black;
+		const auto next   = seat == network::Seat::Black ? network::Seat::White : network::Seat::Black;
 
-		gameNet::ServerDelta delta{
+		network::ServerDelta delta{
 		        .turn     = moveId,
 		        .seat     = seat,
-		        .action   = gameNet::ServerAction::Place,
+		        .action   = network::ServerAction::Place,
 		        .coord    = event.c,
 		        .captures = {},
 		        .next     = next,
-		        .status   = gameNet::GameStatus::Active,
+		        .status   = network::GameStatus::Active,
 		};
 
 		m_server.broadcast(delta);
 	}
 
 	template <typename T>
-	void handleEvent(gameNet::SessionId, const T&) {
+	void handleEvent(network::SessionId, const T&) {
 	}
 
-	gameNet::Server& m_server;
+	network::Server& m_server;
 	std::atomic<unsigned> m_turn{0};
 };
 
 TEST(Networking, ServerDeltaFromPutStone) {
 	constexpr std::uint16_t kPort = 12346;
 
-	gameNet::Server server{kPort};
+	network::Server server{kPort};
 	TestServerHandler serverHandler(server);
 	ASSERT_TRUE(server.registerHandler(&serverHandler));
 	server.start();
 
-	gameNet::Client client1;
-	gameNet::Client client2;
+	network::Client client1;
+	network::Client client2;
 	TestClientHandler handler1;
 	TestClientHandler handler2;
 
@@ -121,21 +121,21 @@ TEST(Networking, ServerDeltaFromPutStone) {
 	std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
 	// Player 1 places a stone. Valid move
-	ASSERT_TRUE(client1.send(gameNet::ClientPutStone{1u, 2u}));
+	ASSERT_TRUE(client1.send(network::ClientPutStone{1u, 2u}));
 
 	// Player 2 recives the delta
-	gameNet::ServerDelta delta{};
+	network::ServerDelta delta{};
 	ASSERT_TRUE(handler2.waitForDelta(std::chrono::milliseconds(300), delta));
 
 	EXPECT_EQ(delta.turn, 1u);
-	EXPECT_EQ(delta.seat, gameNet::Seat::Black);
-	EXPECT_EQ(delta.action, gameNet::ServerAction::Place);
+	EXPECT_EQ(delta.seat, network::Seat::Black);
+	EXPECT_EQ(delta.action, network::ServerAction::Place);
 	ASSERT_TRUE(delta.coord.has_value());
 	EXPECT_EQ(delta.coord->x, 1u);
 	EXPECT_EQ(delta.coord->y, 2u);
 	EXPECT_EQ(delta.captures.size(), 0u);
-	EXPECT_EQ(delta.next, gameNet::Seat::White);
-	EXPECT_EQ(delta.status, gameNet::GameStatus::Active);
+	EXPECT_EQ(delta.next, network::Seat::White);
+	EXPECT_EQ(delta.status, network::GameStatus::Active);
 
 	client1.disconnect();
 	client2.disconnect();
