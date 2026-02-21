@@ -1,5 +1,5 @@
-#include "network/tcpClient.hpp"
-#include "network/protocol.hpp"
+#include "network/core/tcpClient.hpp"
+#include "network/core/protocol.hpp"
 
 #include <asio.hpp>
 #include <asio/connect.hpp>
@@ -8,7 +8,6 @@
 
 #include <array>
 #include <optional>
-#include <utility>
 
 namespace go {
 namespace network {

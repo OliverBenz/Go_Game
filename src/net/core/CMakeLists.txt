@@ -2,9 +2,9 @@ set(targetName netCore)
 
 # Get files to build
 set(headers
-    "${CMAKE_CURRENT_LIST_DIR}/include/network/protocol.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/include/network/tcpServer.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/include/network/tcpClient.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/network/core/protocol.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/network/core/tcpServer.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/network/core/tcpClient.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/connection.hpp"
 )
 

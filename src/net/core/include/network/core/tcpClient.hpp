@@ -1,6 +1,6 @@
 #pragma once
 
-#include "network/protocol.hpp"
+#include "network/core/protocol.hpp"
 
 #include <cstdint>
 #include <memory>
