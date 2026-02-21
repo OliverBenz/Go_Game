@@ -26,10 +26,11 @@ add_library(go::camera ALIAS ${targetName})
 target_include_directories(${targetName}
     PUBLIC
         "${CMAKE_CURRENT_LIST_DIR}/include"
+		${OpenCV_INCLUDE_DIRS}
 )
-
-target_include_directories(${targetName} PUBLIC ${OpenCV_INCLUDE_DIRS})
-target_link_libraries(${targetName} PUBLIC ${OpenCV_LIBS})
+target_link_libraries(${targetName}
+	PUBLIC ${OpenCV_LIBS}
+)
 
 # Setup project settings
 # set_project_warnings(${targetName})  # Which warnings to enable
@@ -38,21 +39,6 @@ set_output_directory(${targetName})  # Set the output directory of the library
 
 # Specify version
 target_compile_definitions(${targetName} PUBLIC VERSION_MAJOR=0)
-target_compile_definitions(${targetName} PUBLIC VERSION_MINOR=0)
-target_compile_definitions(${targetName} PUBLIC VERSION_PATCH=1)
+target_compile_definitions(${targetName} PUBLIC VERSION_MINOR=1)
+target_compile_definitions(${targetName} PUBLIC VERSION_PATCH=0)
 
-
-
-
-
-# TODO: Delete after prototyping 
-add_executable("${targetName}Exec" "${CMAKE_CURRENT_LIST_DIR}/main.cpp" ${headers} ${sources})
-target_include_directories("${targetName}Exec"
-    PUBLIC
-        "${CMAKE_CURRENT_LIST_DIR}/include"
-)
-target_include_directories("${targetName}Exec" PRIVATE ${OpenCV_INCLUDE_DIRS})
-target_link_libraries("${targetName}Exec" PRIVATE ${OpenCV_LIBS})
-target_compile_definitions("${targetName}Exec" PRIVATE PATH_TEST_IMG="${CMAKE_SOURCE_DIR}/tests/camera/resources/")
-set_compile_options("${targetName}Exec")   # Which extra compiler flags to enable
-set_output_directory("${targetName}Exec")  # Set the output directory of the library

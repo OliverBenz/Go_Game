@@ -7,3 +7,4 @@ add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/App/")      # Library:     Applicati
 
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/gui/")         # Application: GUI
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/server/")      # Application: Server
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/CameraTuner/") # Application: Server
