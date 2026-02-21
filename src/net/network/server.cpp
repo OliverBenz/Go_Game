@@ -1,7 +1,7 @@
 #include "gameNet/server.hpp"
 
 #include "SafeQueue.hpp"
-#include "network/tcpServer.hpp"
+#include "network/core/tcpServer.hpp"
 #include "serverEvents.hpp"
 #include "sessionManager.hpp"
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "network/protocol.hpp"
+#include "network/core/protocol.hpp"
 
 #include <asio.hpp>
 
@@ -8,7 +8,6 @@
 #include <deque>
 #include <functional>
 #include <memory>
-#include <variant>
 
 namespace go::network {
 

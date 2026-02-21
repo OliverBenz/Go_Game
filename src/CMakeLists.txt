@@ -7,7 +7,7 @@ add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/game/model")    # Library: Core data
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/game/core")     # Library: Core game logic
 
 # Adapters / Integration
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/net/gameNet")       # Library: Go game networking
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/net/network")   # Library: Go game networking
  # add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/vision/perception") # Library: Image detection on game model
 
 # Runtime + Apps

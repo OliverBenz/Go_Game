@@ -1,4 +1,4 @@
-#include "network/tcpServer.hpp"
+#include "network/core/tcpServer.hpp"
 #include "connection.hpp"
 
 #include <asio.hpp>

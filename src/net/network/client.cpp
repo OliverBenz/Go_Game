@@ -1,10 +1,9 @@
 #include "gameNet/client.hpp"
 
-#include "network/tcpClient.hpp"
+#include "network/core/tcpClient.hpp"
 
 #include <atomic>
 #include <cstring>
-#include <sstream>
 #include <thread>
 
 namespace go::gameNet {

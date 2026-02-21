@@ -1,11 +1,9 @@
 #pragma once
 
 #include "gameNet/types.hpp"
-#include "network/protocol.hpp"
+#include "network/core/protocol.hpp"
 
-#include <cstdint>
 #include <functional>
-#include <string>
 #include <unordered_map>
 
 namespace go::gameNet {
