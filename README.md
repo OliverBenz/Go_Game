@@ -1,5 +1,18 @@
-# Go Game Client
-A simple Go game client with local LAN support and an image detection system so you can play on a physical board instead of the computer.
+# Tengen (天元)
+A modular Go system combining game logic, networking, and real-world board perception.
+
+Tengen (天元) refers to the center point of a Go board. This project aims to be the center point between physical and digital Go.
+
+Tengen is a modular C++ system that combines:
+ - Go game logic and rules engine
+ - TCP networking
+ - GUI client
+ - Computer vision for detecting moves on a real board
+ - Robotic arm control to place stones on a real board
+
+The goal is to seamlessly integrate physical gameplay with digital systems.
+Challenging opponents remotely while playing over a real board instead of staring at a screen.
+
 The whole project is still very much work in progress. Current focus lies on the image detection system as well as a robotic arm that can mirror the opponents move on the physical board.
 The project is aimed to be kept modular so you can easily just take whatever parts are useful to you.
 
