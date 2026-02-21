@@ -17,4 +17,4 @@ struct WarpResult {
 WarpResult warpToBoard(const cv::Mat& image, DebugVisualizer* debugger = nullptr);
 
 
-} // namespace go::camera
+} // namespace go::vision::core

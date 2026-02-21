@@ -251,4 +251,4 @@ std::optional<ServerEvent> fromServerMessage(const std::string& message) {
 	return {};
 }
 
-} // namespace go::gameNet
+} // namespace go::network

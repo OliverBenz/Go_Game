@@ -33,4 +33,4 @@ inline constexpr bool isPlayer(Seat seat) {
 	return seat == Seat::Black || seat == Seat::White;
 }
 
-} // namespace go::gameNet
+} // namespace go::network

@@ -64,7 +64,7 @@ bool process(const cv::Mat& image, DebugVisualizer* debugger = nullptr) {
 		return false;
 	}
 
-	if(geometry.boardSize != 13u) {
+	if (geometry.boardSize != 13u) {
 		std::cerr << "This is NOT RIGHT\n";
 	}
 
@@ -87,7 +87,7 @@ bool process(const std::filesystem::path& path, DebugVisualizer* debugger = null
 	return process(image, debugger);
 }
 
-} // namespace go::camera
+} // namespace go::vision::core
 
 // 3 steps
 // 1) Find board in image and rectify (find largest plausible board contour, dont care if its physical board or outer grid contour)

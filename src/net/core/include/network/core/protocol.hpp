@@ -43,6 +43,6 @@ constexpr std::uint32_t from_network_u32(std::uint32_t value) {
 	return to_network_u32(value);
 }
 
+} // namespace core
 } // namespace network
 } // namespace go
-}

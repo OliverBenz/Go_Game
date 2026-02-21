@@ -179,4 +179,4 @@ Message TcpClient::read() {
 	return m_pimpl->read();
 }
 
-} // namespace network
+} // namespace go::network::core

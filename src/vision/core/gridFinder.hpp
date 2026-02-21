@@ -30,4 +30,4 @@ bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hC
 bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hCenters, std::vector<double>& vGrid, std::vector<double>& hGrid,
               const std::vector<std::size_t>& candidateNs);
 
-} // namespace go::camera
+} // namespace go::vision::core

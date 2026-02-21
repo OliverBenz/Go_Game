@@ -44,4 +44,4 @@ private:
 	std::vector<DebugStage> m_stages{}; //!< Collection of debug info for all stages.
 };
 
-} // namespace go::camera
+} // namespace go::vision::core

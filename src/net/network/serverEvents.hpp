@@ -14,4 +14,4 @@ struct ServerQueueEvent {
 	core::Message payload{};           //!< Network message. Protocol examples: {"type":"put","x":3,"y":4}, {"type":"chat","message":"hello"}.
 };
 
-} // namespace go::gameNet
+} // namespace go::network

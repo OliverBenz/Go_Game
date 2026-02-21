@@ -146,4 +146,4 @@ StoneResult analyseBoard(const BoardGeometry& geometry, DebugVisualizer* debugge
  */
 StoneResult analyseBoardV2(const BoardGeometry& geometry, DebugVisualizer* debugger = nullptr, const StoneDetectionConfig& config = StoneDetectionConfig{});
 
-} // namespace go::camera
+} // namespace go::vision::core

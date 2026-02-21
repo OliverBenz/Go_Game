@@ -63,4 +63,4 @@ std::string toMessage(ServerEvent event);
 std::optional<ClientEvent> fromClientMessage(const std::string& message);
 std::optional<ServerEvent> fromServerMessage(const std::string& message);
 
-} // namespace go::gameNet
+} // namespace go::network

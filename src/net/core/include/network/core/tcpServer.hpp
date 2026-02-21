@@ -41,6 +41,6 @@ private:
 	std::unique_ptr<Implementation> m_pimpl; //!< Pimpl to hide asio stuff in public interfaces.
 };
 
+} // namespace core
 } // namespace network
 } // namespace go
-}
