@@ -1,4 +1,4 @@
-#include "gameNet/server.hpp"
+#include "network/server.hpp"
 
 #include "SafeQueue.hpp"
 #include "network/core/tcpServer.hpp"

@@ -3,13 +3,9 @@
 #include "core/IGameStateListener.hpp"
 #include "core/game.hpp"
 #include "data/player.hpp"
-#include "gameNet/server.hpp"
+#include "network/server.hpp"
 
-#include <array>
-#include <atomic>
-#include <optional>
 #include <string>
-#include <string_view>
 #include <thread>
 #include <unordered_map>
 

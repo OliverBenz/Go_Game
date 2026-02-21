@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gameNet/client.hpp"
+#include "network/client.hpp"
 
 namespace go::gtest {
 

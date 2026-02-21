@@ -1,10 +1,9 @@
 #pragma once
 
-#include "app/eventHub.hpp"
 #include "data/board.hpp"
 #include "data/gameStatus.hpp"
 #include "data/player.hpp"
-#include "gameNet/nwEvents.hpp"
+#include "network/nwEvents.hpp"
 
 namespace go::app {
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "gameNet/nwEvents.hpp"
-#include "gameNet/types.hpp"
+#include "network/nwEvents.hpp"
+#include "network/types.hpp"
 
 #include <cstdint>
 #include <memory>

@@ -1,11 +1,9 @@
 
 #pragma once
 
-#include "gameNet/server.hpp"
-#include <format>
+#include "network/server.hpp"
 #include <gtest/gtest.h>
-#include <iostream>
-#include <optional>
+
 namespace go::gtest {
 
 class MockServer : public gameNet::IServerHandler {

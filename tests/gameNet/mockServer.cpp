@@ -1,5 +1,7 @@
 #include "mockServer.hpp"
 
+#include <format>
+
 namespace go::gtest {
 
 MockServer::MockServer() {

@@ -1,7 +1,7 @@
-#include "gameNet/server.hpp"
-#include "gameNet/client.hpp"
-#include "gameNet/nwEvents.hpp"
-#include "gameNet/types.hpp"
+#include "network/server.hpp"
+#include "network/client.hpp"
+#include "network/nwEvents.hpp"
+#include "network/types.hpp"
 
 #include <atomic>
 #include <chrono>

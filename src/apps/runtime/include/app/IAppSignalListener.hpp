@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/gameEvent.hpp"
+#include <cstdint>
 
 namespace go::app {
 

@@ -1,4 +1,4 @@
-#include "gameNet/client.hpp"
+#include "network/client.hpp"
 
 #include "network/core/tcpClient.hpp"
 

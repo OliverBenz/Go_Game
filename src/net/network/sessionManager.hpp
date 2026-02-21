@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gameNet/types.hpp"
+#include "network/types.hpp"
 #include "network/core/protocol.hpp"
 
 #include <functional>
