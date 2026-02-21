@@ -1,4 +1,4 @@
-set(targetName Core)
+set(targetName gameCore)
 
 # Get files to build
 set(headers
@@ -23,7 +23,7 @@ set(sources
 
 # Create target
 add_library(${targetName} STATIC ${headers} ${sources})
-add_library(go::core ALIAS ${targetName})
+add_library(go::game::core ALIAS ${targetName})
 
 target_include_directories(${targetName}
     PUBLIC
@@ -31,7 +31,7 @@ target_include_directories(${targetName}
 )
 target_link_libraries(${targetName} 
     PUBLIC
-        go::data    
+        go::game::model
 )
 
 # Setup project settings

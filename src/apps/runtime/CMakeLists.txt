@@ -1,4 +1,4 @@
-set(targetName App)
+set(targetName appRuntime)
 
 # Get files to build
 set(headers
@@ -19,7 +19,7 @@ set(sources
 )
 
 add_library(${targetName} STATIC ${headers} ${sources})
-add_library(go::app ALIAS ${targetName})
+add_library(go::app::runtime ALIAS ${targetName})
 
 target_include_directories(${targetName}
     PUBLIC
@@ -31,7 +31,7 @@ target_link_libraries(${targetName}
     PRIVATE
         Logger::Logger
     PUBLIC
-        go::core go::gameNet
+		go::game::core go::net::gameNet
 )
 
 # Setup project settings

@@ -1,5 +1,5 @@
 # Settings
-set(targetName "core.gtest")
+set(targetName "gameCore.gtest")
 
 # Create executable
 add_executable(${targetName}
@@ -8,7 +8,7 @@ add_executable(${targetName}
 )
 
 # Link to required libraries
-target_link_libraries(${targetName} PRIVATE go::core GTest::gtest_main)
+target_link_libraries(${targetName} PRIVATE go::game::core GTest::gtest_main)
 set_target_properties(${targetName} PROPERTIES FOLDER "${ideFolderSource}")
 
 # Setup project settings

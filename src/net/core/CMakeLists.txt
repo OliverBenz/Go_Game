@@ -1,4 +1,4 @@
-set(targetName Network)
+set(targetName netCore)
 
 # Get files to build
 set(headers
@@ -16,7 +16,7 @@ set(sources
 
 
 add_library(${targetName} STATIC ${headers} ${sources})
-add_library(go::network ALIAS ${targetName})
+add_library(go::net::core ALIAS ${targetName})
 
 target_include_directories(${targetName}
     PUBLIC

@@ -1,5 +1,5 @@
 # Settings
-set(targetName "network.gtest")
+set(targetName "netCore.gtest")
 
 # Create executable
 add_executable(${targetName}
@@ -7,7 +7,7 @@ add_executable(${targetName}
 )
 
 # Link to required libraries
-target_link_libraries(${targetName} PRIVATE go::network go::gameNet GTest::gtest_main)
+target_link_libraries(${targetName} PRIVATE go::net::core go::net::gameNet GTest::gtest_main)
 set_target_properties(${targetName} PROPERTIES FOLDER "${ideFolderSource}")
 
 # Setup project settings

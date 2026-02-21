@@ -1,4 +1,4 @@
-set(targetName goUi)
+set(targetName goGame)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
@@ -15,9 +15,9 @@ add_executable(${targetName}
 
 target_link_libraries(${targetName} 
     PRIVATE
-        go::app
-        go::core
         Logger::Logger
+        go::game::core
+        go::app::runtime
         Qt6::Widgets
 )
 

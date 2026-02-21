@@ -1,5 +1,5 @@
 # Settings
-set(targetName "gameNet.gtest")
+set(targetName "netGameNet.gtest")
 
 # Create executable
 add_executable(${targetName}
@@ -12,7 +12,7 @@ add_executable(${targetName}
 # Link to required libraries
 target_link_libraries(${targetName}
     PRIVATE
-        go::gameNet
+        go::net::gameNet
         GTest::gtest_main
         nlohmann_json::nlohmann_json
 )
