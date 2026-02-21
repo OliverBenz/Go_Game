@@ -3,7 +3,7 @@
 #include "app/IAppSignalListener.hpp"
 #include "app/eventHub.hpp"
 #include "app/position.hpp"
-#include "gameNet/client.hpp"
+#include "network/client.hpp"
 
 #include <memory>
 #include <mutex>

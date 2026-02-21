@@ -1,4 +1,4 @@
-#include "gameNet/nwEvents.hpp"
+#include "network/nwEvents.hpp"
 
 #include <gtest/gtest.h>
 

@@ -1,11 +1,11 @@
-set(targetName netGameNet)
+set(targetName netNetwork)
 
 # Get files to build
 set(headers
-    "${CMAKE_CURRENT_LIST_DIR}/include/gameNet/client.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/include/gameNet/server.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/include/gameNet/nwEvents.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/include/gameNet/types.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/network/client.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/network/server.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/network/nwEvents.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/network/types.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/sessionManager.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/serverEvents.hpp"
 )

@@ -2,7 +2,7 @@
 
 #include "data/coordinate.hpp"
 #include "data/player.hpp"
-#include "gameNet/types.hpp"
+#include "network/types.hpp"
 
 #include <optional>
 #include <string>
