@@ -6,14 +6,13 @@
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
-#include <limits>
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include <opencv2/opencv.hpp>
 
-namespace go::camera {
+namespace go::vision::core {
 
 namespace {
 

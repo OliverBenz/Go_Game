@@ -8,7 +8,8 @@
 #include <algorithm>
 #include <filesystem>
 
-namespace go::camera::gtest {
+namespace go::vision::core {
+namespace gtest {
 
 //! Expected test results (result of each step in the pipeline).
 struct TestResult {
@@ -136,3 +137,4 @@ TEST(Process, Board_Detect_Easy) {
 }
 
 } // namespace go::camera::gtest
+}

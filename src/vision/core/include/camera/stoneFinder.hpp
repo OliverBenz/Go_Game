@@ -6,7 +6,7 @@
 #include <opencv2/core/mat.hpp>
 #include <vector>
 
-namespace go::camera {
+namespace go::vision::core {
 
 //! Stone state at a single grid intersection.
 enum class StoneState { Empty, Black, White };

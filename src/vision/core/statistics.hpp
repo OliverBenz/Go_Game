@@ -2,7 +2,7 @@
 
 #include <vector>
 
-namespace go::camera {
+namespace go::vision::core {
 
 double mean(const std::vector<double>& v);
 double variance(const std::vector<double>& v);

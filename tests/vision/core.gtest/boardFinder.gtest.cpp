@@ -4,9 +4,8 @@
 #include <gtest/gtest.h>
 #include <opencv2/opencv.hpp>
 
-#include <algorithm>
-
-namespace go::camera::gtest {
+namespace go::vision::core {
+namespace gtest {
 
 // Check that the board can be detected. Same board different angles.
 void runTest(const std::string& testSetName) {
@@ -42,4 +41,5 @@ TEST(Process, Find_Board_Hard) {
 	runTest("angled_hard");
 }
 
+}
 } // namespace go::camera::gtest

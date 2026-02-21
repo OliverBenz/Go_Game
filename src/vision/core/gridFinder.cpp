@@ -24,7 +24,7 @@
  *
  * This avoids tolerance-based snapping loops and naturally rejects border artifacts as outliers.
  */
-namespace go::camera {
+namespace go::vision::core {
 
 /*! Estimate the dominant adjacent gap (grid spacing) using a coarse histogram.
  *  Using a mode (instead of a mean) is fast and robust against outlier gaps introduced by missing/spurious lines.

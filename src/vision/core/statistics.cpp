@@ -6,7 +6,7 @@
 #include <numeric>
 
 // TODO: Check all this
-namespace go::camera {
+namespace go::vision::core {
 
 double mean(const std::vector<double>& v) {
 	if (v.empty()) {

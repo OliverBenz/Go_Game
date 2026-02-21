@@ -5,7 +5,8 @@
 
 #include <filesystem>
 
-namespace go::gtest {
+namespace go::vision::core {
+namespace gtest {
 
 TEST(Rectifier, RectifyImage) {
 	// // Load Image
@@ -20,3 +21,4 @@ TEST(Rectifier, RectifyImage) {
 
 
 } // namespace go::gtest
+}
