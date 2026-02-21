@@ -6,7 +6,7 @@
 
 #include <opencv2/opencv.hpp>
 
-namespace go::camera {
+namespace go::vision::core {
 
 void DebugVisualizer::setInteractive(bool interactive, unsigned displayTimeMs) {
 	m_interactive = interactive;

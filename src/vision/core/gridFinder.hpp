@@ -2,7 +2,7 @@
 
 #include <vector>
 
-namespace go::camera {
+namespace go::vision::core {
 
 /*! Reconstruct the NxN Go board grid from candidate line-center detections.
  *  The rectified board image provides sorted candidate line centers per axis.

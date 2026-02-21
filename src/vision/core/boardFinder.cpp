@@ -12,7 +12,7 @@
 
 #include <opencv2/opencv.hpp>
 
-namespace go::camera {
+namespace go::vision::core {
 
 namespace {
 

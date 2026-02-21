@@ -4,7 +4,7 @@
 
 #include <opencv2/core/mat.hpp>
 
-namespace go::camera {
+namespace go::vision::core {
 
 struct WarpResult {
 	cv::Mat image; //!< Image warped to fit the rough board contour.

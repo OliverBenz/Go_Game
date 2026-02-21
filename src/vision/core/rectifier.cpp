@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace go::camera {
+namespace go::vision::core {
 namespace debugging {
 
 //! Draw lines onto an image.

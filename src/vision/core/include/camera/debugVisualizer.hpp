@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace go::camera {
+namespace go::vision::core {
 
 //! Each step in the algorithm.
 struct DebugStep {

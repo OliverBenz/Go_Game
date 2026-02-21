@@ -10,7 +10,7 @@
 #include "camera/rectifier.hpp"
 #include "camera/stoneFinder.hpp"
 
-namespace go::camera {
+namespace go::vision::core {
 // Notes and Findings:
 // - Board Detection
 //   - Easy Straight Dataset
@@ -99,14 +99,14 @@ bool process(const std::filesystem::path& path, DebugVisualizer* debugger = null
 // - Output: Board cropped + Board size. Expect stable
 // 3) Detect grid lines again and stones.
 int main(int argc, char** argv) {
-	go::camera::DebugVisualizer debug;
+	go::vision::core::DebugVisualizer debug;
 	debug.setInteractive(false);
 
 	// If a path is passed here then use this image. Else do test images.
 	if (argc > 1) {
 		std::filesystem::path inputPath = argv[1]; // Path from command line.
 
-		if (go::camera::process(inputPath, &debug)) {
+		if (go::vision::core::process(inputPath, &debug)) {
 			cv::Mat mosaic = debug.buildMosaic();
 			if (!mosaic.empty()) {
 				cv::imshow("Debug Mosaic", mosaic);
@@ -150,7 +150,7 @@ int main(int argc, char** argv) {
 
 
 		const auto exampleImage = std::filesystem::path(PATH_TEST_IMG) / "angled_hard/angle_1.jpeg";
-		if (go::camera::process(exampleImage, &debug)) {
+		if (go::vision::core::process(exampleImage, &debug)) {
 			const auto mosaic = debug.buildMosaic();
 			// cv::imshow("", mosaic);
 			// cv::waitKey(0);
