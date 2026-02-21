@@ -11,73 +11,73 @@ MockServer::MockServer() {
 MockServer::~MockServer() {
 	m_network.stop();
 }
-void MockServer::onClientConnected(gameNet::SessionId sessionId, gameNet::Seat seat) {
+void MockServer::onClientConnected(network::SessionId sessionId, network::Seat seat) {
 	std::cout << std::format("[Server] Client {} connected to seat: {}\n", sessionId, static_cast<int>(seat));
-	m_network.send(sessionId, gameNet::ServerGameConfig{.boardSize = 9u, .komi = 6.5, .timeSeconds = 0u});
+	m_network.send(sessionId, network::ServerGameConfig{.boardSize = 9u, .komi = 6.5, .timeSeconds = 0u});
 }
 
-void MockServer::onClientDisconnected(gameNet::SessionId sessionId) {
+void MockServer::onClientDisconnected(network::SessionId sessionId) {
 	std::cout << std::format("[Server] {} disconnected.\n", sessionId);
 }
 
-void MockServer::onNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientEvent& event) {
+void MockServer::onNetworkEvent(network::SessionId sessionId, const network::ClientEvent& event) {
 	std::visit([&](const auto& e) { handleNetworkEvent(sessionId, e); }, event);
 }
 
-void MockServer::handleNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientPutStone& event) {
+void MockServer::handleNetworkEvent(network::SessionId sessionId, const network::ClientPutStone& event) {
 	const auto seat = m_network.getSeat(sessionId);
-	m_network.broadcast(gameNet::ServerDelta{
+	m_network.broadcast(network::ServerDelta{
 	        .turn     = ++m_turn,
 	        .seat     = seat,
-	        .action   = gameNet::ServerAction::Place,
+	        .action   = network::ServerAction::Place,
 	        .coord    = event.c,
 	        .captures = {},
 	        .next     = nextSeat(seat),
-	        .status   = gameNet::GameStatus::Active,
+	        .status   = network::GameStatus::Active,
 	});
 }
 
-void MockServer::handleNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientPass&) {
+void MockServer::handleNetworkEvent(network::SessionId sessionId, const network::ClientPass&) {
 	const auto seat = m_network.getSeat(sessionId);
-	m_network.broadcast(gameNet::ServerDelta{
+	m_network.broadcast(network::ServerDelta{
 	        .turn     = ++m_turn,
 	        .seat     = seat,
-	        .action   = gameNet::ServerAction::Pass,
+	        .action   = network::ServerAction::Pass,
 	        .coord    = std::nullopt,
 	        .captures = {},
 	        .next     = nextSeat(seat),
-	        .status   = gameNet::GameStatus::Active,
+	        .status   = network::GameStatus::Active,
 	});
 }
 
-void MockServer::handleNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientResign&) {
+void MockServer::handleNetworkEvent(network::SessionId sessionId, const network::ClientResign&) {
 	const auto seat = m_network.getSeat(sessionId);
-	m_network.broadcast(gameNet::ServerDelta{
+	m_network.broadcast(network::ServerDelta{
 	        .turn     = ++m_turn,
 	        .seat     = seat,
-	        .action   = gameNet::ServerAction::Resign,
+	        .action   = network::ServerAction::Resign,
 	        .coord    = std::nullopt,
 	        .captures = {},
 	        .next     = nextSeat(seat),
-	        .status   = seat == gameNet::Seat::Black ? gameNet::GameStatus::WhiteWin : gameNet::GameStatus::BlackWin,
+	        .status   = seat == network::Seat::Black ? network::GameStatus::WhiteWin : network::GameStatus::BlackWin,
 	});
 }
 
-void MockServer::handleNetworkEvent(gameNet::SessionId sessionId, const gameNet::ClientChat& event) {
+void MockServer::handleNetworkEvent(network::SessionId sessionId, const network::ClientChat& event) {
 	static unsigned messageId = 0u;
 
 	const auto seat = m_network.getSeat(sessionId);
-	m_network.broadcast(gameNet::ServerChat{seat == gameNet::Seat::Black ? Player::Black : Player::White, messageId++, event.message});
+	m_network.broadcast(network::ServerChat{seat == network::Seat::Black ? Player::Black : Player::White, messageId++, event.message});
 }
 
-gameNet::Seat MockServer::nextSeat(gameNet::Seat seat) const {
-	if (seat == gameNet::Seat::Black) {
-		return gameNet::Seat::White;
+network::Seat MockServer::nextSeat(network::Seat seat) const {
+	if (seat == network::Seat::Black) {
+		return network::Seat::White;
 	}
-	if (seat == gameNet::Seat::White) {
-		return gameNet::Seat::Black;
+	if (seat == network::Seat::White) {
+		return network::Seat::Black;
 	}
-	return gameNet::Seat::Observer;
+	return network::Seat::Observer;
 }
 
 

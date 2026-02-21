@@ -12,8 +12,8 @@ public:
 	Position() = default;
 
 	void reset(std::size_t boardSize);                 //!< Reset the position to some default data.
-	bool init(const gameNet::ServerGameConfig& event); //!< Initialize the given position. Returns true if it changed state.
-	bool apply(const gameNet::ServerDelta& delta);     //!< Apply a delta to the current position if ok.
+	bool init(const network::ServerGameConfig& event); //!< Initialize the given position. Returns true if it changed state.
+	bool apply(const network::ServerDelta& delta);     //!< Apply a delta to the current position if ok.
 	void setStatus(GameStatus status);                 //!< Update the status.
 
 	const Board& getBoard() const;
@@ -21,7 +21,7 @@ public:
 	Player getPlayer() const;
 
 private:
-	bool isDeltaApplicable(const gameNet::ServerDelta& delta); //!< Check if the delta is ok to use for the position update.
+	bool isDeltaApplicable(const network::ServerDelta& delta); //!< Check if the delta is ok to use for the position update.
 
 private:
 	unsigned m_moveId{0};                  //!< Last move id in game.

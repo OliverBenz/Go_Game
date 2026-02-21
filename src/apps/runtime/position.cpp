@@ -12,7 +12,7 @@ void Position::reset(const std::size_t boardSize) {
 	m_board  = Board{boardSize};
 }
 
-bool Position::init(const gameNet::ServerGameConfig& event) {
+bool Position::init(const network::ServerGameConfig& event) {
 	if (m_status == GameStatus::Active) {
 		return false;
 	}
@@ -25,18 +25,18 @@ bool Position::init(const gameNet::ServerGameConfig& event) {
 	return true;
 }
 
-bool Position::apply(const gameNet::ServerDelta& delta) {
+bool Position::apply(const network::ServerDelta& delta) {
 	if (!isDeltaApplicable(delta)) {
 		return false;
 	}
 
 	m_moveId = delta.turn;
-	m_status = delta.status == gameNet::GameStatus::Active ? GameStatus::Active : GameStatus::Done;
-	m_player = delta.next == gameNet::Seat::Black ? Player::Black : Player::White;
+	m_status = delta.status == network::GameStatus::Active ? GameStatus::Active : GameStatus::Done;
+	m_player = delta.next == network::Seat::Black ? Player::Black : Player::White;
 
-	if (delta.action == gameNet::ServerAction::Place) {
+	if (delta.action == network::ServerAction::Place) {
 		if (delta.coord) {
-			m_board.place(Coord{delta.coord->x, delta.coord->y}, delta.seat == gameNet::Seat::Black ? Board::Stone::Black : Board::Stone::White);
+			m_board.place(Coord{delta.coord->x, delta.coord->y}, delta.seat == network::Seat::Black ? Board::Stone::Black : Board::Stone::White);
 			for (const auto c: delta.captures) {
 				m_board.remove({c.x, c.y});
 			}
@@ -62,7 +62,7 @@ Player Position::getPlayer() const {
 	return m_player;
 }
 
-bool Position::isDeltaApplicable(const gameNet::ServerDelta& delta) {
+bool Position::isDeltaApplicable(const network::ServerDelta& delta) {
 	// No gamestate updates before game is active (received game configuration).
 	if (m_status != GameStatus::Active) {
 		Logger().Log(Logging::LogLevel::Error, "Received game update before game is active.");
@@ -81,7 +81,7 @@ bool Position::isDeltaApplicable(const gameNet::ServerDelta& delta) {
 	}
 
 	// Player values valid
-	if (!gameNet::isPlayer(delta.seat) || !gameNet::isPlayer(delta.next)) {
+	if (!network::isPlayer(delta.seat) || !network::isPlayer(delta.next)) {
 		Logger().Log(Logging::LogLevel::Error, "Received game update from non player seat.");
 		return false;
 	}

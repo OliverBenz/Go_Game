@@ -3,7 +3,7 @@
 #include <cassert>
 #include <nlohmann/json.hpp>
 
-namespace go::gameNet {
+namespace go::network {
 
 using nlohmann::json;
 

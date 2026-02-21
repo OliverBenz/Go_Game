@@ -21,49 +21,49 @@ void MockClient::disconnect() {
 }
 
 void MockClient::chat(const std::string& message) {
-	m_network.send(gameNet::ClientChat{message});
+	m_network.send(network::ClientChat{message});
 }
 
 void MockClient::tryPlace(unsigned x, unsigned y) {
-	m_network.send(gameNet::ClientPutStone{.c = {x, y}});
+	m_network.send(network::ClientPutStone{.c = {x, y}});
 }
 
 static std::string toString(const Player player) {
 	return player == Player::Black ? "Black" : "White";
 }
-static std::string toString(const gameNet::Seat seat) {
+static std::string toString(const network::Seat seat) {
 	assert(isPlayer(seat));
-	return seat == gameNet::Seat::Black ? "Black" : "White";
+	return seat == network::Seat::Black ? "Black" : "White";
 }
 
 
-void MockClient::onGameUpdate(const gameNet::ServerDelta& event) {
+void MockClient::onGameUpdate(const network::ServerDelta& event) {
 	const auto seat = toString(event.seat);
 	switch (event.action) {
-	case gameNet::ServerAction::Place:
+	case network::ServerAction::Place:
 		if (event.coord.has_value()) {
 			std::cout << std::format("[Client] Received board update from '{}' at ({}, {}).\n", seat, event.coord->x, event.coord->y);
 		} else {
 			std::cout << std::format("[Client] Received board update from '{}'.\n", seat);
 		}
 		break;
-	case gameNet::ServerAction::Pass:
+	case network::ServerAction::Pass:
 		std::cout << std::format("[Client] Received pass from '{}'.\n", seat);
 		break;
-	case gameNet::ServerAction::Resign:
+	case network::ServerAction::Resign:
 		std::cout << std::format("[Client] Received resign from '{}'\n", seat);
 		break;
-	case gameNet::ServerAction::Count:
+	case network::ServerAction::Count:
 		assert(false && "ServerAction::Count is not a valid action");
 		break;
 	}
 }
 
-void MockClient::onGameConfig(const gameNet::ServerGameConfig& event) {
+void MockClient::onGameConfig(const network::ServerGameConfig& event) {
 	std::cout << std::format("[Client] Received config: board={}, komi={}, time={}\n", event.boardSize, event.komi, event.timeSeconds);
 }
 
-void MockClient::onChatMessage(const gameNet::ServerChat& event) {
+void MockClient::onChatMessage(const network::ServerChat& event) {
 	std::cout << std::format("[Client] Received message from '{}':{}\n", toString(event.player), event.message);
 }
 

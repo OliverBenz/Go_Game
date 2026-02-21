@@ -5,8 +5,8 @@ It turns typed game events into wire messages and back, and it manages server/cl
 
 ## Big Picture
 
-- **Client**: `gameNet::Client` wraps `network::TcpClient` and runs a read thread.
-- **Server**: `gameNet::Server` wraps `network::TcpServer` and exposes a clean event callback.
+- **Client**: `network::Client` wraps `network::TcpClient` and runs a read thread.
+- **Server**: `network::Server` wraps `network::TcpServer` and exposes a clean event callback.
 - **Events**: All wire messages are defined in `nwEvents.hpp` and serialized as JSON.
 - **Sessions**: `SessionManager` maps `ConnectionId` <-> `SessionId` and tracks seats.
 

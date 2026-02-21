@@ -6,7 +6,7 @@
 #include <mutex>
 
 // TODO: Got this once in gameNet and once in core.
-namespace go::gameNet {
+namespace go::network {
 
 //! Thread safe queue with a blocking Pop function.
 template <class Entry>

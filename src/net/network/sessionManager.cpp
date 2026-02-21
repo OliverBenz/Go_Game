@@ -2,11 +2,11 @@
 
 #include <cassert>
 
-namespace go::gameNet {
+namespace go::network {
 
 static SessionId nextSessionId{1};
 
-SessionId SessionManager::add(network::ConnectionId connectionId) {
+SessionId SessionManager::add(core::ConnectionId connectionId) {
 	const auto existing = m_connectionToSession.find(connectionId);
 	if (existing != m_connectionToSession.end()) {
 		const auto it = m_sessions.find(existing->second);
@@ -38,7 +38,7 @@ void SessionManager::remove(SessionId sessionId) {
 	m_sessions.erase(it);
 }
 
-SessionId SessionManager::getSessionId(network::ConnectionId connectionId) const {
+SessionId SessionManager::getSessionId(core::ConnectionId connectionId) const {
 	const auto it = m_connectionToSession.find(connectionId);
 	if (it == m_connectionToSession.end()) {
 		return 0;
@@ -46,7 +46,7 @@ SessionId SessionManager::getSessionId(network::ConnectionId connectionId) const
 	return it->second;
 }
 
-network::ConnectionId SessionManager::getConnectionId(SessionId sessionId) const {
+core::ConnectionId SessionManager::getConnectionId(SessionId sessionId) const {
 	const auto it = m_sessions.find(sessionId);
 	if (it == m_sessions.end()) {
 		return 0;
@@ -54,7 +54,7 @@ network::ConnectionId SessionManager::getConnectionId(SessionId sessionId) const
 	return it->second.connectionId;
 }
 
-network::ConnectionId SessionManager::getConnectionIdBySeat(Seat seat) const {
+core::ConnectionId SessionManager::getConnectionIdBySeat(Seat seat) const {
 	assert(seat == Seat::Black || seat == Seat::White);
 
 	for (const auto& [_, context]: m_sessions) {

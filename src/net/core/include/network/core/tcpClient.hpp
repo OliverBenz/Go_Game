@@ -8,6 +8,7 @@
 
 namespace go {
 namespace network {
+namespace core {
 
 //! Minimal synchronous TCP client.
 //! \note    This is intentionally blocking I/O to keep the client logic simple.
@@ -38,3 +39,4 @@ private:
 
 } // namespace network
 } // namespace go
+}

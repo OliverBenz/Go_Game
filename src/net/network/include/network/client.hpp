@@ -7,7 +7,7 @@
 #include <memory>
 #include <string>
 
-namespace go::gameNet {
+namespace go::network {
 
 //! Callback interface invoked on the client's read thread.
 //! \note Keep handlers lightweight.

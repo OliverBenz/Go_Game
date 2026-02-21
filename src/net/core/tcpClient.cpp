@@ -9,8 +9,7 @@
 #include <array>
 #include <optional>
 
-namespace go {
-namespace network {
+namespace go::network::core {
 
 class TcpClient::Implementation {
 public:
@@ -181,4 +180,3 @@ Message TcpClient::read() {
 }
 
 } // namespace network
-} // namespace go

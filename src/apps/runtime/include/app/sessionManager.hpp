@@ -24,7 +24,7 @@ struct ChatEntry {
 //! Listeners can subscribe to certain signals, get notification when happens.
 //! Listeners then check which signal and query the updated data from this SessionManager.
 //! SessionManager is the local source of truth about the game state, GUI is just dumb renderer of this state.
-class SessionManager : public gameNet::IClientHandler {
+class SessionManager : public network::IClientHandler {
 public:
 	SessionManager();
 	~SessionManager();
@@ -54,13 +54,13 @@ public:
 	std::vector<ChatEntry> getChatSince(unsigned messageId) const;
 
 public: // Client listener handlers
-	void onGameUpdate(const gameNet::ServerDelta& event) override;
-	void onGameConfig(const gameNet::ServerGameConfig& event) override;
-	void onChatMessage(const gameNet::ServerChat& event) override;
+	void onGameUpdate(const network::ServerDelta& event) override;
+	void onGameConfig(const network::ServerGameConfig& event) override;
+	void onChatMessage(const network::ServerChat& event) override;
 	void onDisconnected() override;
 
 private:
-	gameNet::Client m_network;
+	network::Client m_network;
 	EventHub m_eventHub;
 	Position m_position{};
 

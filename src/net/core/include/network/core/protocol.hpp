@@ -8,6 +8,7 @@
 
 namespace go {
 namespace network {
+namespace core {
 
 using ConnectionId = std::uint32_t; //!< Identifies a connection on network layer.
 using Message      = std::string;   //!< Message type.
@@ -44,3 +45,4 @@ constexpr std::uint32_t from_network_u32(std::uint32_t value) {
 
 } // namespace network
 } // namespace go
+}

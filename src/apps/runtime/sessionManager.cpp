@@ -100,16 +100,16 @@ void SessionManager::shutdown() {
 
 
 void SessionManager::tryPlace(unsigned x, unsigned y) {
-	m_network.send(gameNet::ClientPutStone{.c = {x, y}});
+	m_network.send(network::ClientPutStone{.c = {x, y}});
 }
 void SessionManager::tryResign() {
-	m_network.send(gameNet::ClientResign{});
+	m_network.send(network::ClientResign{});
 }
 void SessionManager::tryPass() {
-	m_network.send(gameNet::ClientPass{});
+	m_network.send(network::ClientPass{});
 }
 void SessionManager::chat(const std::string& message) {
-	m_network.send(gameNet::ClientChat{message});
+	m_network.send(network::ClientChat{message});
 }
 
 GameStatus SessionManager::status() const {
@@ -134,7 +134,7 @@ std::vector<ChatEntry> SessionManager::getChatSince(const unsigned messageId) co
 	return {it, m_chatHistory.end()};
 }
 
-void SessionManager::onGameUpdate(const gameNet::ServerDelta& event) {
+void SessionManager::onGameUpdate(const network::ServerDelta& event) {
 	GameStatus status         = GameStatus::Active;
 	GameStatus previousStatus = GameStatus::Active;
 	bool applied              = false;
@@ -151,16 +151,16 @@ void SessionManager::onGameUpdate(const gameNet::ServerDelta& event) {
 
 	// Signalling depending on action
 	switch (event.action) {
-	case gameNet::ServerAction::Place:
+	case network::ServerAction::Place:
 		m_eventHub.signal(AS_BoardChange);
 		m_eventHub.signal(AS_PlayerChange);
 		break;
-	case gameNet::ServerAction::Pass:
+	case network::ServerAction::Pass:
 		m_eventHub.signal(AS_PlayerChange);
 		break;
-	case gameNet::ServerAction::Resign:
+	case network::ServerAction::Resign:
 		break;
-	case gameNet::ServerAction::Count:
+	case network::ServerAction::Count:
 		assert(false); //!< This should already be prohibited by libGameNet.
 		break;
 	};
@@ -168,7 +168,7 @@ void SessionManager::onGameUpdate(const gameNet::ServerDelta& event) {
 		m_eventHub.signal(AS_StateChange);
 	}
 }
-void SessionManager::onGameConfig(const gameNet::ServerGameConfig& event) {
+void SessionManager::onGameConfig(const network::ServerGameConfig& event) {
 	bool initialized = false;
 	{
 		std::lock_guard<std::mutex> lock(m_stateMutex);
@@ -181,7 +181,7 @@ void SessionManager::onGameConfig(const gameNet::ServerGameConfig& event) {
 	m_eventHub.signal(AS_PlayerChange);
 	m_eventHub.signal(AS_StateChange);
 }
-void SessionManager::onChatMessage(const gameNet::ServerChat& event) {
+void SessionManager::onChatMessage(const network::ServerChat& event) {
 	bool appended = false;
 	{
 		std::lock_guard<std::mutex> lock(m_stateMutex);

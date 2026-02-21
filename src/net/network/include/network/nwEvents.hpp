@@ -9,7 +9,7 @@
 #include <variant>
 #include <vector>
 
-namespace go::gameNet {
+namespace go::network {
 
 // Client Network Events (client -> server)
 struct ClientPutStone {
