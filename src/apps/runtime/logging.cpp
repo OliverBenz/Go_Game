@@ -1,4 +1,4 @@
-#include "Logging.hpp"
+#include "logging.hpp"
 
 #include "Logger/LogConfig.hpp"
 #include "Logger/LogOutputConsole.hpp"
