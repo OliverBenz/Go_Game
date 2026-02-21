@@ -1,4 +1,4 @@
-set(targetName Camera)
+set(targetName visionCore)
 
 find_package(OpenCV REQUIRED)
 
@@ -21,7 +21,7 @@ set(sources
 )
 
 add_library(${targetName} STATIC ${headers} ${sources})
-add_library(go::camera ALIAS ${targetName})
+add_library(go::vision::core ALIAS ${targetName})
 
 target_include_directories(${targetName}
     PUBLIC
