@@ -1,13 +1,10 @@
 #include "app/gameServer.hpp"
 
-#include "Logging.hpp"
 #include "core/game.hpp"
+#include "logging.hpp"
 
 #include <cassert>
 #include <format>
-#include <iomanip>
-#include <random>
-#include <sstream>
 
 namespace go::app {
 

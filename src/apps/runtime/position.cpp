@@ -1,5 +1,5 @@
 #include "app/position.hpp"
-#include "Logging.hpp"
+#include "logging.hpp"
 
 #include <cassert>
 

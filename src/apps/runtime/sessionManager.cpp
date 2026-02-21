@@ -1,7 +1,7 @@
 #include "app/sessionManager.hpp"
 
-#include "Logging.hpp"
 #include "app/gameServer.hpp"
+#include "logging.hpp"
 
 #include <algorithm>
 #include <cassert>
