@@ -1,4 +1,4 @@
-set(targetName goServer)
+set(targetName server)
 
 add_executable(${targetName}
     "${CMAKE_CURRENT_LIST_DIR}/main.cpp"
@@ -6,7 +6,7 @@ add_executable(${targetName}
 
 target_link_libraries(${targetName}
     PRIVATE
-        go::app
+        go::app::runtime
 )
 
 # Setup project settings

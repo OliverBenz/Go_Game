@@ -1,4 +1,4 @@
-set(targetName Data)
+set(targetName gameModel)
 
 # Get files to build
 set(headers
@@ -13,7 +13,7 @@ set(sources
 
 # Create target
 add_library(${targetName} STATIC ${headers} ${sources})
-add_library(go::data ALIAS ${targetName})
+add_library(go::game::model ALIAS ${targetName})
 
 target_include_directories(${targetName}
     PUBLIC

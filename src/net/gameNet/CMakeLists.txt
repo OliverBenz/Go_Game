@@ -1,4 +1,4 @@
-set(targetName GameNet)
+set(targetName netGameNet)
 
 # Get files to build
 set(headers
@@ -19,7 +19,7 @@ set(sources
 
 
 add_library(${targetName} STATIC ${headers} ${sources})
-add_library(go::gameNet ALIAS ${targetName})
+add_library(go::net::gameNet ALIAS ${targetName})
 
 target_include_directories(${targetName}
     PUBLIC
@@ -28,9 +28,9 @@ target_include_directories(${targetName}
 
 target_link_libraries(${targetName}
     PUBLIC
-        go::data
+        go::game::model
     PRIVATE
-        go::network
+        go::net::core
         nlohmann_json::nlohmann_json
 )
 

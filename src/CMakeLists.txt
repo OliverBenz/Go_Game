@@ -1,10 +1,17 @@
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/Data/")     # Library:     Core data layer
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/Core/")     # Library:     Core game logic
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/Network/")  # Library:     Network layer networking
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/GameNet/")  # Library:     Application layer networking
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/App/")      # Library:     Application logic
+# Foundations (reusable across domains)
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/vision/core")   # Library: Board image detection algorithm
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/net/core")      # Library: General network layer 
 
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/vision")    # Module: vision/image detection
+# Game Domain
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/game/model")    # Library: Core data layer
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/game/core")     # Library: Core game logic
 
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/gui/")         # Application: GUI
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/server/")      # Application: Server
+# Adapters / Integration
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/net/gameNet")       # Library: Go game networking
+ # add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/vision/perception") # Library: Image detection on game model
+
+# Runtime + Apps
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/apps/runtime")   # Library:     Runtime/Orchestration
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/apps/gui")       # Application: The actual game (GUI wrapper of runtime)
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/apps/server/")   # Application: Server
+
