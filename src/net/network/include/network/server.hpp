@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <memory>
 
-namespace go::network {
+namespace tengen::network {
 
 //! Callback interface invoked on the server's processing thread.
 //! \note Keep handlers lightweight.
@@ -44,4 +44,4 @@ private:
 	std::unique_ptr<Implementation> m_pimpl; //!< Pimpl to hide networking protocol stuff.
 };
 
-} // namespace go::network
+} // namespace tengen::network

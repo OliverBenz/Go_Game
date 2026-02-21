@@ -5,7 +5,7 @@
 #include <iostream>
 #include <optional>
 
-namespace go::gtest {
+namespace tengen::gtest {
 
 MockClient::MockClient() {
 	EXPECT_TRUE(m_network.registerHandler(this));
@@ -71,4 +71,4 @@ void MockClient::onDisconnected() {
 	std::cout << std::format("[Client] Client {} disconnected.\n", m_network.sessionId());
 }
 
-} // namespace go::gtest
+} // namespace tengen::gtest

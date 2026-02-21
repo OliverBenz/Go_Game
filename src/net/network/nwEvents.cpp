@@ -3,7 +3,7 @@
 #include <cassert>
 #include <nlohmann/json.hpp>
 
-namespace go::network {
+namespace tengen::network {
 
 using nlohmann::json;
 
@@ -251,4 +251,4 @@ std::optional<ServerEvent> fromServerMessage(const std::string& message) {
 	return {};
 }
 
-} // namespace go::network
+} // namespace tengen::network

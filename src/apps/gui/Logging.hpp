@@ -2,9 +2,9 @@
 
 #include "Logger/Logger.hpp"
 
-namespace go::gui {
+namespace tengen::gui {
 
 //! Returns the logger instance based on the set up configuration.
 Logging::Logger Logger();
 
-} // namespace go::gui
+} // namespace tengen::gui

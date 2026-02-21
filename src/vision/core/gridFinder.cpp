@@ -24,7 +24,7 @@
  *
  * This avoids tolerance-based snapping loops and naturally rejects border artifacts as outliers.
  */
-namespace go::vision::core {
+namespace tengen::vision::core {
 
 /*! Estimate the dominant adjacent gap (grid spacing) using a coarse histogram.
  *  Using a mode (instead of a mean) is fast and robust against outlier gaps introduced by missing/spurious lines.
@@ -614,4 +614,4 @@ bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hC
 	return findGrid(vCenters, hCenters, vGrid, hGrid, kDefaultNs);
 }
 
-} // namespace go::vision::core
+} // namespace tengen::vision::core

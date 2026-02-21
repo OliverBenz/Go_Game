@@ -6,7 +6,7 @@
 
 #include <QMenuBar>
 
-namespace go::gui {
+namespace tengen::gui {
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 	// Setup Window
@@ -54,4 +54,4 @@ void MainWindow::closeEvent(QCloseEvent* event) {
 	QMainWindow::closeEvent(event);
 }
 
-} // namespace go::gui
+} // namespace tengen::gui

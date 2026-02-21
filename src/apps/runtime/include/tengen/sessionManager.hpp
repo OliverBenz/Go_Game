@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace go::app {
+namespace tengen::app {
 class GameServer;
 
 struct ChatEntry {
@@ -72,4 +72,4 @@ private:
 	mutable std::mutex m_stateMutex;
 };
 
-} // namespace go::app
+} // namespace tengen::app

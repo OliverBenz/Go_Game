@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 #include <thread>
 
-namespace go::gtest {
+namespace tengen::gtest {
 
 TEST(GameNet, Connection) {
 	auto server  = MockServer();
@@ -23,4 +23,4 @@ TEST(GameNet, Connection) {
 	client2.disconnect();
 }
 
-} // namespace go::gtest
+} // namespace tengen::gtest

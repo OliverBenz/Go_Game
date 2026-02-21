@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 #include <opencv2/opencv.hpp>
 
-namespace go::vision::core {
+namespace tengen::vision::core {
 namespace gtest {
 
 // Check that the board can be detected. Same board different angles.
@@ -42,4 +42,4 @@ TEST(Process, Find_Board_Hard) {
 }
 
 } // namespace gtest
-} // namespace go::vision::core
+} // namespace tengen::vision::core

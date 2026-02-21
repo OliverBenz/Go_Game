@@ -16,7 +16,7 @@ set(sources
 
 
 add_library(${targetName} STATIC ${headers} ${sources})
-add_library(go::net::core ALIAS ${targetName})
+add_library(tengen::net::core ALIAS ${targetName})
 
 target_include_directories(${targetName}
     PUBLIC

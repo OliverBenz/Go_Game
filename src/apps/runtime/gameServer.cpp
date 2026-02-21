@@ -6,7 +6,7 @@
 #include <cassert>
 #include <format>
 
-namespace go::app {
+namespace tengen::app {
 
 static constexpr char LOG_REC_PUT[]    = "[GameServer] Received Event 'Put'    from player {} at ({}, {}).";
 static constexpr char LOG_REC_PASS[]   = "[GameServer] Received Event 'Pass'   from Player {}.";
@@ -160,4 +160,4 @@ void GameServer::handleNetworkEvent(Player player, const network::ClientChat& ev
 	m_server.broadcast(network::ServerChat{player, static_cast<unsigned>(m_chatHistory.size()), event.message});
 }
 
-} // namespace go::app
+} // namespace tengen::app

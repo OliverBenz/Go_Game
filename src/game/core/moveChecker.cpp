@@ -6,7 +6,7 @@
 #include <cassert>
 #include <optional>
 
-namespace go {
+namespace tengen {
 
 static constexpr std::array<int, 4> kDx{1, -1, 0, 0};
 static constexpr std::array<int, 4> kDy{0, 0, 1, -1};
@@ -210,4 +210,4 @@ bool isNextPositionLegal(const GamePosition& current, Player player, Coord c, IZ
 	return true;
 }
 
-} // namespace go
+} // namespace tengen

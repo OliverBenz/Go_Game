@@ -10,7 +10,7 @@ add_executable(${targetName}
 )
 
 # Link to required libraries
-target_link_libraries(${targetName} PRIVATE go::vision::core GTest::gtest_main)
+target_link_libraries(${targetName} PRIVATE tengen::vision::core GTest::gtest_main)
 set_target_properties(${targetName} PROPERTIES FOLDER "${ideFolderSource}")
 
 target_compile_definitions(${targetName} PRIVATE PATH_TEST_IMG="${CMAKE_CURRENT_LIST_DIR}/resources/")

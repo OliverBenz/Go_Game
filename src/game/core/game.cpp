@@ -2,7 +2,7 @@
 #include "core/moveChecker.hpp"
 #include "zobristHash.hpp"
 
-namespace go {
+namespace tengen {
 
 Game::Game(const std::size_t boardSize) : m_gameActive{false}, m_position{boardSize} {
 	switch (m_position.board.size()) {
@@ -153,4 +153,4 @@ void Game::unsubscribeState(IGameStateListener* listener) {
 	m_eventHub.unsubscribe(listener);
 }
 
-} // namespace go
+} // namespace tengen

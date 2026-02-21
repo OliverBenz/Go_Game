@@ -2,11 +2,11 @@ set(targetName appRuntime)
 
 # Get files to build
 set(headers
-    "${CMAKE_CURRENT_LIST_DIR}/include/app/sessionManager.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/include/app/IAppSignalListener.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/include/app/eventHub.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/include/app/position.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/include/app/gameServer.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/tengen/sessionManager.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/tengen/IAppSignalListener.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/tengen/eventHub.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/tengen/position.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/tengen/gameServer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/logging.hpp"
 )
 
@@ -19,7 +19,7 @@ set(sources
 )
 
 add_library(${targetName} STATIC ${headers} ${sources})
-add_library(go::runtime ALIAS ${targetName})
+add_library(tengen::runtime ALIAS ${targetName})
 
 target_include_directories(${targetName}
     PUBLIC
@@ -31,7 +31,7 @@ target_link_libraries(${targetName}
     PRIVATE
         Logger::Logger
     PUBLIC
-		go::game::core go::net::gameNet
+		tengen::game::core tengen::net::gameNet
 )
 
 # Setup project settings

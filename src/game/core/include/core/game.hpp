@@ -8,7 +8,7 @@
 
 #include <unordered_set>
 
-namespace go {
+namespace tengen {
 
 using EventQueue = SafeQueue<GameEvent>;
 
@@ -49,4 +49,4 @@ private:
 	std::unique_ptr<IZobristHash> m_hasher;    //!< Store the last 2 moves. Allows to check repeating board state.
 };
 
-} // namespace go
+} // namespace tengen

@@ -4,7 +4,7 @@
 
 #include <string>
 
-namespace go {
+namespace tengen {
 
 //! Convert sgf code to core game coordinate.
 Coord fromSGF(const std::string& s);
@@ -13,4 +13,4 @@ Coord fromSGF(const std::string& s);
 std::string toSGF(Coord c);
 
 
-} // namespace go
+} // namespace tengen

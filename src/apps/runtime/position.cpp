@@ -3,7 +3,7 @@
 
 #include <cassert>
 
-namespace go::app {
+namespace tengen::app {
 
 void Position::reset(const std::size_t boardSize) {
 	m_moveId = 0u;
@@ -89,4 +89,4 @@ bool Position::isDeltaApplicable(const network::ServerDelta& delta) {
 	return true;
 }
 
-} // namespace go::app
+} // namespace tengen::app

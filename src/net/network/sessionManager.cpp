@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-namespace go::network {
+namespace tengen::network {
 
 static SessionId nextSessionId{1};
 
@@ -115,4 +115,4 @@ SessionId SessionManager::generateSessionId() const {
 }
 
 
-} // namespace go::network
+} // namespace tengen::network

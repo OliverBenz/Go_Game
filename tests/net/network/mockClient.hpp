@@ -2,7 +2,7 @@
 
 #include "network/client.hpp"
 
-namespace go::gtest {
+namespace tengen::gtest {
 
 class MockClient : public network::IClientHandler {
 public:
@@ -23,4 +23,4 @@ private:
 	network::Client m_network;
 };
 
-} // namespace go::gtest
+} // namespace tengen::gtest

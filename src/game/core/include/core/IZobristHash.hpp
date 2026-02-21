@@ -5,7 +5,7 @@
 
 #include <cstdint>
 
-namespace go {
+namespace tengen {
 
 //! Interface to allow storing different board size instantiations.
 class IZobristHash {
@@ -15,4 +15,4 @@ public:
 	virtual uint64_t togglePlayer()               = 0;
 };
 
-} // namespace go
+} // namespace tengen

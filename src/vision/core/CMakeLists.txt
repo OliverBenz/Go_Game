@@ -21,7 +21,7 @@ set(sources
 )
 
 add_library(${targetName} STATIC ${headers} ${sources})
-add_library(go::vision::core ALIAS ${targetName})
+add_library(tengen::vision::core ALIAS ${targetName})
 
 target_include_directories(${targetName}
     PUBLIC

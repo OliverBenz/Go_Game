@@ -9,7 +9,7 @@
 #include <thread>
 #include <unordered_map>
 
-namespace go {
+namespace tengen {
 namespace app {
 
 
@@ -52,4 +52,4 @@ private:
 };
 
 } // namespace app
-} // namespace go
+} // namespace tengen

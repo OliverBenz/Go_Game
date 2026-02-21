@@ -5,7 +5,7 @@
 #include "tengen/sessionManager.hpp"
 #include <QWidget>
 
-namespace go::gui {
+namespace tengen::gui {
 
 class BoardWidget : public QWidget, public app::IAppSignalListener {
 	Q_OBJECT
@@ -43,4 +43,4 @@ private:
 	BoardRenderer m_boardRenderer;
 };
 
-} // namespace go::gui
+} // namespace tengen::gui

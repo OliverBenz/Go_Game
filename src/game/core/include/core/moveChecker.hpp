@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <unordered_set>
 
-namespace go {
+namespace tengen {
 
 //! Returns the liberties of the group connected to startCoord if player placed a stone there.
 std::size_t computeGroupLiberties(const Board& board, Coord startCoord, Player player);
@@ -24,4 +24,4 @@ bool isValidMove(const Board& board, Player player, Coord c);
 bool isNextPositionLegal(const GamePosition& current, Player player, Coord c, IZobristHash& hasher, const std::unordered_set<uint64_t>& history,
                          GamePosition& out, std::vector<Coord>& outCaptures);
 
-} // namespace go
+} // namespace tengen

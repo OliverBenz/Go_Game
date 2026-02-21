@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-namespace go {
+namespace tengen {
 
 Board::Board(std::size_t size) : m_size(size), m_board(size * size, Stone::Empty) {
 }
@@ -42,4 +42,4 @@ bool Board::isEmpty(Coord c) const {
 	return get(c) == Stone::Empty;
 }
 
-} // namespace go
+} // namespace tengen

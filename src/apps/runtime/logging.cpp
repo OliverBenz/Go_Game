@@ -9,7 +9,7 @@
 #include <iostream>
 #include <mutex>
 
-namespace go::app {
+namespace tengen::app {
 
 static Logging::LogConfig config;
 
@@ -41,4 +41,4 @@ Logging::Logger Logger() {
 	return Logging::Logger(config);
 }
 
-} // namespace go::app
+} // namespace tengen::app

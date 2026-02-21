@@ -12,7 +12,7 @@
 
 #include <opencv2/opencv.hpp>
 
-namespace go::vision::core {
+namespace tengen::vision::core {
 
 namespace {
 
@@ -656,4 +656,4 @@ WarpResult warpToBoard(const cv::Mat& image, DebugVisualizer* debugger) {
 	return {warped, H};
 }
 
-} // namespace go::vision::core
+} // namespace tengen::vision::core

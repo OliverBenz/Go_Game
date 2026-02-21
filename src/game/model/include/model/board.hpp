@@ -6,7 +6,7 @@
 #include <cassert>
 #include <vector>
 
-namespace go {
+namespace tengen {
 
 //! A physical go board of arbitrary size.
 class Board {
@@ -33,4 +33,4 @@ inline constexpr Board::Stone toStone(const Player player) {
 	return player == Player::White ? Board::Stone::White : Board::Stone::Black;
 }
 
-} // namespace go
+} // namespace tengen

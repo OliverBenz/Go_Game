@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace go::app {
+namespace tengen::app {
 
 //! Types of signals.
 enum AppSignal : uint64_t {
@@ -19,4 +19,4 @@ public:
 	virtual void onAppEvent(AppSignal signal) = 0;
 };
 
-} // namespace go::app
+} // namespace tengen::app

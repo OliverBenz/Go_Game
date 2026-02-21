@@ -1,6 +1,6 @@
 #pragma once
 
-namespace go {
+namespace tengen {
 
 enum class Player { Black = 1, White = 2 };
 
@@ -9,4 +9,4 @@ inline constexpr Player opponent(Player player) {
 	return player == Player::White ? Player::Black : Player::White;
 }
 
-} // namespace go
+} // namespace tengen

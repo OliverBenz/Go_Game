@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 
-namespace go::gtest {
+namespace tengen::gtest {
 
 // Liberties of single stones at all board positions
 TEST(MoveChecker, ComputeConnectedLiberties_Single) {
@@ -364,4 +364,4 @@ TEST(MoveChecker, Kill) {
 // 	EXPECT_FALSE(history.contains(pos.hash)); // Ensure we did not accidentally mutate history inside the call.
 // }
 
-} // namespace go::gtest
+} // namespace tengen::gtest

@@ -5,7 +5,7 @@
 
 #include <algorithm>
 
-namespace go::vision::core {
+namespace tengen::vision::core {
 namespace gtest {
 
 //! Create a synthetic, perfectly rectified board geometry with evenly spaced intersections.
@@ -116,4 +116,4 @@ TEST(StoneFinderUnit, BlackStone_WithMildGlare_NotWhite) {
 }
 
 } // namespace gtest
-} // namespace go::vision::core
+} // namespace tengen::vision::core

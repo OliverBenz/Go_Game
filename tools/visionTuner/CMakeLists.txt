@@ -1,6 +1,6 @@
 set(targetName visionTuner)
 
-# TODO: This needed if go::vision::core links PUBLIC?
+# TODO: This needed if tengen::vision::core links PUBLIC?
 find_package(OpenCV REQUIRED)
 
 # Get files to build
@@ -12,7 +12,7 @@ set(sources
 add_executable(${targetName} ${headers} ${sources})
 
 target_link_libraries(${targetName}
-	PRIVATE go::vision::core
+	PRIVATE tengen::vision::core
 )
 target_compile_definitions(${targetName}
 	PRIVATE

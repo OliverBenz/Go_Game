@@ -4,7 +4,7 @@
 #include "model/board.hpp"
 #include "model/player.hpp"
 
-namespace go {
+namespace tengen {
 
 //! The current game position.
 struct GamePosition {
@@ -20,4 +20,4 @@ public:
 	void pass(IZobristHash& hasher);              //!< Current player passes his turn.
 };
 
-} // namespace go
+} // namespace tengen

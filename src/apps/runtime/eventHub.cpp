@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace go::app {
+namespace tengen::app {
 
 void EventHub::subscribe(IAppSignalListener* listener, uint64_t signalMask) {
 	std::lock_guard<std::mutex> lock(m_listenerMutex);
@@ -28,4 +28,4 @@ void EventHub::signal(AppSignal signal) {
 	}
 }
 
-} // namespace go::app
+} // namespace tengen::app

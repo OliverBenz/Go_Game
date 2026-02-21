@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <random>
 
-namespace go {
+namespace tengen {
 
 //! Hash for the current game state. Used to ensure no game state repetition.
 template <std::size_t SIZE>
@@ -57,4 +57,4 @@ void ZobristHash<SIZE>::initRandomTable() {
 
 	m_playerToggle = dist(rng);
 }
-} // namespace go
+} // namespace tengen

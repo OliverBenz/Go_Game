@@ -6,7 +6,7 @@
 #include <functional>
 #include <unordered_map>
 
-namespace go::network {
+namespace tengen::network {
 
 struct SessionContext {
 	core::ConnectionId connectionId; //!< Identify connection on network layer.
@@ -41,4 +41,4 @@ private:
 	std::unordered_map<core::ConnectionId, SessionId> m_connectionToSession;
 };
 
-} // namespace go::network
+} // namespace tengen::network

@@ -9,7 +9,7 @@
 #include <variant>
 #include <vector>
 
-namespace go::network {
+namespace tengen::network {
 
 // Client Network Events (client -> server)
 struct ClientPutStone {
@@ -63,4 +63,4 @@ std::string toMessage(ServerEvent event);
 std::optional<ClientEvent> fromClientMessage(const std::string& message);
 std::optional<ServerEvent> fromServerMessage(const std::string& message);
 
-} // namespace go::network
+} // namespace tengen::network

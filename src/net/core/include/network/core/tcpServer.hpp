@@ -6,7 +6,7 @@
 #include <functional>
 #include <memory>
 
-namespace go {
+namespace tengen {
 namespace network {
 namespace core {
 
@@ -43,4 +43,4 @@ private:
 
 } // namespace core
 } // namespace network
-} // namespace go
+} // namespace tengen

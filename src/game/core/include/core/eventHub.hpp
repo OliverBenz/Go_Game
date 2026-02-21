@@ -6,7 +6,7 @@
 #include <mutex>
 #include <vector>
 
-namespace go {
+namespace tengen {
 
 //! Allows external components to be updated on internal game events.
 //! \note Signals are synchronous and run on the caller thread.
@@ -35,4 +35,4 @@ private:
 	std::vector<StateListenerEntry> m_stateListeners;
 };
 
-} // namespace go
+} // namespace tengen

@@ -2,7 +2,7 @@
 
 #include "core/gameEvent.hpp"
 
-namespace go {
+namespace tengen {
 
 class IGameSignalListener {
 public:
@@ -10,4 +10,4 @@ public:
 	virtual void onGameEvent(GameSignal signal) = 0;
 };
 
-} // namespace go
+} // namespace tengen

@@ -2,7 +2,7 @@
 
 #include "network/core/protocol.hpp"
 
-namespace go::network {
+namespace tengen::network {
 
 // Events flowing from network threads into the server thread.
 // Keep these small PODs so network callbacks remain cheap.
@@ -14,4 +14,4 @@ struct ServerQueueEvent {
 	core::Message payload{};           //!< Network message. Protocol examples: {"type":"put","x":3,"y":4}, {"type":"chat","message":"hello"}.
 };
 
-} // namespace go::network
+} // namespace tengen::network

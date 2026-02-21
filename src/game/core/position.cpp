@@ -1,6 +1,6 @@
 #include "core/position.hpp"
 
-namespace go {
+namespace tengen {
 
 GamePosition::GamePosition(std::size_t boardSize) : board{boardSize} {
 }
@@ -22,4 +22,4 @@ void GamePosition::pass(IZobristHash& hasher) {
 	++moveId;
 }
 
-} // namespace go
+} // namespace tengen

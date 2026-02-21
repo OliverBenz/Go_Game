@@ -7,7 +7,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-namespace go::gui {
+namespace tengen::gui {
 
 HostDialog::HostDialog(QWidget* parent) : QDialog(parent) {
 	setWindowTitle("Host Server");
@@ -56,4 +56,4 @@ unsigned HostDialog::boardSize() const {
 	return 13u;
 }
 
-} // namespace go::gui
+} // namespace tengen::gui

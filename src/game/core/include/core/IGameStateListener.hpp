@@ -2,7 +2,7 @@
 
 #include "core/gameEvent.hpp"
 
-namespace go {
+namespace tengen {
 
 class IGameStateListener {
 public:
@@ -10,4 +10,4 @@ public:
 	virtual void onGameDelta(const GameDelta& delta) = 0;
 };
 
-} // namespace go
+} // namespace tengen

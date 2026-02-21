@@ -7,7 +7,7 @@
 #include <memory>
 #include <string>
 
-namespace go::network {
+namespace tengen::network {
 
 //! Callback interface invoked on the client's read thread.
 //! \note Keep handlers lightweight.
@@ -46,4 +46,4 @@ private:
 	std::unique_ptr<Implementation> m_pimpl; //!< Pimpl to hide networking protocol stuff.
 };
 
-} // namespace go::network
+} // namespace tengen::network

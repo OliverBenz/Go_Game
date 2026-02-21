@@ -6,7 +6,7 @@
 
 #include <opencv2/opencv.hpp>
 
-namespace go::vision::core {
+namespace tengen::vision::core {
 
 void DebugVisualizer::setInteractive(bool interactive, unsigned displayTimeMs) {
 	m_interactive = interactive;
@@ -182,4 +182,4 @@ cv::Mat DebugVisualizer::labelTile(const cv::Mat& tile, const std::string& text)
 	return out;
 }
 
-} // namespace go::vision::core
+} // namespace tengen::vision::core

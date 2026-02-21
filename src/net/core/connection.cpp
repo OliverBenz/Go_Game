@@ -6,7 +6,7 @@
 #include <array>
 #include <memory>
 
-namespace go::network::core {
+namespace tengen::network::core {
 
 Connection::Connection(asio::ip::tcp::socket socket, ConnectionId connectionId, Callbacks callbacks)
     : m_socket(std::move(socket)), m_strand(m_socket.get_executor()), m_connectionId(connectionId), m_callbacks(std::move(callbacks)) {
@@ -147,4 +147,4 @@ void Connection::doDisconnect() {
 	}
 }
 
-} // namespace go::network::core
+} // namespace tengen::network::core

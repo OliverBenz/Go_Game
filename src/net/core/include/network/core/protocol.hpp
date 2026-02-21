@@ -6,7 +6,7 @@
 
 #include <string>
 
-namespace go {
+namespace tengen {
 namespace network {
 namespace core {
 
@@ -45,4 +45,4 @@ constexpr std::uint32_t from_network_u32(std::uint32_t value) {
 
 } // namespace core
 } // namespace network
-} // namespace go
+} // namespace tengen

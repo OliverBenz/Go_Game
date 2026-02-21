@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <filesystem>
 
-namespace go::vision::core {
+namespace tengen::vision::core {
 namespace gtest {
 
 //! Expected test results (result of each step in the pipeline).
@@ -137,4 +137,4 @@ TEST(Process, Board_Detect_Easy) {
 }
 
 } // namespace gtest
-} // namespace go::vision::core
+} // namespace tengen::vision::core

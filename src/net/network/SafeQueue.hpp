@@ -6,7 +6,7 @@
 #include <mutex>
 
 // TODO: Got this once in gameNet and once in core.
-namespace go::network {
+namespace tengen::network {
 
 //! Thread safe queue with a blocking Pop function.
 template <class Entry>
@@ -77,4 +77,4 @@ void SafeQueue<Entry>::Release() {
 	m_condition.notify_all();
 }
 
-} // namespace go::network
+} // namespace tengen::network

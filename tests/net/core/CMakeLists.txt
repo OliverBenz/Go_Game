@@ -7,7 +7,7 @@ add_executable(${targetName}
 )
 
 # Link to required libraries
-target_link_libraries(${targetName} PRIVATE go::net::core go::net::gameNet GTest::gtest_main)
+target_link_libraries(${targetName} PRIVATE tengen::net::core tengen::net::gameNet GTest::gtest_main)
 set_target_properties(${targetName} PROPERTIES FOLDER "${ideFolderSource}")
 
 # Setup project settings

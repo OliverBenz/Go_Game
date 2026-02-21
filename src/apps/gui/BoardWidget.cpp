@@ -14,7 +14,7 @@
 #include <algorithm>
 #include <cstdint>
 
-namespace go::gui {
+namespace tengen::gui {
 
 BoardWidget::BoardWidget(app::SessionManager& game, QWidget* parent)
     : QWidget(parent), m_game(game), m_boardRenderer(static_cast<unsigned>(game.board().size())) {
@@ -150,4 +150,4 @@ QPoint BoardWidget::boardOffset(unsigned boardSize) const {
 	return {dx, dy};
 }
 
-} // namespace go::gui
+} // namespace tengen::gui

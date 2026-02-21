@@ -10,7 +10,7 @@
 #include <QTabWidget>
 #include <QWidget>
 
-namespace go::gui {
+namespace tengen::gui {
 
 class GameWidget : public QWidget, public app::IAppSignalListener {
 	Q_OBJECT
@@ -54,4 +54,4 @@ private:
 	unsigned m_lastChatMessageId = 0u;
 };
 
-} // namespace go::gui
+} // namespace tengen::gui

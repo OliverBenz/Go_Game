@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace go {
+namespace tengen {
 
 void EventHub::subscribe(IGameSignalListener* listener, uint64_t signalMask) {
 	std::lock_guard<std::mutex> lock(m_listenerMutex);
@@ -51,4 +51,4 @@ void EventHub::signalDelta(const GameDelta& delta) {
 	}
 }
 
-} // namespace go
+} // namespace tengen
