@@ -1,8 +1,8 @@
 #pragma once
 
-#include "data/board.hpp"
-#include "data/gameStatus.hpp"
-#include "data/player.hpp"
+#include "model/board.hpp"
+#include "model/gameStatus.hpp"
+#include "model/player.hpp"
 #include "network/nwEvents.hpp"
 
 namespace go::app {

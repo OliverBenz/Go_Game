@@ -1,10 +1,10 @@
 #include "core/moveChecker.hpp"
 
-#include "core/game.hpp"
 #include "core/moveChecker.hpp"
 
 #include <array>
 #include <cassert>
+#include <optional>
 
 namespace go {
 

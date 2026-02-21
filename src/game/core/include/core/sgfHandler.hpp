@@ -1,6 +1,6 @@
 #pragma once
 
-#include "data/board.hpp"
+#include "model/coordinate.hpp"
 
 #include <string>
 

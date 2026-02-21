@@ -1,10 +1,7 @@
 #include "core/moveChecker.hpp"
-#include "core/game.hpp"
-#include "data/board.hpp"
-#//include "core/zobristHash.hpp"
+#include "model/board.hpp"
 
 #include <gtest/gtest.h>
-#include <unordered_set>
 
 namespace go::gtest {
 

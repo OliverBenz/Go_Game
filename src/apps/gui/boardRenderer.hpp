@@ -1,7 +1,6 @@
 #pragma once
 
-#include "data/board.hpp"
-#include "data/player.hpp"
+#include "model/board.hpp"
 
 #include <QImage>
 #include <QPainter>

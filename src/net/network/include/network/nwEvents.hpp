@@ -1,7 +1,7 @@
 #pragma once
 
-#include "data/coordinate.hpp"
-#include "data/player.hpp"
+#include "model/coordinate.hpp"
+#include "model/player.hpp"
 #include "network/types.hpp"
 
 #include <optional>

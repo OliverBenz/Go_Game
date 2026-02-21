@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/IZobristHash.hpp"
-#include "data/player.hpp"
+#include "model/player.hpp"
 
 #include <array>
 #include <cassert>
