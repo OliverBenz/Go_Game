@@ -19,7 +19,7 @@ set(sources
 )
 
 add_library(${targetName} STATIC ${headers} ${sources})
-add_library(go::app::runtime ALIAS ${targetName})
+add_library(go::runtime ALIAS ${targetName})
 
 target_include_directories(${targetName}
     PUBLIC

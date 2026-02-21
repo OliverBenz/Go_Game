@@ -6,7 +6,7 @@ add_executable(${targetName}
 
 target_link_libraries(${targetName}
     PRIVATE
-        go::app::runtime
+        go::runtime
 )
 
 # Setup project settings
