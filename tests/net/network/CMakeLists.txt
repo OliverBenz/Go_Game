@@ -1,5 +1,5 @@
 # Settings
-set(targetName "netGameNet.gtest")
+set(targetName "netNetwork.gtest")
 
 # Create executable
 add_executable(${targetName}
