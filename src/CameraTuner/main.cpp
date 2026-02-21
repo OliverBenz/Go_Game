@@ -1,11 +1,7 @@
-#include <algorithm>
-#include <array>
 #include <cmath>
-#include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
-#include <limits>
 #include <opencv2/highgui.hpp>
 #include <vector>
 
@@ -13,7 +9,6 @@
 
 #include "camera/rectifier.hpp"
 #include "camera/stoneFinder.hpp"
-#include "gridFinder.hpp"
 
 namespace go::camera {
 // Notes and Findings:
@@ -120,47 +115,47 @@ int main(int argc, char** argv) {
 		}
 
 	} else {
-		cv::VideoCapture cap(0);
-		if(!cap.isOpened()) {
-			std::cerr << "Video device not opened\n";
-			return -1;
-		}
-
-		cv::Mat image;
-		for(;;) {
-			debug.clear();
-			cap >> image; // Get an image.
-			if(image.empty()) {
-				std::cerr << "Could not get image.\n";
-				return -1;
-			}
-
-			if(go::camera::process(image, &debug)) {
-				// const auto mosaic = debug.buildMosaic();
-				// cv::imshow("", mosaic);
-			} else {
-				//cv::imshow("", image);
-			}
-				const auto mosaic = debug.buildMosaic();
-				cv::imshow("", mosaic);
-
-			// Wait 2s and exit on ESC
-			if(cv::waitKey(500) == 27) {
-				break;
-			}
-		}
-
-		cap.release();
-		cv::destroyAllWindows();
-
-
-		// const auto exampleImage = std::filesystem::path(PATH_TEST_IMG) / "angled_easy/angle_4.jpeg";
-		// if (go::camera::process(exampleImage, &debug)) {
-		// 	const auto mosaic = debug.buildMosaic();
-		// 	// cv::imshow("", mosaic);
-		// 	// cv::waitKey(0);
-		// 	cv::imwrite("/home/oliver/temp.png", mosaic);
+		// cv::VideoCapture cap(0);
+		// if(!cap.isOpened()) {
+		// 	std::cerr << "Video device not opened\n";
+		// 	return -1;
 		// }
+
+		// cv::Mat image;
+		// for(;;) {
+		// 	debug.clear();
+		// 	cap >> image; // Get an image.
+		// 	if(image.empty()) {
+		// 		std::cerr << "Could not get image.\n";
+		// 		return -1;
+		// 	}
+
+		// 	if(go::camera::process(image, &debug)) {
+		// 		// const auto mosaic = debug.buildMosaic();
+		// 		// cv::imshow("", mosaic);
+		// 	} else {
+		// 		//cv::imshow("", image);
+		// 	}
+		// 		const auto mosaic = debug.buildMosaic();
+		// 		cv::imshow("", mosaic);
+
+		// 	// Wait 2s and exit on ESC
+		// 	if(cv::waitKey(500) == 27) {
+		// 		break;
+		// 	}
+		// }
+
+		// cap.release();
+		// cv::destroyAllWindows();
+
+
+		const auto exampleImage = std::filesystem::path(PATH_TEST_IMG) / "angled_hard/angle_1.jpeg";
+		if (go::camera::process(exampleImage, &debug)) {
+			const auto mosaic = debug.buildMosaic();
+			// cv::imshow("", mosaic);
+			// cv::waitKey(0);
+			cv::imwrite("/home/oliver/temp.png", mosaic);
+		}
 	}
 
 	return 0;
