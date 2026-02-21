@@ -1,8 +1,7 @@
 #pragma once
 
 #include "BoardWidget.hpp"
-#include "app/sessionManager.hpp"
-#include "core/game.hpp"
+#include "tengen/sessionManager.hpp"
 #include <QCloseEvent>
 #include <QLabel>
 #include <QLineEdit>

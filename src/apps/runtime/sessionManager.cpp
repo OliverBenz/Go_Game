@@ -1,7 +1,7 @@
-#include "app/sessionManager.hpp"
+#include "tengen/sessionManager.hpp"
 
-#include "app/gameServer.hpp"
 #include "logging.hpp"
+#include "tengen/gameServer.hpp"
 
 #include <algorithm>
 #include <cassert>

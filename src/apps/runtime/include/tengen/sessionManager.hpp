@@ -1,9 +1,9 @@
 #pragma once
 
-#include "app/IAppSignalListener.hpp"
-#include "app/eventHub.hpp"
-#include "app/position.hpp"
 #include "network/client.hpp"
+#include "tengen/IAppSignalListener.hpp"
+#include "tengen/eventHub.hpp"
+#include "tengen/position.hpp"
 
 #include <memory>
 #include <mutex>

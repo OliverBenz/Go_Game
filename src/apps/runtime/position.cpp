@@ -1,4 +1,4 @@
-#include "app/position.hpp"
+#include "tengen/position.hpp"
 #include "logging.hpp"
 
 #include <cassert>

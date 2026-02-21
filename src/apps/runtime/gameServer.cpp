@@ -1,4 +1,4 @@
-#include "app/gameServer.hpp"
+#include "tengen/gameServer.hpp"
 
 #include "core/game.hpp"
 #include "logging.hpp"
