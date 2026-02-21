@@ -1,8 +1,8 @@
 #pragma once
 
-#include "app/sessionManager.hpp"
 #include "boardRenderer.hpp"
 #include "core/game.hpp"
+#include "tengen/sessionManager.hpp"
 #include <QWidget>
 
 namespace go::gui {

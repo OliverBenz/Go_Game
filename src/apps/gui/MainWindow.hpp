@@ -1,6 +1,6 @@
 #pragma once
 
-#include "app/sessionManager.hpp"
+#include "tengen/sessionManager.hpp"
 
 #include <QMainWindow>
 
