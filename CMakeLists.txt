@@ -9,12 +9,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(BUILD_TESTS "Create the unit tests for the project." ON)
+option(BUILD_TOOLS "Create the tools for the project." ON)
 
 # Add libraries to project
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/lib")
 
-# Add source, tests and examples
+# Add source, tests, and tools
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/src")
+if(BUILD_TESTS)
+	add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/tools")
+endif()
+
 if(BUILD_TESTS)
     include(CTest)
     enable_testing()

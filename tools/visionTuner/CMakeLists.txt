@@ -1,6 +1,6 @@
-set(targetName CameraTuner)
+set(targetName visionTuner)
 
-# TODO: This needed if go::camera links PUBLIC?
+# TODO: This needed if go::vision::core links PUBLIC?
 find_package(OpenCV REQUIRED)
 
 # Get files to build
@@ -12,11 +12,11 @@ set(sources
 add_executable(${targetName} ${headers} ${sources})
 
 target_link_libraries(${targetName}
-	PRIVATE go::camera
+	PRIVATE go::vision::core
 )
 target_compile_definitions(${targetName}
 	PRIVATE
-		PATH_TEST_IMG="${CMAKE_SOURCE_DIR}/tests/camera/resources/"
+		PATH_TEST_IMG="${CMAKE_SOURCE_DIR}/tests/vision/resources/"
 )
 
 # Setup project settings
