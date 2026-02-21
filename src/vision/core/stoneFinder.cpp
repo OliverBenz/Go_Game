@@ -1185,4 +1185,4 @@ StoneResult analyseBoard(const BoardGeometry& geometry, DebugVisualizer* debugge
 	return analyseBoardV2(geometry, debugger, config);
 }
 
-} // namespace go::camera
+} // namespace go::vision::core

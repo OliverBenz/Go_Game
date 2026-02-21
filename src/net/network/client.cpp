@@ -182,4 +182,4 @@ SessionId Client::sessionId() const {
 	return m_pimpl->sessionId();
 }
 
-} // namespace go::gameNet
+} // namespace go::network

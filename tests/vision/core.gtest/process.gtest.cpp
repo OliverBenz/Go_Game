@@ -136,5 +136,5 @@ TEST(Process, Board_Detect_Easy) {
 	}
 }
 
-} // namespace go::camera::gtest
-}
+} // namespace gtest
+} // namespace go::vision::core

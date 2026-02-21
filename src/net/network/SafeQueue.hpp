@@ -77,4 +77,4 @@ void SafeQueue<Entry>::Release() {
 	m_condition.notify_all();
 }
 
-} // namespace go::gameNet
+} // namespace go::network

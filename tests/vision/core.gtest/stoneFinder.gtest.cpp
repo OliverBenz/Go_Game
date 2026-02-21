@@ -6,7 +6,7 @@
 #include <algorithm>
 
 namespace go::vision::core {
-namespace gtest{
+namespace gtest {
 
 //! Create a synthetic, perfectly rectified board geometry with evenly spaced intersections.
 static BoardGeometry makeSyntheticBoard(unsigned N, double spacingPx, const cv::Scalar& woodBgr) {
@@ -115,5 +115,5 @@ TEST(StoneFinderUnit, BlackStone_WithMildGlare_NotWhite) {
 	EXPECT_EQ(countState(r.stones, StoneState::White), 0u);
 }
 
-} // namespace go::camera::gtest
-}
+} // namespace gtest
+} // namespace go::vision::core

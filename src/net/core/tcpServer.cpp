@@ -224,4 +224,4 @@ void TcpServer::reject(ConnectionId connectionId) {
 }
 
 
-} // namespace go::network
+} // namespace go::network::core

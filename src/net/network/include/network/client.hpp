@@ -46,4 +46,4 @@ private:
 	std::unique_ptr<Implementation> m_pimpl; //!< Pimpl to hide networking protocol stuff.
 };
 
-} // namespace go::gameNet
+} // namespace go::network

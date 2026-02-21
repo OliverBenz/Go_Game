@@ -52,4 +52,4 @@ double median(std::vector<double> values) {
 }
 
 
-} // namespace go::camera
+} // namespace go::vision::core

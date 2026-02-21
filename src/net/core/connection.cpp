@@ -147,4 +147,4 @@ void Connection::doDisconnect() {
 	}
 }
 
-} // namespace go::network
+} // namespace go::network::core

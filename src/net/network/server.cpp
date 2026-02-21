@@ -280,4 +280,4 @@ Seat Server::getSeat(SessionId sessionId) const {
 	return m_pimpl->getSeat(sessionId);
 }
 
-} // namespace go::gameNet
+} // namespace go::network

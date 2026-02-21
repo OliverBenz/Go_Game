@@ -41,5 +41,5 @@ TEST(Process, Find_Board_Hard) {
 	runTest("angled_hard");
 }
 
-}
-} // namespace go::camera::gtest
+} // namespace gtest
+} // namespace go::vision::core

@@ -614,4 +614,4 @@ bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hC
 	return findGrid(vCenters, hCenters, vGrid, hGrid, kDefaultNs);
 }
 
-} // namespace go::camera
+} // namespace go::vision::core

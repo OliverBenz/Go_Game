@@ -359,4 +359,4 @@ BoardGeometry rectifyImage(const cv::Mat& originalImg, const WarpResult& input, 
 	return {refined, homographyFinal, intersectionsRefined, refinedSpacing, static_cast<unsigned>(N)};
 }
 
-} // namespace go::camera
+} // namespace go::vision::core

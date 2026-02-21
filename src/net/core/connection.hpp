@@ -48,4 +48,4 @@ private:
 	bool m_writeInProgress{false};
 };
 
-} // namespace go::network
+} // namespace go::network::core

@@ -29,4 +29,4 @@ struct BoardGeometry {
 //! the edges).
 BoardGeometry rectifyImage(const cv::Mat& originalImg, const WarpResult& input, DebugVisualizer* debugger = nullptr);
 
-} // namespace go::camera
+} // namespace go::vision::core

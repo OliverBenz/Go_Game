@@ -115,4 +115,4 @@ SessionId SessionManager::generateSessionId() const {
 }
 
 
-} // namespace go::gameNet
+} // namespace go::network

@@ -182,4 +182,4 @@ cv::Mat DebugVisualizer::labelTile(const cv::Mat& tile, const std::string& text)
 	return out;
 }
 
-} // namespace go::camera
+} // namespace go::vision::core

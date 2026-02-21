@@ -110,21 +110,25 @@ static CandidateMasks buildCandidateMasks(const cv::Mat& blurredGray, const Prep
 static std::vector<cv::Point2f> orderCorners(const std::vector<cv::Point2f>& quad) {
 	CV_Assert(quad.size() == 4u);
 
-	const auto idxMinSum = static_cast<int>(
-	        std::min_element(quad.begin(), quad.end(), [](const cv::Point2f& left, const cv::Point2f& right) { return (left.x + left.y) < (right.x + right.y); }) -
-	        quad.begin());
-	const auto idxMinDiff = static_cast<int>(
-	        std::min_element(quad.begin(), quad.end(), [](const cv::Point2f& left, const cv::Point2f& right) { return (left.x - left.y) < (right.x - right.y); }) -
-	        quad.begin());
-	const auto idxMaxSum = static_cast<int>(
-	        std::max_element(quad.begin(), quad.end(), [](const cv::Point2f& left, const cv::Point2f& right) { return (left.x + left.y) < (right.x + right.y); }) -
-	        quad.begin());
-	const auto idxMaxDiff = static_cast<int>(
-	        std::max_element(quad.begin(), quad.end(), [](const cv::Point2f& left, const cv::Point2f& right) { return (left.x - left.y) < (right.x - right.y); }) -
-	        quad.begin());
+	const auto idxMinSum =
+	        static_cast<int>(std::min_element(quad.begin(), quad.end(),
+	                                          [](const cv::Point2f& left, const cv::Point2f& right) { return (left.x + left.y) < (right.x + right.y); }) -
+	                         quad.begin());
+	const auto idxMinDiff =
+	        static_cast<int>(std::min_element(quad.begin(), quad.end(),
+	                                          [](const cv::Point2f& left, const cv::Point2f& right) { return (left.x - left.y) < (right.x - right.y); }) -
+	                         quad.begin());
+	const auto idxMaxSum =
+	        static_cast<int>(std::max_element(quad.begin(), quad.end(),
+	                                          [](const cv::Point2f& left, const cv::Point2f& right) { return (left.x + left.y) < (right.x + right.y); }) -
+	                         quad.begin());
+	const auto idxMaxDiff =
+	        static_cast<int>(std::max_element(quad.begin(), quad.end(),
+	                                          [](const cv::Point2f& left, const cv::Point2f& right) { return (left.x - left.y) < (right.x - right.y); }) -
+	                         quad.begin());
 
-	const bool unique = idxMinSum != idxMinDiff && idxMinSum != idxMaxSum && idxMinSum != idxMaxDiff && idxMinDiff != idxMaxSum &&
-	                    idxMinDiff != idxMaxDiff && idxMaxSum != idxMaxDiff;
+	const bool unique = idxMinSum != idxMinDiff && idxMinSum != idxMaxSum && idxMinSum != idxMaxDiff && idxMinDiff != idxMaxSum && idxMinDiff != idxMaxDiff &&
+	                    idxMaxSum != idxMaxDiff;
 	if (unique) {
 		return {
 		        quad[static_cast<std::size_t>(idxMinSum)],
@@ -198,7 +202,7 @@ struct GridEvidence {
 
 //! Try multiple approximation epsilons until a convex 4-corner polygon is found.
 static bool contourToApproxQuad(const std::vector<cv::Point>& contour, std::vector<cv::Point2f>& outQuad) {
-	const double perimeter = cv::arcLength(contour, true);
+	const double perimeter                 = cv::arcLength(contour, true);
 	const std::array<double, 6> epsFactors = {0.012, 0.016, 0.020, 0.026, 0.032, 0.040};
 
 	std::vector<cv::Point> polygon;
@@ -260,9 +264,9 @@ static std::vector<double> clusterWeighted1D(std::vector<Line1D> values, double 
 
 //! Score how close a line-count is to legal Go board sizes.
 static double boardLineCountScore(const int count) {
-	const int d9  = std::abs(count - 9);
-	const int d13 = std::abs(count - 13);
-	const int d19 = std::abs(count - 19);
+	const int d9   = std::abs(count - 9);
+	const int d13  = std::abs(count - 13);
+	const int d19  = std::abs(count - 19);
 	const int best = std::min({d9, d13, d19});
 	return std::clamp(1.0 - static_cast<double>(best) / 8.0, 0.0, 1.0);
 }
@@ -312,10 +316,10 @@ static GridEvidence evaluateGridEvidence(const cv::Mat& image, const std::vector
 	vertical.reserve(lines.size());
 	horizontal.reserve(lines.size());
 	for (const auto& line: lines) {
-		const double dx = static_cast<double>(line[2] - line[0]);
-		const double dy = static_cast<double>(line[3] - line[1]);
+		const double dx     = static_cast<double>(line[2] - line[0]);
+		const double dy     = static_cast<double>(line[3] - line[1]);
 		const double segLen = std::sqrt(dx * dx + dy * dy);
-		double angle = std::atan2(dy, dx) * 180.0 / CV_PI;
+		double angle        = std::atan2(dy, dx) * 180.0 / CV_PI;
 		while (angle < -90.0)
 			angle += 180.0;
 		while (angle > 90.0)
@@ -334,12 +338,11 @@ static GridEvidence evaluateGridEvidence(const cv::Mat& image, const std::vector
 	evidence.verticalCount   = static_cast<int>(vCenters.size());
 	evidence.horizontalCount = static_cast<int>(hCenters.size());
 
-	const double fitV = boardLineCountScore(evidence.verticalCount);
-	const double fitH = boardLineCountScore(evidence.horizontalCount);
-	const double pairFit = std::sqrt(fitV * fitH);
-	const double balance = std::clamp(1.0 - std::abs(evidence.verticalCount - evidence.horizontalCount) / 12.0, 0.0, 1.0);
-	const double segmentSupport =
-	        std::clamp((static_cast<double>(vertical.size()) + static_cast<double>(horizontal.size())) / 220.0, 0.0, 1.0);
+	const double fitV           = boardLineCountScore(evidence.verticalCount);
+	const double fitH           = boardLineCountScore(evidence.horizontalCount);
+	const double pairFit        = std::sqrt(fitV * fitH);
+	const double balance        = std::clamp(1.0 - std::abs(evidence.verticalCount - evidence.horizontalCount) / 12.0, 0.0, 1.0);
+	const double segmentSupport = std::clamp((static_cast<double>(vertical.size()) + static_cast<double>(horizontal.size())) / 220.0, 0.0, 1.0);
 
 	evidence.score = 2.0 * pairFit + 0.8 * balance + 0.4 * segmentSupport;
 	return evidence;
@@ -437,9 +440,9 @@ static double boardQuadScore(const std::vector<cv::Point2f>& quad, const cv::Siz
 
 	const cv::Point2f center = 0.25f * (quad[0] + quad[1] + quad[2] + quad[3]);
 	const cv::Point2f imageCenter{0.5f * static_cast<float>(imageSize.width - 1), 0.5f * static_cast<float>(imageSize.height - 1)};
-	const double centerDist   = cv::norm(center - imageCenter);
-	const double diag         = std::sqrt(static_cast<double>(imageSize.width) * imageSize.width + static_cast<double>(imageSize.height) * imageSize.height);
-	const double centerScore  = std::clamp(1.0 - centerDist / (0.60 * diag), 0.0, 1.0);
+	const double centerDist  = cv::norm(center - imageCenter);
+	const double diag        = std::sqrt(static_cast<double>(imageSize.width) * imageSize.width + static_cast<double>(imageSize.height) * imageSize.height);
+	const double centerScore = std::clamp(1.0 - centerDist / (0.60 * diag), 0.0, 1.0);
 
 	const double approxBonus = fromApprox ? 0.15 : 0.0;
 	return 1.2 * areaFrac + 1.3 * squareness + 1.2 * edgeBalance + 1.1 * parallelScore + 0.6 * rightness + 0.8 * centerScore + approxBonus;
@@ -497,8 +500,8 @@ static std::optional<BoardCandidate> selectBestBoardCandidate(const std::vector<
 		const bool lowRectFill = !q.fromApprox && rectFill < 0.08;
 		if (lowRectFill) {
 			if (verbose) {
-				std::cout << "[board-debug] rank=" << rank << " idx=" << contourIdx << " contourArea=" << q.contourArea
-				          << " quadArea=" << quadArea << " fill=" << rectFill << " reject=fill\n";
+				std::cout << "[board-debug] rank=" << rank << " idx=" << contourIdx << " contourArea=" << q.contourArea << " quadArea=" << quadArea
+				          << " fill=" << rectFill << " reject=fill\n";
 			}
 			continue;
 		}
@@ -521,18 +524,18 @@ static std::optional<BoardCandidate> selectBestBoardCandidate(const std::vector<
 	static constexpr int REFINED_CANDIDATES = 6;
 	static constexpr double GRID_SCORE_W    = 1.25;
 
-	BoardCandidate best = candidates.front();
+	BoardCandidate best   = candidates.front();
 	double bestFinalScore = -std::numeric_limits<double>::infinity();
 	const int refineCount = std::min<int>(static_cast<int>(candidates.size()), REFINED_CANDIDATES);
 	for (int i = 0; i < refineCount; ++i) {
-		BoardCandidate current = candidates[static_cast<std::size_t>(i)];
+		BoardCandidate current      = candidates[static_cast<std::size_t>(i)];
 		const GridEvidence evidence = evaluateGridEvidence(image, current.quad);
 		current.verticalCount       = evidence.verticalCount;
 		current.horizontalCount     = evidence.horizontalCount;
 		const double finalScore     = current.score + GRID_SCORE_W * evidence.score;
 		if (verbose) {
-			std::cout << "[board-debug] refine idx=" << current.contourIdx << " geom=" << current.score << " grid=" << evidence.score
-			          << " final=" << finalScore << " v=" << evidence.verticalCount << " h=" << evidence.horizontalCount << '\n';
+			std::cout << "[board-debug] refine idx=" << current.contourIdx << " geom=" << current.score << " grid=" << evidence.score << " final=" << finalScore
+			          << " v=" << evidence.verticalCount << " h=" << evidence.horizontalCount << '\n';
 		}
 		if (finalScore > bestFinalScore) {
 			bestFinalScore = finalScore;
@@ -653,4 +656,4 @@ WarpResult warpToBoard(const cv::Mat& image, DebugVisualizer* debugger) {
 	return {warped, H};
 }
 
-} // namespace go::camera
+} // namespace go::vision::core

@@ -20,5 +20,5 @@ TEST(Rectifier, RectifyImage) {
 }
 
 
-} // namespace go::gtest
-}
+} // namespace gtest
+} // namespace go::vision::core
