@@ -5,11 +5,11 @@ find_package(OpenCV REQUIRED)
 # Get files to build
 set(headers
     "${CMAKE_CURRENT_LIST_DIR}/statistics.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/include/camera/debugVisualizer.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/include/camera/boardFinder.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/gridFinder.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/include/camera/rectifier.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/include/camera/stoneFinder.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/vision/core/debugVisualizer.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/vision/core/boardFinder.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/vision/core/rectifier.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/vision/core/stoneFinder.hpp"
 )
 set(sources
     "${CMAKE_CURRENT_LIST_DIR}/statistics.cpp"

@@ -1,4 +1,4 @@
-#include "camera/stoneFinder.hpp"
+#include "vision/core/stoneFinder.hpp"
 
 #include <algorithm>
 #include <array>

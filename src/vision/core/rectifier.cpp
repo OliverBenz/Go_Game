@@ -1,6 +1,6 @@
-#include "camera/rectifier.hpp"
+#include "vision/core/rectifier.hpp"
 
-#include "camera/boardFinder.hpp"
+#include "vision/core/boardFinder.hpp"
 
 #include "gridFinder.hpp"
 #include "statistics.hpp"

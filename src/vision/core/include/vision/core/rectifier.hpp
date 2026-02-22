@@ -1,7 +1,7 @@
 #pragma once
 
-#include "boardFinder.hpp"
-#include "camera/debugVisualizer.hpp"
+#include "vision/core//debugVisualizer.hpp"
+#include "vision/core/boardFinder.hpp"
 
 #include <opencv2/opencv.hpp>
 

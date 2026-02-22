@@ -1,6 +1,6 @@
-#include "camera/boardFinder.hpp"
-#include "camera/rectifier.hpp"
-#include "camera/stoneFinder.hpp"
+#include "vision/core/boardFinder.hpp"
+#include "vision/core/rectifier.hpp"
+#include "vision/core/stoneFinder.hpp"
 
 #include <gtest/gtest.h>
 #include <opencv2/opencv.hpp>
@@ -66,9 +66,9 @@ TEST(Process, Game_Simple_Size9) {
 	const auto TEST_PATH = std::filesystem::path(PATH_TEST_IMG) / "game_simple/size_9";
 
 	// Game Information
-	static constexpr unsigned MOVES      = 13;  //!< This game image series has 13 moves (+ a captures image).
+	static constexpr unsigned MOVES = 13; //!< This game image series has 13 moves (+ a captures image).
 	// static constexpr double SPACING      = 76.; //!< Pixels between grid lines. Manually checked for this series.
-	static constexpr unsigned BOARD_SIZE = 9u;  //!< Board size of this game.
+	static constexpr unsigned BOARD_SIZE = 9u; //!< Board size of this game.
 
 	for (unsigned i = 0; i <= MOVES; ++i) {
 		std::string fileName = std::format("move_{}.png", i);
@@ -96,7 +96,7 @@ TEST(Process, Game_Simple_Size13) {
 	const auto TEST_PATH = std::filesystem::path(PATH_TEST_IMG) / "game_simple/size_13";
 
 	// Game Information
-	static constexpr unsigned MOVES      = 27;  //!< This game image series has 27 moves.
+	static constexpr unsigned MOVES = 27; //!< This game image series has 27 moves.
 	// static constexpr double SPACING      = 72.; //!< Pixels between grid lines. Manually checked for this series.
 	static constexpr unsigned BOARD_SIZE = 13u; //!< Board size of this game.
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "camera/debugVisualizer.hpp"
-#include "camera/rectifier.hpp"
+#include "vision/core/debugVisualizer.hpp"
+#include "vision/core/rectifier.hpp"
 
 #include <opencv2/core/mat.hpp>
 #include <vector>

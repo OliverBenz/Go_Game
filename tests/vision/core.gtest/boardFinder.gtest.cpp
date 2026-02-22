@@ -1,4 +1,4 @@
-#include "camera/rectifier.hpp"
+#include "vision/core/rectifier.hpp"
 
 #include <filesystem>
 #include <gtest/gtest.h>

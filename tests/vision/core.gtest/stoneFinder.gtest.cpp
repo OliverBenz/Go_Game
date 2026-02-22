@@ -1,4 +1,4 @@
-#include "camera/stoneFinder.hpp"
+#include "vision/core/stoneFinder.hpp"
 
 #include <gtest/gtest.h>
 #include <opencv2/opencv.hpp>

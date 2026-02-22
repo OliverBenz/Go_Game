@@ -1,4 +1,4 @@
-#include "camera/boardFinder.hpp"
+#include "vision/core/boardFinder.hpp"
 
 #include <algorithm>
 #include <array>

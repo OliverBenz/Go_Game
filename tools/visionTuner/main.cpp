@@ -7,8 +7,8 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "camera/rectifier.hpp"
-#include "camera/stoneFinder.hpp"
+#include "vision/core/rectifier.hpp"
+#include "vision/core/stoneFinder.hpp"
 
 namespace tengen::vision::core {
 // Notes and Findings:

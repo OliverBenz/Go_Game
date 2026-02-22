@@ -1,6 +1,6 @@
 #pragma once
 
-#include "camera/debugVisualizer.hpp"
+#include "vision/core/debugVisualizer.hpp"
 
 #include <opencv2/core/mat.hpp>
 

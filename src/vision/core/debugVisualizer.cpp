@@ -1,4 +1,4 @@
-#include "camera/debugVisualizer.hpp"
+#include "vision/core/debugVisualizer.hpp"
 
 #include <algorithm>
 #include <cassert>
