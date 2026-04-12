@@ -1,7 +1,5 @@
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/game/core")
-
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/net/core")
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/net/network")
-
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/vision/core.gtest")
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/vision/perception.gtest")
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/unit")
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/integration")
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/golden")
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/regression")
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/fuzz")

@@ -20,8 +20,6 @@ set_target_properties(${targetName}
         FOLDER "${ideFolderSource}"
 )
 
-target_compile_definitions(${targetName} PRIVATE PATH_TEST_IMG="${CMAKE_CURRENT_LIST_DIR}/../resources/")
-
 # Setup project settings
 set_target_configuration(${targetName} Config::Default)
 set_output_directory(${targetName})

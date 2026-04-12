@@ -1,5 +1,3 @@
-#include "syntheticBoard.hpp"
-
 #include "vision/core/gridFinder.hpp"
 
 #include <array>
@@ -37,35 +35,12 @@ void runTest(const std::string& testSetName) {
 	}
 }
 
-TEST(Process, Find_Board_Easy) {
+TEST(BoardFinder, Find_Board_Easy) {
 	runTest("angled_easy");
 }
 
-// TODO: These do not work yet.
-TEST(Process, Find_Board_Hard) {
+TEST(BoardFinder, Find_Board_Hard) {
 	runTest("angled_hard");
-}
-
-TEST(Process, Find_Board_Synthetic_FullFramePerspective) {
-	const cv::Mat image = makeFullFrameSyntheticScene();
-	ASSERT_FALSE(image.empty());
-
-	const auto warpResult = warpToBoard(image);
-	EXPECT_TRUE(isValidBoard(warpResult));
-
-	const auto geometry  = analyseGeometry(warpResult);
-	const auto rectified = transformImage(image, geometry);
-	EXPECT_FALSE(rectified.imageB.empty());
-	EXPECT_FALSE(rectified.geometry.H.empty());
-	EXPECT_EQ(rectified.geometry.boardSize, 13u);
-}
-
-TEST(Process, Find_Board_Synthetic_OutlineOnly) {
-	const cv::Mat image = makeOutlineOnlySyntheticScene();
-	ASSERT_FALSE(image.empty());
-
-	const auto warpResult = warpToBoard(image);
-	EXPECT_TRUE(isValidBoard(warpResult));
 }
 
 } // namespace gtest

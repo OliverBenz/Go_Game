@@ -105,8 +105,8 @@ std::optional<DetectedStone> detectSingleStone(const std::filesystem::path& imag
 	return DetectedStone{
 	        rectified.geometry.boardSize,
 	        Coord{
-	                static_cast<unsigned>(stoneIndex / rectified.geometry.boardSize),
-	                static_cast<unsigned>(stoneIndex % rectified.geometry.boardSize),
+				static_cast<unsigned>(stoneIndex / rectified.geometry.boardSize),
+				static_cast<unsigned>(stoneIndex % rectified.geometry.boardSize),
 	        },
 	        detectedStone,
 	};
