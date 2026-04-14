@@ -1,6 +1,6 @@
 # Foundations (reusable across domains)
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/vision/core")       # Library: Board image detection algorithm
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/net/core")          # Library: General network layer 
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/net/core")          # Library: General network layer
 
 # Game Domain
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/game/model")        # Library: Core data layer
@@ -17,3 +17,7 @@ add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/game/gui")          # Library: GUI c
 # Applications
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/apps/tengen")       # Application: The actual game (GUI wrapper of runtime)
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/apps/server/")      # Application: Server
+
+
+# Dev Tools
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/vision/devtools")   # Library: 

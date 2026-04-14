@@ -1,6 +1,6 @@
 include_guard(GLOBAL)
 
-set(targetName "visionPerception.gtest")
+set(targetName "visionPerception.unit.gtest")
 
 add_executable(${targetName}
     "${CMAKE_CURRENT_LIST_DIR}/symmetryBreaking.gtest.cpp"

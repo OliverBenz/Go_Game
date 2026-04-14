@@ -3,6 +3,8 @@
 
 ## Test Types
 This is general knowledge, just adding it again.
+Each test type gets its own subdirectory.
+We also provide a testHelper library with nice to have functionality.
 
 Test Type   | What is tests | Notes
 -----------------------------------

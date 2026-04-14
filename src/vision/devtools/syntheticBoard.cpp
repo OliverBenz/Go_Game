@@ -1,13 +1,12 @@
-#include "syntheticBoard.hpp"
+#include "vision/devtools/syntheticBoard.hpp"
 
 #include <array>
-#include <gtest/gtest.h>
+#include <cassert>
 
-namespace tengen::vision::core {
-namespace gtest {
+namespace tengen::vision::devtools {
 
-RectifiedBoard makeSyntheticBoard(unsigned N, double spacingPx, const cv::Scalar& woodBgr) {
-	RectifiedBoard g{};
+core::RectifiedBoard makeSyntheticBoard(unsigned N, double spacingPx, const cv::Scalar& woodBgr) {
+	core::RectifiedBoard g{};
 	g.geometry.boardSize = N;
 	g.geometry.spacing   = spacingPx;
 	g.geometry.H         = cv::Mat::eye(3, 3, CV_64F);
@@ -93,18 +92,17 @@ cv::Mat makeCanonicalBoardImage(unsigned boardSize, int sidePx) {
 	return board;
 }
 
-void drawStone(RectifiedBoard& g, unsigned gx, unsigned gy, StoneState s) {
-	ASSERT_FALSE(g.imageB.empty());
-	ASSERT_TRUE(g.geometry.boardSize == 9u || g.geometry.boardSize == 13u || g.geometry.boardSize == 19u);
-	ASSERT_EQ(g.geometry.intersections.size(), g.geometry.boardSize * g.geometry.boardSize);
+void drawStone(core::RectifiedBoard& g, unsigned gx, unsigned gy, core::StoneState s) {
+	assert(!g.imageB.empty());
+	assert(g.geometry.boardSize == 9u || g.geometry.boardSize == 13u || g.geometry.boardSize == 19u);
+	assert(g.geometry.intersections.size() == g.geometry.boardSize * g.geometry.boardSize);
 
 	const unsigned idx = gx * g.geometry.boardSize + gy;
-	ASSERT_LT(idx, g.geometry.intersections.size());
+	assert(idx < g.geometry.intersections.size());
 
 	const int r          = static_cast<int>(std::lround(g.geometry.spacing * 0.40)); //!< < 0.5*spacing to avoid overlap
-	const cv::Scalar col = (s == StoneState::Black) ? cv::Scalar(0, 0, 0) : cv::Scalar(255, 255, 255);
+	const cv::Scalar col = (s == core::StoneState::Black) ? cv::Scalar(0, 0, 0) : cv::Scalar(255, 255, 255);
 	cv::circle(g.imageB, g.geometry.intersections[idx], r, col, cv::FILLED, cv::LINE_AA);
 }
 
-} // namespace gtest
 } // namespace tengen::vision::core

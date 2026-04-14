@@ -1,11 +1,8 @@
 include_guard(GLOBAL)
 
-set(targetName "visionCore.gtest")
+set(targetName "visionCore.unit.gtest")
 
 add_executable(${targetName}
-	"${CMAKE_CURRENT_LIST_DIR}/syntheticBoard.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/rectifier.gtest.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/process.gtest.cpp"
 	"${CMAKE_CURRENT_LIST_DIR}/boardFinder.gtest.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/stoneFinder.gtest.cpp"
 )
@@ -13,6 +10,7 @@ add_executable(${targetName}
 target_link_libraries(${targetName}
     PRIVATE
         tengen::vision::core
+        tengen::vision::devtools
         GTest::gtest_main
 )
 set_target_properties(${targetName}

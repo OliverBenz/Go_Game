@@ -1,4 +1,4 @@
-#include "syntheticBoard.hpp"
+#include "vision/devtools/syntheticBoard.hpp"
 
 #include "vision/core/boardFinder.hpp"
 #include "vision/core/gridFinder.hpp"
@@ -18,8 +18,13 @@
 namespace tengen::vision::core {
 namespace gtest {
 
+//! Count occurrences of a given state.
+static std::size_t countState(const std::vector<StoneState>& stones, StoneState s) {
+	return static_cast<std::size_t>(std::count(stones.begin(), stones.end(), s));
+}
+
 TEST(StoneFinderUnit, EmptyBoard_NoStones) {
-	RectifiedBoard g = makeSyntheticBoard(9u, 80.0, cv::Scalar(80, 140, 200));
+	RectifiedBoard g = devtools::makeSyntheticBoard(9u, 80.0, cv::Scalar(80, 140, 200));
 
 	const StoneResult r = analyseBoard(g);
 	ASSERT_TRUE(r.success);
@@ -31,8 +36,8 @@ TEST(StoneFinderUnit, EmptyBoard_NoStones) {
 }
 
 TEST(StoneFinderUnit, SingleBlackStone_Detected) {
-	RectifiedBoard g = makeSyntheticBoard(9u, 80.0, cv::Scalar(80, 140, 200));
-	drawStone(g, 4u, 4u, StoneState::Black);
+	RectifiedBoard g = devtools::makeSyntheticBoard(9u, 80.0, cv::Scalar(80, 140, 200));
+	devtools::drawStone(g, 4u, 4u, StoneState::Black);
 
 	const StoneResult r = analyseBoard(g);
 	ASSERT_TRUE(r.success);
@@ -43,8 +48,8 @@ TEST(StoneFinderUnit, SingleBlackStone_Detected) {
 }
 
 TEST(StoneFinderUnit, SingleWhiteStone_Detected) {
-	RectifiedBoard g = makeSyntheticBoard(9u, 80.0, cv::Scalar(80, 140, 200));
-	drawStone(g, 4u, 4u, StoneState::White);
+	RectifiedBoard g = devtools::makeSyntheticBoard(9u, 80.0, cv::Scalar(80, 140, 200));
+	devtools::drawStone(g, 4u, 4u, StoneState::White);
 
 	const StoneResult r = analyseBoard(g);
 	ASSERT_TRUE(r.success);
@@ -55,8 +60,8 @@ TEST(StoneFinderUnit, SingleWhiteStone_Detected) {
 }
 
 TEST(StoneFinderUnit, EdgeWhiteStone_Detected) {
-	RectifiedBoard g = makeSyntheticBoard(9u, 80.0, cv::Scalar(80, 140, 200));
-	drawStone(g, 0u, 4u, StoneState::White); // on grid edge
+	RectifiedBoard g = devtools::makeSyntheticBoard(9u, 80.0, cv::Scalar(80, 140, 200));
+	devtools::drawStone(g, 0u, 4u, StoneState::White); // on grid edge
 
 	const StoneResult r = analyseBoard(g);
 	ASSERT_TRUE(r.success);
@@ -67,8 +72,8 @@ TEST(StoneFinderUnit, EdgeWhiteStone_Detected) {
 }
 
 TEST(StoneFinderUnit, BlackStone_WithMildGlare_NotWhite) {
-	RectifiedBoard g = makeSyntheticBoard(9u, 80.0, cv::Scalar(80, 140, 200));
-	drawStone(g, 4u, 4u, StoneState::Black);
+	RectifiedBoard g = devtools::makeSyntheticBoard(9u, 80.0, cv::Scalar(80, 140, 200));
+	devtools::drawStone(g, 4u, 4u, StoneState::Black);
 
 	// Add a small bright highlight inside the black stone (simulates mild glare/reflection).
 	const cv::Point2f c = g.geometry.intersections[4u * 9u + 4u];

@@ -12,6 +12,7 @@ add_executable(${targetName}
 target_link_libraries(${targetName}
     PRIVATE
         tengen::vision::core
+		tengen::vision::devtools
         GTest::gtest_main
 )
 set_target_properties(${targetName}

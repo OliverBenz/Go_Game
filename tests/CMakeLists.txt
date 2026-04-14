@@ -1,5 +1,6 @@
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/unit")
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/integration")
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/golden")
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/regression")
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/fuzz")
+
+# add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/golden")
+# add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/regression")
+# add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/fuzz")

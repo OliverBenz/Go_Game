@@ -1,4 +1,4 @@
-#include "syntheticBoard.hpp"
+#include "vision/devtools/syntheticBoard.hpp"
 
 #include "vision/core/gridFinder.hpp"
 
@@ -12,7 +12,7 @@ namespace tengen::vision::core {
 namespace gtest {
 
 TEST(Process, Find_Board_Synthetic_FullFramePerspective) {
-	const cv::Mat image = makeFullFrameSyntheticScene();
+	const cv::Mat image = devtools::makeFullFrameSyntheticScene();
 	ASSERT_FALSE(image.empty());
 
 	const auto warpResult = warpToBoard(image);
@@ -26,7 +26,7 @@ TEST(Process, Find_Board_Synthetic_FullFramePerspective) {
 }
 
 TEST(Process, Find_Board_Synthetic_OutlineOnly) {
-	const cv::Mat image = makeOutlineOnlySyntheticScene();
+	const cv::Mat image = devtools::makeOutlineOnlySyntheticScene();
 	ASSERT_FALSE(image.empty());
 
 	const auto warpResult = warpToBoard(image);

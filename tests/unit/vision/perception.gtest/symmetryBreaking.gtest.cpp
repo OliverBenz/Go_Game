@@ -152,6 +152,8 @@ std::filesystem::path setupImage(const std::string_view fileName) {
 
 } // namespace
 
+
+// TODO: Make synthetic board instead of using real images. Same synthetic functions as used in core.gtest.
 TEST(Perception, Setup_SymmetryBreaking_D4Orbit) {
 	static constexpr std::array<std::string_view, 8> BLACK_CASES = {
 	        "C2_1.png", "C2_2.png", "C2_3.png", "C2_4.png", "E3_1.png", "E3_2.png", "E3_3.png", "E3_4.png",
