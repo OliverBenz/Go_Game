@@ -7,6 +7,25 @@
 
 namespace tengen::vision::devtools {
 
+//! Helper to create a cv::Mat of a go board.
+class Board {
+public:
+	Board(unsigned size);
+	void setStone(unsigned x, unsigned y, core::StoneState s) {
+		// TODO: We have to keep track of the homography.
+		// m_boardImage = (m_homography \circ Place Stone \circ m_homography^{-1})
+	}
+
+	cv::Mat& getImage(); //!< Returns the produced board image.
+	void show();	     //!< Show the board image in popup window.
+
+private:
+	cv::Mat m_homography;
+	cv::Mat m_boardImage;
+};
+
+// TODO: Remove functions below and use Board helper above.
+
 //! Draw a synthetic board image in canonical board coordinates.
 cv::Mat makeCanonicalBoardImage(unsigned boardSize, int sidePx);
 
