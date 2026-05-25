@@ -29,6 +29,7 @@ private:
 private:
 	void openConnectDialog();
 	void openHostDialog();
+	void openRulesDialog();
 
 protected:
 	void closeEvent(QCloseEvent* event) override;
