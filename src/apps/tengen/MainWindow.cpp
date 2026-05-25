@@ -2,6 +2,7 @@
 
 #include "ConnectDialog.hpp"
 #include "HostDialog.hpp"
+#include "RulesDialog.hpp"
 #include "gui/gameWidget.hpp"
 
 #include <QMenuBar>
@@ -52,7 +53,12 @@ void MainWindow::buildLayout() {
 	tools->addAction(actStartCameraDetection);
 	tools->addAction(actCalibrateDetection);
 
-	[[maybe_unused]] auto* help = menuBar()->addMenu(tr("&Help"));
+	auto* help     = menuBar()->addMenu(tr("&Help"));
+	auto* actRules = new QAction("&Rules", this);
+	auto* actAbout = new QAction("&About", this);
+	help->addAction(actRules);
+	help->addAction(actAbout);
+	connect(actRules, &QAction::triggered, this, &MainWindow::openRulesDialog);
 
 	m_gameWidget = new GameWidget();
 	setCentralWidget(m_gameWidget);
@@ -72,6 +78,11 @@ void MainWindow::openHostDialog() {
 	if (dialog.exec() == QDialog::Accepted) {
 		emit hostRequested(dialog.boardSize());
 	}
+}
+
+void MainWindow::openRulesDialog() {
+	RulesDialog dialog(this);
+	dialog.exec();
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {
