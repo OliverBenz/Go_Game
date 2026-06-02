@@ -18,6 +18,7 @@ public:
 	GameWidget& gameWidget();
 
 signals:
+	void newLocalGameRequested();
 	void connectRequested(const QString& hostIp);
 	void hostRequested(unsigned boardSize);
 	void shutdownRequested();
