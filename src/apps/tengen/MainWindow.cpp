@@ -34,6 +34,7 @@ void MainWindow::buildLayout() {
 	game->addAction(actNewLocalGame);
 	game->addAction(actSaveGame);
 	game->addAction(actLoadGame);
+	connect(actNewLocalGame, &QAction::triggered, this, &MainWindow::newLocalGameRequested); // Signal to signal connection
 
 	auto* network            = menuBar()->addMenu(tr("&Network"));
 	auto* actConnectToServer = new QAction("&Connect to Server", this);

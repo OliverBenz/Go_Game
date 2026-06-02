@@ -10,6 +10,7 @@
 namespace tengen {
 
 MainWindowPresenter::MainWindowPresenter(gui::MainWindow& mainWindow) : QObject(nullptr), m_mainWindow(mainWindow) {
+	QObject::connect(&m_mainWindow, &gui::MainWindow::newLocalGameRequested, this, &MainWindowPresenter::onNewLocalGameRequested);
 	QObject::connect(&m_mainWindow, &gui::MainWindow::connectRequested, this, &MainWindowPresenter::onConnectRequested);
 	QObject::connect(&m_mainWindow, &gui::MainWindow::hostRequested, this, &MainWindowPresenter::onHostRequested);
 	QObject::connect(&m_mainWindow, &gui::MainWindow::shutdownRequested, this, &MainWindowPresenter::onShutdownRequested);
@@ -22,6 +23,11 @@ MainWindowPresenter::~MainWindowPresenter() = default;
 void MainWindowPresenter::startOpenPlay() {
 	m_game          = std::make_unique<app::OpenSession>(9u);
 	m_gamePresenter = std::make_unique<GamePresenter>(*m_game, m_mainWindow.gameWidget());
+}
+
+void MainWindowPresenter::onNewLocalGameRequested() {
+	onShutdownRequested();
+	startOpenPlay();
 }
 
 void MainWindowPresenter::onConnectRequested(const QString& hostIp) {

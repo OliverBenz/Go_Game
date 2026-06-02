@@ -17,6 +17,7 @@ public:
 	~MainWindowPresenter() override;
 
 private slots:
+	void onNewLocalGameRequested();
 	void onConnectRequested(const QString& hostIp);
 	void onHostRequested(const unsigned boardSize);
 	void onShutdownRequested();
