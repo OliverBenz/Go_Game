@@ -10,6 +10,7 @@ target_link_libraries(${targetName}
 	PRIVATE
 		tengen::game::core
 		tengen::game::gui
+		tengen::vision::devtools
 		Qt6::Widgets
 )
 target_compile_definitions(${targetName}
