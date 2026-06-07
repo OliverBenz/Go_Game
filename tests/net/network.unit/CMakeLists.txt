@@ -1,11 +1,9 @@
 include_guard(GLOBAL)
 
-set(targetName netNetwork.integration)
+set(targetName netNetwork.unit)
 
 add_executable(${targetName}
-    "${CMAKE_CURRENT_LIST_DIR}/mockClient.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/mockServer.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/basic.gtest.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/nwEvents.gtest.cpp"
 )
 
 target_link_libraries(${targetName}
