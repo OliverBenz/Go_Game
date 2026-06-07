@@ -1,18 +1,15 @@
 include_guard(GLOBAL)
 
-set(targetName "visionCore.gtest")
+set(targetName visionPerception.integration)
 
 add_executable(${targetName}
-	"${CMAKE_CURRENT_LIST_DIR}/syntheticBoard.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/rectifier.gtest.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/process.gtest.cpp"
-	"${CMAKE_CURRENT_LIST_DIR}/boardFinder.gtest.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/stoneFinder.gtest.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/symmetryBreaking.gtest.cpp"
 )
 
 target_link_libraries(${targetName}
     PRIVATE
         tengen::vision::core
+        tengen::vision::perception
         GTest::gtest_main
 )
 set_target_properties(${targetName}

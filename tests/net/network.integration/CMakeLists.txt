@@ -1,6 +1,6 @@
 include_guard(GLOBAL)
 
-set(targetName "netNetwork.gtest")
+set(targetName netNetwork.integration)
 
 add_executable(${targetName}
     "${CMAKE_CURRENT_LIST_DIR}/mockClient.cpp"

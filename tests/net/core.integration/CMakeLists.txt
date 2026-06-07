@@ -1,21 +1,19 @@
 include_guard(GLOBAL)
 
-set(targetName "gameCore.gtest")
+set(targetName netCore.integration)
 
 add_executable(${targetName}
-    "${CMAKE_CURRENT_LIST_DIR}/game.gtest.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/moveChecker.gtest.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/server.gtest.cpp"
 )
 
-# Link to required libraries
 target_link_libraries(${targetName}
     PRIVATE
-        tengen::game::core
+        tengen::net::core
+        tengen::net::gameNet
         GTest::gtest_main
 )
-set_target_properties(${targetName}
-    PROPERTIES
-        FOLDER "${ideFolderSource}"
+set_target_properties(${targetName} PROPERTIES
+    FOLDER "${ideFolderSource}"
 )
 
 # Setup project settings
