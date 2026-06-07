@@ -1,8 +1,6 @@
-#include "syntheticBoard.hpp"
-
+#include "vision/core/stoneFinder.hpp"
 #include "vision/core/boardFinder.hpp"
 #include "vision/core/gridFinder.hpp"
-#include "vision/core/stoneFinder.hpp"
 
 #include <gtest/gtest.h>
 #include <opencv2/opencv.hpp>
@@ -17,11 +15,6 @@
 
 namespace tengen::vision::core {
 namespace gtest {
-
-//! Count occurrences of a given state.
-static std::size_t countState(const std::vector<StoneState>& stones, StoneState s) {
-	return static_cast<std::size_t>(std::count(stones.begin(), stones.end(), s));
-}
 
 static bool isStone(const StoneState state) {
 	return state == StoneState::Black || state == StoneState::White;
@@ -61,69 +54,6 @@ static std::optional<StoneState> detectSingleStoneInImage(const std::filesystem:
 	}
 
 	return *stoneIt;
-}
-
-TEST(StoneFinderUnit, EmptyBoard_NoStones) {
-	RectifiedBoard g = makeSyntheticBoard(9u, 80.0, cv::Scalar(80, 140, 200));
-
-	const StoneResult r = analyseBoard(g);
-	ASSERT_TRUE(r.success);
-	ASSERT_EQ(r.stones.size(), g.geometry.intersections.size());
-	ASSERT_EQ(r.confidence.size(), r.stones.size());
-
-	EXPECT_EQ(countState(r.stones, StoneState::Black), 0u);
-	EXPECT_EQ(countState(r.stones, StoneState::White), 0u);
-}
-
-TEST(StoneFinderUnit, SingleBlackStone_Detected) {
-	RectifiedBoard g = makeSyntheticBoard(9u, 80.0, cv::Scalar(80, 140, 200));
-	drawStone(g, 4u, 4u, StoneState::Black);
-
-	const StoneResult r = analyseBoard(g);
-	ASSERT_TRUE(r.success);
-
-	EXPECT_EQ(countState(r.stones, StoneState::Black), 1u);
-	EXPECT_EQ(countState(r.stones, StoneState::White), 0u);
-	EXPECT_EQ(r.stones[4u * 9u + 4u], StoneState::Black);
-}
-
-TEST(StoneFinderUnit, SingleWhiteStone_Detected) {
-	RectifiedBoard g = makeSyntheticBoard(9u, 80.0, cv::Scalar(80, 140, 200));
-	drawStone(g, 4u, 4u, StoneState::White);
-
-	const StoneResult r = analyseBoard(g);
-	ASSERT_TRUE(r.success);
-
-	EXPECT_EQ(countState(r.stones, StoneState::Black), 0u);
-	EXPECT_EQ(countState(r.stones, StoneState::White), 1u);
-	EXPECT_EQ(r.stones[4u * 9u + 4u], StoneState::White);
-}
-
-TEST(StoneFinderUnit, EdgeWhiteStone_Detected) {
-	RectifiedBoard g = makeSyntheticBoard(9u, 80.0, cv::Scalar(80, 140, 200));
-	drawStone(g, 0u, 4u, StoneState::White); // on grid edge
-
-	const StoneResult r = analyseBoard(g);
-	ASSERT_TRUE(r.success);
-
-	EXPECT_EQ(countState(r.stones, StoneState::Black), 0u);
-	EXPECT_EQ(countState(r.stones, StoneState::White), 1u);
-	EXPECT_EQ(r.stones[0u * 9u + 4u], StoneState::White);
-}
-
-TEST(StoneFinderUnit, BlackStone_WithMildGlare_NotWhite) {
-	RectifiedBoard g = makeSyntheticBoard(9u, 80.0, cv::Scalar(80, 140, 200));
-	drawStone(g, 4u, 4u, StoneState::Black);
-
-	// Add a small bright highlight inside the black stone (simulates mild glare/reflection).
-	const cv::Point2f c = g.geometry.intersections[4u * 9u + 4u];
-	cv::circle(g.imageB, c + cv::Point2f(10.0f, -10.0f), 6, cv::Scalar(255, 255, 255), cv::FILLED, cv::LINE_AA);
-
-	const StoneResult r = analyseBoard(g);
-	ASSERT_TRUE(r.success);
-
-	EXPECT_EQ(r.stones[4u * 9u + 4u], StoneState::Black);
-	EXPECT_EQ(countState(r.stones, StoneState::White), 0u);
 }
 
 // Checks the board images which are just of a single stone and used to do the setup in the perception algorithm.

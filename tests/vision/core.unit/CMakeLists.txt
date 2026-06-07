@@ -1,10 +1,9 @@
 include_guard(GLOBAL)
 
-set(targetName visionCore.integration)
+set(targetName visionCore.unit)
 
 add_executable(${targetName}
-  "${CMAKE_CURRENT_LIST_DIR}/rectifier.gtest.cpp"
-  "${CMAKE_CURRENT_LIST_DIR}/process.gtest.cpp"
+  "${CMAKE_CURRENT_LIST_DIR}/syntheticBoard.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/boardFinder.gtest.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/stoneFinder.gtest.cpp"
 )
@@ -17,11 +16,6 @@ target_link_libraries(${targetName}
 set_target_properties(${targetName}
   PROPERTIES
     FOLDER "${ideFolderSource}"
-)
-
-target_compile_definitions(${targetName}
-  PRIVATE
-    PATH_TEST_IMG="${CMAKE_CURRENT_LIST_DIR}/../resources/"
 )
 
 # Setup project settings
