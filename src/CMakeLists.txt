@@ -5,6 +5,7 @@ add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/net/core")          # Library: Gener
 # Game Domain
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/game/model")        # Library: Core data layer
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/game/core")         # Library: Core game logic
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/game/engine")       # Library: Bot engine backends
 
 # Adapters / Integration
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/net/network")       # Library: Go game networking
