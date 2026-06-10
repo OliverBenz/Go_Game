@@ -1,6 +1,8 @@
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/game/core.unit")
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/game/engine.unit")
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/game/engine.integration")
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/game/runtime.unit")
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/game/runtime.integration")
 
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/net/core.integration")
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/net/network.unit")

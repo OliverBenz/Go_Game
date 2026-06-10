@@ -19,6 +19,7 @@ public:
 
 signals:
 	void newLocalGameRequested();
+	void botGameRequested(unsigned boardSize, unsigned difficultyIndex, bool humanPlaysBlack);
 	void connectRequested(const QString& hostIp);
 	void hostRequested(unsigned boardSize);
 	void shutdownRequested();
@@ -28,6 +29,7 @@ private:
 	void buildLayout();
 
 private:
+	void openBotDialog();
 	void openConnectDialog();
 	void openHostDialog();
 	void openRulesDialog();

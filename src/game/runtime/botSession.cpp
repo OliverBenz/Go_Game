@@ -1,6 +1,7 @@
 #include "tengen/botSession.hpp"
 
 #include "core/gameEvent.hpp"
+#include "logging.hpp"
 
 #include <cassert>
 #include <utility>
@@ -14,14 +15,17 @@ BotSession::BotSession(BotSessionConfig config, std::unique_ptr<engine::IEngineS
 	m_position.init(m_config.boardSize);
 	m_game.subscribeState(this);
 
-	if (m_engine) {
-		m_engine->newGame(toEngineConfig());
+	m_gameThread = std::thread([this] { m_game.run(); });
+	m_botThread  = std::thread([this] { botLoop(); });
+
+	if (m_engine && m_engine->newGame(toEngineConfig())) {
+		m_engineAvailable = true;
+	} else if (m_engine) {
+		Logger().Log(Logging::LogLevel::Error, "Could not initialize bot engine session: " + m_engine->lastError());
 	}
 
-	m_gameThread = std::thread([this] { m_game.run(); });
-
-	if (botPlayer() == Player::Black) {
-		maybeRequestBotMove();
+	if (m_engineAvailable && botPlayer() == Player::Black) {
+		queueBotMove();
 	}
 }
 
@@ -66,14 +70,28 @@ void BotSession::tryResign() {
 }
 
 void BotSession::shutdown() {
+	{
+		std::lock_guard<std::mutex> lock(m_botMutex);
+		m_botShutdownRequested = true;
+		m_botMovePending       = false;
+	}
+	m_botCv.notify_all();
+
 	m_game.pushEvent(ShutdownEvent{});
+
+	if (m_botThread.joinable()) {
+		m_botThread.join();
+	}
 	if (m_gameThread.joinable()) {
 		m_gameThread.join();
 	}
+
 	m_game.unsubscribeState(this);
+
 	if (m_engine) {
 		m_engine->shutdown();
 	}
+	m_engineAvailable = false;
 }
 
 void BotSession::subscribe(IAppSignalListener* listener, const uint64_t signalMask) {
@@ -102,10 +120,11 @@ void BotSession::onGameDelta(const GameDelta& delta) {
 		return;
 	}
 
-	if (m_engine) {
+	if (m_engineAvailable) {
 		const auto move = toEngineMove(delta);
-		if (move) {
-			m_engine->recordMove(*move);
+		if (move && !m_engine->recordMove(*move)) {
+			m_engineAvailable = false;
+			Logger().Log(Logging::LogLevel::Error, "Could not mirror move to bot engine: " + m_engine->lastError());
 		}
 	}
 
@@ -124,8 +143,8 @@ void BotSession::onGameDelta(const GameDelta& delta) {
 		m_eventHub.signal(AS_StateChange);
 	}
 
-	if (delta.gameActive && delta.nextPlayer == botPlayer()) {
-		maybeRequestBotMove();
+	if (m_engineAvailable && delta.gameActive && delta.nextPlayer == botPlayer()) {
+		queueBotMove();
 	}
 }
 
@@ -176,22 +195,48 @@ std::optional<engine::Move> BotSession::toEngineMove(const GameDelta& delta) {
 	}
 }
 
-void BotSession::maybeRequestBotMove() {
-	if (!m_engine || status() != GameStatus::Active || currentPlayer() != botPlayer()) {
-		return;
+void BotSession::queueBotMove() {
+	{
+		std::lock_guard<std::mutex> lock(m_botMutex);
+		if (m_botShutdownRequested || m_botMovePending) {
+			return;
+		}
+		m_botMovePending = true;
 	}
+	m_botCv.notify_one();
+}
 
-	// TODO: Move this blocking call onto a dedicated worker once the real subprocess transport exists.
-	const auto decision = m_engine->requestMove(botPlayer());
-	if (!decision) {
-		return;
+void BotSession::botLoop() {
+	while (true) {
+		{
+			std::unique_lock<std::mutex> lock(m_botMutex);
+			m_botCv.wait(lock, [this] { return m_botShutdownRequested || m_botMovePending; });
+			if (m_botShutdownRequested) {
+				return;
+			}
+			m_botMovePending = false;
+		}
+
+		if (!m_engineAvailable || !m_engine) {
+			continue;
+		}
+
+		const auto decision = m_engine->requestMove(botPlayer());
+		if (!decision) {
+			m_engineAvailable = false;
+			Logger().Log(Logging::LogLevel::Error, "Could not request move from bot engine: " + m_engine->lastError());
+			continue;
+		}
+
+		applyEngineDecision(*decision);
 	}
-
-	applyEngineDecision(*decision);
 }
 
 void BotSession::applyEngineDecision(const engine::Decision& decision) {
 	if (decision.move.player != botPlayer()) {
+		return;
+	}
+	if (status() != GameStatus::Active || currentPlayer() != botPlayer()) {
 		return;
 	}
 

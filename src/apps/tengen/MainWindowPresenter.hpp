@@ -18,6 +18,7 @@ public:
 
 private slots:
 	void onNewLocalGameRequested();
+	void onBotGameRequested(unsigned boardSize, unsigned difficultyIndex, bool humanPlaysBlack);
 	void onConnectRequested(const QString& hostIp);
 	void onHostRequested(const unsigned boardSize);
 	void onShutdownRequested();

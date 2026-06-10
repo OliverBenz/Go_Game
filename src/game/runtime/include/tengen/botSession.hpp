@@ -7,6 +7,8 @@
 #include "tengen/eventHub.hpp"
 #include "tengen/position.hpp"
 
+#include <atomic>
+#include <condition_variable>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -50,7 +52,8 @@ private:
 	engine::GameConfig toEngineConfig() const;
 	static std::optional<engine::Move> toEngineMove(const GameDelta& delta);
 
-	void maybeRequestBotMove();
+	void queueBotMove();
+	void botLoop();
 	void applyEngineDecision(const engine::Decision& decision);
 
 private:
@@ -60,10 +63,16 @@ private:
 	EventHub m_eventHub;
 
 	std::thread m_gameThread;
+	std::thread m_botThread;
 	mutable std::mutex m_stateMutex;
+	std::mutex m_botMutex;
+	std::condition_variable m_botCv;
+	bool m_botMovePending{false};
+	bool m_botShutdownRequested{false};
 
 	Position m_position{};
 	std::vector<GameDelta> m_history{};
+	std::atomic<bool> m_engineAvailable{false};
 };
 
 } // namespace tengen::app

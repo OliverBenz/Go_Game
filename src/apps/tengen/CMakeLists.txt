@@ -5,6 +5,7 @@ set(targetName tengen)
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
 add_executable(${targetName}
+    "${CMAKE_CURRENT_LIST_DIR}/BotDialog.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/main.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/MainWindow.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/MainWindowPresenter.cpp"
@@ -23,6 +24,26 @@ target_link_libraries(${targetName}
         tengen::game::runtime
         tengen::game::gui
         Qt6::Widgets
+)
+
+file(GLOB kataGoModels
+    "${CMAKE_SOURCE_DIR}/../KataGo/cpp/*.bin.gz"
+    "${CMAKE_SOURCE_DIR}/../KataGo/cpp/*.txt.gz"
+)
+
+set(kataGoModel "")
+foreach(modelPath ${kataGoModels})
+    if(NOT modelPath MATCHES "human")
+        set(kataGoModel "${modelPath}")
+        break()
+    endif()
+endforeach()
+
+target_compile_definitions(${targetName}
+    PRIVATE
+        TENGEN_KATAGO_EXECUTABLE="${CMAKE_SOURCE_DIR}/../KataGo/cpp/katago"
+        TENGEN_KATAGO_CONFIG="${CMAKE_SOURCE_DIR}/../KataGo/cpp/configs/gtp_example.cfg"
+        TENGEN_KATAGO_MODEL="${kataGoModel}"
 )
 
 set_target_properties(${targetName}
