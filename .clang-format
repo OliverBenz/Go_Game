@@ -33,7 +33,7 @@ BraceWrapping:
 BreakBeforeBinaryOperators: None
 BreakConstructorInitializers: BeforeColon
 BreakInheritanceList: BeforeColon
-ColumnLimit: 160
+ColumnLimit: 0
 ContinuationIndentWidth: 8
 IndentPPDirectives: None
 IndentWidth: 4
@@ -55,5 +55,4 @@ SpacesInSquareBrackets: false
 Standard: Cpp11
 TabWidth: 4
 UseTab: ForIndentation
-
 ...
