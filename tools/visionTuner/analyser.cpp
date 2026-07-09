@@ -11,7 +11,6 @@
 
 namespace tengen::vision {
 
-
 static cv::Mat buildInfoTile(const std::string& title, const std::string& message) {
 	cv::Mat tile(540, 960, CV_8UC3, cv::Scalar(20, 20, 20));
 	cv::putText(tile, title, cv::Point(40, 120), cv::FONT_HERSHEY_SIMPLEX, 1.1, cv::Scalar(250, 250, 250), 2, cv::LINE_AA);
@@ -19,8 +18,7 @@ static cv::Mat buildInfoTile(const std::string& title, const std::string& messag
 	return tile;
 }
 
-
-cv::Mat Analyser::analyse(const cv::Mat& image, const PipelineStep step) const {
+cv::Mat analyse(const cv::Mat& image, const PipelineStep step) {
 	if (image.empty()) {
 		return buildInfoTile("Input Error", "Could not load image.");
 	}

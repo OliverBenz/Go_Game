@@ -4,6 +4,7 @@
 
 #include <QImage>
 #include <QMainWindow>
+#include <QPushButton>
 #include <QWidget>
 
 #include <functional>
@@ -27,15 +28,25 @@ private:
 	QImage m_image{};
 };
 
-
 class MainWindow : public QMainWindow {
+	Q_OBJECT
+
 public:
 	explicit MainWindow(QWidget* parent = nullptr);
 	~MainWindow() override;
 
 	void setImage(const cv::Mat& image);
-	void setPipelineStepChangedCallback(std::function<void(PipelineStep)> callback);
-	PipelineStep selectedPipelineStep() const;
+
+signals:
+	void imageSourceChanged(ImageSource source);
+	void videoCaptureClicked();
+	void videoModeChanged(VideoMode mode);
+	void pipelineStepChanged(PipelineStep step);
+
+private slots:
+	void onPipelineStepChange();
+	void onSourceChange();
+
 
 private:
 	void buildLayout();
@@ -43,6 +54,8 @@ private:
 private:
 	CvMatrixView* m_matrixView{nullptr};
 	QComboBox* m_sourceCombo{nullptr};
+	QPushButton* m_captureButton{nullptr};
+
 	QComboBox* m_stepCombo{nullptr};
 	std::function<void(PipelineStep)> m_stepChangedCallback{};
 };
