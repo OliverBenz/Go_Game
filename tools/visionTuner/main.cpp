@@ -1,12 +1,16 @@
 #include "analyser.hpp"
 #include "mainWindow.hpp"
-#include "webcamAnalysisLoop.hpp"
+#include "pipelineStep.hpp"
+#include "webcam.hpp"
 
 #include <QApplication>
 #include <opencv2/opencv.hpp>
 
 #include <filesystem>
 #include <iostream>
+
+
+namespace tengen {
 
 static std::filesystem::path resolveInputPath(const int argc, char** argv) {
 	if (argc > 1) {
@@ -24,28 +28,47 @@ static cv::Mat loadFallbackImage(const int argc, char** argv) {
 	return image;
 }
 
-int main(int argc, char** argv) {
+int run(int argc, char** argv) {
 	QApplication application(argc, argv);
 
-	tengen::vision::Analyser analyser;
-	tengen::MainWindow window;
+	MainWindow window;
 	window.resize(1400, 900);
 	cv::Mat fallbackImage;
 
-	tengen::WebcamAnalysisLoop webcamLoop(window, analyser, 0, 500);
-	window.setPipelineStepChangedCallback([&webcamLoop](const tengen::PipelineStep) { webcamLoop.refreshFromLastFrame(); });
+	PipelineStep currentStep{PipelineStep::FindBoard};
 
-	if (!webcamLoop.start()) {
-		std::cerr << "Failed to open webcam (camera index 0). Falling back to static image input.\n";
-		fallbackImage = loadFallbackImage(argc, argv);
-		window.setPipelineStepChangedCallback(
-		        [&window, &analyser, &fallbackImage](const tengen::PipelineStep step) { window.setImage(analyser.analyse(fallbackImage, step)); });
-		window.setImage(analyser.analyse(fallbackImage, window.selectedPipelineStep()));
-	}
+	Webcam webcam(0, [&](const cv::Mat& frame) { window.setImage(vision::analyse(frame, currentStep)); });
+	webcam.setCaptureRate(1000); // TODO: Use chrono ms
+
+	QObject::connect(&window, &MainWindow::videoCaptureClicked, [&] { webcam.capture(); });
+	QObject::connect(&window, &MainWindow::imageSourceChanged, [&](const ImageSource source) {
+		switch (source) {
+		case ImageSource::Photo:
+			if (webcam.isRunning()) {
+				webcam.stopLive();
+			}
+			webcam.capture();
+			break;
+		case ImageSource::Video:
+			if (!webcam.isRunning()) {
+				webcam.startLive();
+			}
+			break;
+		default:
+			break;
+		}
+	});
+	QObject::connect(&window, &MainWindow::pipelineStepChanged, [&](const PipelineStep step) { currentStep = step; });
 
 	window.show();
 
 	const int exitCode = application.exec();
-	webcamLoop.stop();
+	webcam.stopLive();
 	return exitCode;
+}
+
+} // namespace tengen
+
+int main(int argc, char** argv) {
+	return tengen::run(argc, argv);
 }

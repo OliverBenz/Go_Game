@@ -1,4 +1,5 @@
 #include "mainWindow.hpp"
+#include "pipelineStep.hpp"
 
 #include <QComboBox>
 #include <QHBoxLayout>
@@ -11,19 +12,6 @@
 #include <utility>
 
 namespace tengen {
-
-static PipelineStep pipelineStepFromIndex(int index) {
-	switch (index) {
-	case 0:
-		return PipelineStep::FindBoard;
-	case 1:
-		return PipelineStep::ConstructGeometry;
-	case 2:
-		return PipelineStep::FindStones;
-	default:
-		return PipelineStep::All;
-	}
-}
 
 CvMatrixView::CvMatrixView(QWidget* parent) : QWidget(parent) {
 }
@@ -118,17 +106,6 @@ void MainWindow::setImage(const cv::Mat& image) {
 	}
 }
 
-void MainWindow::setPipelineStepChangedCallback(std::function<void(PipelineStep)> callback) {
-	m_stepChangedCallback = std::move(callback);
-}
-
-PipelineStep MainWindow::selectedPipelineStep() const {
-	if (m_stepCombo == nullptr) {
-		return PipelineStep::All;
-	}
-	return pipelineStepFromIndex(m_stepCombo->currentIndex());
-}
-
 void MainWindow::buildLayout() {
 	auto* rootWidget  = new QWidget(this);
 	auto* rootLayout  = new QVBoxLayout(rootWidget);
@@ -138,19 +115,22 @@ void MainWindow::buildLayout() {
 	auto* stepLabel   = new QLabel("Pipeline:", rootWidget);
 
 	m_sourceCombo = new QComboBox(rootWidget);
-	m_sourceCombo->addItem("Image");
-	m_sourceCombo->addItem("Video");
+	m_sourceCombo->addItem("Image", static_cast<int>(ImageSource::Photo));
+	m_sourceCombo->addItem("Video", static_cast<int>(ImageSource::Video));
 	m_sourceCombo->setCurrentIndex(0);
+
+	m_captureButton = new QPushButton("Capture");
 
 	sourceRow->addWidget(sourceLabel);
 	sourceRow->addWidget(m_sourceCombo);
+	sourceRow->addWidget(m_captureButton);
 	sourceRow->addStretch(1);
 
 	m_stepCombo = new QComboBox(rootWidget);
-	m_stepCombo->addItem("Find Board");
-	m_stepCombo->addItem("Construct Geometry");
-	m_stepCombo->addItem("Find Stones");
-	m_stepCombo->addItem("All");
+	m_stepCombo->addItem("Find Board", static_cast<int>(PipelineStep::FindBoard));
+	m_stepCombo->addItem("Construct Geometry", static_cast<int>(PipelineStep::ConstructGeometry));
+	m_stepCombo->addItem("Find Stones", static_cast<int>(PipelineStep::FindStones));
+	m_stepCombo->addItem("All", static_cast<int>(PipelineStep::All));
 	m_stepCombo->setCurrentIndex(3);
 
 	stepRow->addWidget(stepLabel);
@@ -163,13 +143,18 @@ void MainWindow::buildLayout() {
 	rootLayout->addLayout(stepRow);
 	rootLayout->addWidget(m_matrixView, 1);
 
-	connect(m_stepCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
-		if (m_stepChangedCallback) {
-			m_stepChangedCallback(pipelineStepFromIndex(index));
-		}
-	});
+	connect(m_captureButton, &QPushButton::clicked, this, [this]() { emit videoCaptureClicked(); });
+	connect(m_sourceCombo, &QComboBox::currentIndexChanged, this, &MainWindow::onSourceChange);
+	connect(m_stepCombo, &QComboBox::currentIndexChanged, this, &MainWindow::onPipelineStepChange);
 
 	setCentralWidget(rootWidget);
+}
+
+void MainWindow::onSourceChange() {
+	emit imageSourceChanged(static_cast<ImageSource>(m_sourceCombo->currentData().toInt()));
+}
+void MainWindow::onPipelineStepChange() {
+	emit pipelineStepChanged(static_cast<PipelineStep>(m_stepCombo->currentData().toInt()));
 }
 
 } // namespace tengen
