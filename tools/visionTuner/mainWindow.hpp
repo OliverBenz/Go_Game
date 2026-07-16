@@ -18,6 +18,7 @@ class CvMatrixView : public QWidget {
 public:
 	explicit CvMatrixView(QWidget* parent = nullptr);
 	void setMat(const cv::Mat& mat);
+	bool saveImage(const QString& filename);
 
 protected:
 	void paintEvent(QPaintEvent* event) override;
@@ -46,7 +47,7 @@ signals:
 private slots:
 	void onPipelineStepChange();
 	void onSourceChange();
-
+	void onSaveClicked();
 
 private:
 	void buildLayout();
@@ -55,6 +56,7 @@ private:
 	CvMatrixView* m_matrixView{nullptr};
 	QComboBox* m_sourceCombo{nullptr};
 	QPushButton* m_captureButton{nullptr};
+	QPushButton* m_saveImageButton{nullptr};
 
 	QComboBox* m_stepCombo{nullptr};
 	std::function<void(PipelineStep)> m_stepChangedCallback{};
