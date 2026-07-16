@@ -131,7 +131,7 @@ void MainWindow::buildLayout() {
 	m_stepCombo->addItem("Construct Geometry", static_cast<int>(PipelineStep::ConstructGeometry));
 	m_stepCombo->addItem("Find Stones", static_cast<int>(PipelineStep::FindStones));
 	m_stepCombo->addItem("All", static_cast<int>(PipelineStep::All));
-	m_stepCombo->setCurrentIndex(3);
+	m_stepCombo->setCurrentIndex(0);
 
 	stepRow->addWidget(stepLabel);
 	stepRow->addWidget(m_stepCombo);
