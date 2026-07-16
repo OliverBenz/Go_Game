@@ -32,7 +32,7 @@ cv::Mat analyse(const cv::Mat& image, const PipelineStep step) {
 		break;
 
 	case tengen::PipelineStep::ConstructGeometry: {
-		const core::WarpResult board = core::warpToBoard(image);
+		const core::WarpResult board = core::warpToBoard(image, &debugger);
 		if (!core::isValidBoard(board)) {
 			return buildInfoTile("Construct Geometry", "warpToBoard failed for this image.");
 		}
@@ -42,13 +42,13 @@ cv::Mat analyse(const cv::Mat& image, const PipelineStep step) {
 	}
 
 	case tengen::PipelineStep::FindStones: {
-		const core::WarpResult board = core::warpToBoard(image);
+		const core::WarpResult board = core::warpToBoard(image, &debugger);
 		if (!core::isValidBoard(board)) {
 			return buildInfoTile("Find Stones", "warpToBoard failed for this image.");
 		}
 
-		const core::BoardGeometry geometry   = core::analyseGeometry(board);
-		const core::RectifiedBoard rectified = core::transformImage(image, geometry);
+		const core::BoardGeometry geometry   = core::analyseGeometry(board, &debugger);
+		const core::RectifiedBoard rectified = core::transformImage(image, geometry, &debugger);
 		if (!core::isValidRectifiedBoard(rectified)) {
 			return buildInfoTile("Find Stones", "Rectification failed for this image.");
 		}
