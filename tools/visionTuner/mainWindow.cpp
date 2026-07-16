@@ -2,8 +2,10 @@
 #include "pipelineStep.hpp"
 
 #include <QComboBox>
+#include <QFileDialog>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QMessageBox>
 #include <QPainter>
 #include <QVBoxLayout>
 
@@ -19,6 +21,10 @@ CvMatrixView::CvMatrixView(QWidget* parent) : QWidget(parent) {
 void CvMatrixView::setMat(const cv::Mat& mat) {
 	m_image = matToQImage(mat);
 	update();
+}
+
+bool CvMatrixView::saveImage(const QString& filename) {
+	return m_image.save(filename);
 }
 
 void CvMatrixView::paintEvent(QPaintEvent* event) {
@@ -119,11 +125,13 @@ void MainWindow::buildLayout() {
 	m_sourceCombo->addItem("Video", static_cast<int>(ImageSource::Video));
 	m_sourceCombo->setCurrentIndex(0);
 
-	m_captureButton = new QPushButton("Capture");
+	m_captureButton   = new QPushButton("Capture");
+	m_saveImageButton = new QPushButton("Save Image");
 
 	sourceRow->addWidget(sourceLabel);
 	sourceRow->addWidget(m_sourceCombo);
 	sourceRow->addWidget(m_captureButton);
+	sourceRow->addWidget(m_saveImageButton);
 	sourceRow->addStretch(1);
 
 	m_stepCombo = new QComboBox(rootWidget);
@@ -144,6 +152,7 @@ void MainWindow::buildLayout() {
 	rootLayout->addWidget(m_matrixView, 1);
 
 	connect(m_captureButton, &QPushButton::clicked, this, [this]() { emit videoCaptureClicked(); });
+	connect(m_saveImageButton, &QPushButton::clicked, this, [this]() { emit onSaveClicked(); });
 	connect(m_sourceCombo, &QComboBox::currentIndexChanged, this, &MainWindow::onSourceChange);
 	connect(m_stepCombo, &QComboBox::currentIndexChanged, this, &MainWindow::onPipelineStepChange);
 
@@ -155,6 +164,19 @@ void MainWindow::onSourceChange() {
 }
 void MainWindow::onPipelineStepChange() {
 	emit pipelineStepChanged(static_cast<PipelineStep>(m_stepCombo->currentData().toInt()));
+}
+
+void MainWindow::onSaveClicked() {
+	const QString fileName = QFileDialog::getSaveFileName(this, tr("Save Image"), QDir::homePath() + "/untitled.png",
+	                                                      tr("PNG Image (*.png);;JPEG Image (*.jpg *.jpeg);;Bitmap (*.bmp);;All Files (*)"));
+
+	if (fileName.isEmpty()) {
+		return; // user hit Cancel
+	}
+
+	if (!m_matrixView->saveImage(fileName)) {
+		QMessageBox::warning(this, tr("Save Failed"), tr("Could not save image to:\n%1").arg(fileName));
+	}
 }
 
 } // namespace tengen
