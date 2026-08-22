@@ -11,8 +11,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-option(TENGEN_BUILD_TESTS "Create the unit tests for the project." ON)
-option(TENGEN_BUILD_TOOLS "Create the tools for the project." ON)
+option(TENGEN_BUILD_TESTS   "Create the unit tests for the project." ON)
+option(TENGEN_BUILD_TOOLS   "Create the tools for the project." ON)
+option(TENGEN_BUILD_SANDBOX "Create the tools for the project." ON)
 
 # Add libraries to project
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/lib")
@@ -27,4 +28,8 @@ if(TENGEN_BUILD_TESTS)
     include(CTest)
     enable_testing()
     add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/tests")
+endif()
+
+if(TENGEN_BUILD_SANDBOX)
+	add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/sandbox")
 endif()
