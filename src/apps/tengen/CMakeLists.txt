@@ -10,6 +10,7 @@ add_executable(${targetName}
     "${CMAKE_CURRENT_LIST_DIR}/MainWindowPresenter.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/GamePresenter.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/BoardPresenter.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/BotDialog.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/ChatPresenter.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/ConnectDialog.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/HostDialog.cpp"

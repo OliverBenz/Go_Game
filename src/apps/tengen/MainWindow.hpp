@@ -1,5 +1,7 @@
 #pragma once
 
+#include "engineTypes.hpp" // TODO: Remove this
+
 #include <QCloseEvent>
 #include <QMainWindow>
 #include <QString>
@@ -18,8 +20,9 @@ public:
 	GameWidget& gameWidget();
 
 signals:
-	void newLocalGameRequested();
+	void botGameRequested(unsigned boardSize, Difficulty difficulty, bool humanPlaysBlack);
 	void connectRequested(const QString& hostIp);
+	void newLocalGameRequested();
 	void hostRequested(unsigned boardSize);
 	void shutdownRequested();
 
@@ -28,6 +31,7 @@ private:
 	void buildLayout();
 
 private:
+	void openBotDialog();
 	void openConnectDialog();
 	void openHostDialog();
 	void openRulesDialog();

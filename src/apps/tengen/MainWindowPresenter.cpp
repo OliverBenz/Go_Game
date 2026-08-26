@@ -9,7 +9,8 @@
 
 namespace tengen {
 
-MainWindowPresenter::MainWindowPresenter(gui::MainWindow& mainWindow) : QObject(nullptr), m_mainWindow(mainWindow) {
+MainWindowPresenter::MainWindowPresenter(gui::MainWindow& mainWindow)
+    : QObject(nullptr), m_mainWindow(mainWindow) {
 	QObject::connect(&m_mainWindow, &gui::MainWindow::newLocalGameRequested, this, &MainWindowPresenter::onNewLocalGameRequested);
 	QObject::connect(&m_mainWindow, &gui::MainWindow::connectRequested, this, &MainWindowPresenter::onConnectRequested);
 	QObject::connect(&m_mainWindow, &gui::MainWindow::hostRequested, this, &MainWindowPresenter::onHostRequested);
