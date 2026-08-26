@@ -20,9 +20,9 @@ public:
 	GameWidget& gameWidget();
 
 signals:
-	void botGameRequested(unsigned boardSize, Difficulty difficulty, bool humanPlaysBlack);
+	void gameLocalRequested();
+	void gameBotRequested(unsigned boardSize, Difficulty difficulty, bool humanPlaysBlack);
 	void connectRequested(const QString& hostIp);
-	void newLocalGameRequested();
 	void hostRequested(unsigned boardSize);
 	void shutdownRequested();
 

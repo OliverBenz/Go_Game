@@ -38,7 +38,7 @@ void MainWindow::buildLayout() {
 	game->addAction(actNewBotGame);
 	game->addAction(actSaveGame);
 	game->addAction(actLoadGame);
-	connect(actNewLocalGame, &QAction::triggered, this, &MainWindow::newLocalGameRequested); // Signal to signal connection
+	connect(actNewLocalGame, &QAction::triggered, this, &MainWindow::gameLocalRequested); // Signal to signal connection
 	connect(actNewBotGame, &QAction::triggered, this, &MainWindow::openBotDialog);
 
 	auto* network            = menuBar()->addMenu(tr("&Network"));
@@ -82,7 +82,7 @@ void MainWindow::openBotDialog() {
 	BotDialog dialog(this);
 
 	if (dialog.exec() == QDialog::Accepted) {
-		emit botGameRequested(dialog.boardSize(), dialog.difficulty(), dialog.humanPlaysBlack());
+		emit gameBotRequested(dialog.boardSize(), dialog.difficulty(), dialog.humanPlaysBlack());
 	}
 }
 

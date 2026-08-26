@@ -11,7 +11,8 @@ namespace tengen {
 
 MainWindowPresenter::MainWindowPresenter(gui::MainWindow& mainWindow)
     : QObject(nullptr), m_mainWindow(mainWindow) {
-	QObject::connect(&m_mainWindow, &gui::MainWindow::newLocalGameRequested, this, &MainWindowPresenter::onNewLocalGameRequested);
+	QObject::connect(&m_mainWindow, &gui::MainWindow::gameLocalRequested, this, &MainWindowPresenter::onNewLocalGameRequested);
+	QObject::connect(&m_mainWindow, &gui::MainWindow::gameBotRequested, this, &MainWindowPresenter::onNewBotGameRequested);
 	QObject::connect(&m_mainWindow, &gui::MainWindow::connectRequested, this, &MainWindowPresenter::onConnectRequested);
 	QObject::connect(&m_mainWindow, &gui::MainWindow::hostRequested, this, &MainWindowPresenter::onHostRequested);
 	QObject::connect(&m_mainWindow, &gui::MainWindow::shutdownRequested, this, &MainWindowPresenter::onShutdownRequested);
@@ -29,6 +30,14 @@ void MainWindowPresenter::startOpenPlay() {
 void MainWindowPresenter::onNewLocalGameRequested() {
 	onShutdownRequested();
 	startOpenPlay();
+}
+
+void MainWindowPresenter::onNewBotGameRequested(unsigned boardSize, gui::Difficulty difficulty, bool humanPlaysBlack) {
+	onShutdownRequested();
+
+	// CONTINUE HERE: We need a botSession.
+	m_gameSession   = std::make_unique<app::OpenSession /*BotSession*/>(boardSize /*, difficulty, humanPlaysBlack*/);
+	m_gamePresenter = std::make_unique<GamePresenter>(*m_gameSession, m_mainWindow.gameWidget());
 }
 
 void MainWindowPresenter::onConnectRequested(const QString& hostIp) {
