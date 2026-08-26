@@ -22,8 +22,8 @@ MainWindowPresenter::MainWindowPresenter(gui::MainWindow& mainWindow)
 MainWindowPresenter::~MainWindowPresenter() = default;
 
 void MainWindowPresenter::startOpenPlay() {
-	m_game          = std::make_unique<app::OpenSession>(9u);
-	m_gamePresenter = std::make_unique<GamePresenter>(*m_game, m_mainWindow.gameWidget());
+	m_gameSession   = std::make_unique<app::OpenSession>(9u);
+	m_gamePresenter = std::make_unique<GamePresenter>(*m_gameSession, m_mainWindow.gameWidget());
 }
 
 void MainWindowPresenter::onNewLocalGameRequested() {
@@ -41,7 +41,7 @@ void MainWindowPresenter::onConnectRequested(const QString& hostIp) {
 	auto& chat      = static_cast<app::IChatSession&>(*session);
 	m_gamePresenter = std::make_unique<GamePresenter>(game, m_mainWindow.gameWidget());
 	m_gamePresenter->addChatWindow(chat);
-	m_game = std::move(session);
+	m_gameSession = std::move(session);
 }
 
 void MainWindowPresenter::onHostRequested(const unsigned boardSize) {
@@ -54,14 +54,14 @@ void MainWindowPresenter::onHostRequested(const unsigned boardSize) {
 	auto& chat      = static_cast<app::IChatSession&>(*session);
 	m_gamePresenter = std::make_unique<GamePresenter>(game, m_mainWindow.gameWidget());
 	m_gamePresenter->addChatWindow(chat);
-	m_game = std::move(session);
+	m_gameSession = std::move(session);
 }
 
 void MainWindowPresenter::onShutdownRequested() {
-	if (m_game) {
+	if (m_gameSession) {
 		m_gamePresenter = nullptr; // Destroy before m_game
-		m_game->shutdown();
-		m_game = nullptr;
+		m_gameSession->shutdown();
+		m_gameSession.reset();
 	}
 }
 
