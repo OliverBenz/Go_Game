@@ -8,16 +8,28 @@
 #include <unistd.h>
 #include <vector>
 
+#include <filesystem>
+
+static bool validConfig(const LaunchConfig& config) {
+	return std::filesystem::exists(config.executable) && std::filesystem::exists(config.model) && std::filesystem::exists(config.config) && std::filesystem::exists(config.modelHuman);
+}
+
 KatagoProcess::~KatagoProcess() {
 	stop();
 }
+
 bool KatagoProcess::start(const LaunchConfig& config) {
 	if (m_pid >= 0) {
 		assert(false);
 		return false; // Already running
 	}
 
-	// Pipes
+	// Check valid config
+	if (!validConfig(config)) {
+		return false;
+	}
+
+	// Setup Pipes
 	if (pipe(m_inPipe) == -1 || pipe(m_outPipe) == -1) {
 		return false;
 	}
