@@ -10,7 +10,8 @@
 
 namespace tengen {
 
-ChatPresenter::ChatPresenter(app::IChatSession& chat, gui::ChatWidget& chatWidget) : m_chat(chat), m_chatWidget(chatWidget) {
+ChatPresenter::ChatPresenter(app::IChatSession& chat, gui::ChatWidget& chatWidget)
+    : m_chat(chat), m_chatWidget(chatWidget) {
 	QObject::connect(&m_chatWidget, &gui::ChatWidget::chatEvent, this, &ChatPresenter::onChatRequested);
 
 	m_chat.subscribe(this, app::AS_NewChat);
@@ -38,8 +39,7 @@ void ChatPresenter::onAppEvent(const app::AppSignal signal) {
 	std::vector<std::string> lines;
 	lines.reserve(messageEntries.size());
 	for (const auto& entry: messageEntries) {
-		const auto player = entry.player == Player::Black ? "Black" : "White";
-		lines.emplace_back(std::format("{}: {}", player, entry.message));
+		lines.emplace_back(std::format("{}: {}", toString(entry.player), entry.message));
 		m_lastChatMessageId = entry.messageId;
 	}
 

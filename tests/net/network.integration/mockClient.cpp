@@ -28,9 +28,6 @@ void MockClient::tryPlace(unsigned x, unsigned y) {
 	m_network.send(network::ClientPutStone{.c = {x, y}});
 }
 
-static std::string toString(const Player player) {
-	return player == Player::Black ? "Black" : "White";
-}
 static std::string toString(const network::Seat seat) {
 	assert(isPlayer(seat));
 	return seat == network::Seat::Black ? "Black" : "White";
