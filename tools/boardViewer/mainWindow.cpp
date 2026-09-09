@@ -43,8 +43,22 @@ static std::vector<cv::Point2f> parsePoints(const nlohmann::json& array) {
 	return points;
 }
 
+//! Map the vision pipeline's stone state to the model's board stone type (same semantics, different enums).
+static Board::Stone toBoardStone(StoneState state) {
+	switch (state) {
+	case StoneState::Black:
+		return Board::Stone::Black;
+	case StoneState::White:
+		return Board::Stone::White;
+	case StoneState::Empty:
+	default:
+		return Board::Stone::Empty;
+	}
+}
+
 //! Run the pipeline and draw detected stones + .json ground truth corners onto a copy of the original image.
-static cv::Mat buildOverlayImage(const cv::Mat& original, const std::filesystem::path& imagePath) {
+//! If groundTruth is provided and matches the detected board size, mismatching intersections are circled thick red.
+static cv::Mat buildOverlayImage(const cv::Mat& original, const std::filesystem::path& imagePath, const Board* groundTruth) {
 	cv::Mat overlay = original.clone();
 
 	const WarpResult warped = warpToBoard(original);
@@ -65,6 +79,9 @@ static cv::Mat buildOverlayImage(const cv::Mat& original, const std::filesystem:
 	std::vector<cv::Point2f> intersectionsOriginal;
 	cv::perspectiveTransform(geometry.intersections, intersectionsOriginal, geometry.H.inv());
 
+	const unsigned N      = geometry.boardSize;
+	const bool canCompare = groundTruth != nullptr && groundTruth->size() == N;
+
 	for (std::size_t i = 0; i < intersectionsOriginal.size(); ++i) {
 		const cv::Point pt(cv::saturate_cast<int>(intersectionsOriginal[i].x), cv::saturate_cast<int>(intersectionsOriginal[i].y));
 		if (stoneRes.success && i < stoneRes.stones.size()) {
@@ -80,6 +97,15 @@ static cv::Mat buildOverlayImage(const cv::Mat& original, const std::filesystem:
 			case StoneState::Empty:
 				cv::circle(overlay, pt, 3, cv::Scalar(0, 255, 0), 1, cv::LINE_AA);
 				break;
+			}
+
+			// Compare detected stone against ground truth. Intersection i maps to Coord{x, y} = {i / N, i % N}
+			if (canCompare) {
+				const Coord c{static_cast<unsigned>(i / N), static_cast<unsigned>(i % N)};
+				const Board::Stone expected = groundTruth->get(c);
+				if (toBoardStone(stoneRes.stones[i]) != expected) {
+					cv::circle(overlay, pt, 18, cv::Scalar(0, 0, 255), 4, cv::LINE_AA);
+				}
 			}
 		}
 	}
@@ -151,13 +177,15 @@ void MainWindow::loadImage(const std::filesystem::path& imagePath) {
 		return;
 	}
 
-	const cv::Mat overlay = buildOverlayImage(original, imagePath);
-	m_imageLabel->setPixmap(QPixmap::fromImage(matToQImage(overlay)).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-
 	std::filesystem::path txtPath = imagePath;
 	txtPath.replace_extension(".txt");
 	Board board(0u);
-	if (readBoard(txtPath, board)) {
+	const bool hasBoard = readBoard(txtPath, board);
+
+	const cv::Mat overlay = buildOverlayImage(original, imagePath, hasBoard ? &board : nullptr);
+	m_imageLabel->setPixmap(QPixmap::fromImage(matToQImage(overlay)).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+
+	if (hasBoard) {
 		m_boardWidget->setBoard(board);
 	}
 }
