@@ -18,7 +18,7 @@ void runRectifyTest(const std::string& testSetName) {
 	for (const unsigned boardSize: BOARD_SIZES) {
 		std::string fileName = std::format("size_{}.jpeg", boardSize);
 
-		cv::Mat image = cv::imread(TEST_PATH / fileName);
+		cv::Mat image = cv::imread((TEST_PATH / fileName).string());
 		ASSERT_FALSE(image.empty());
 
 		const auto warpResult = warpToBoard(image);

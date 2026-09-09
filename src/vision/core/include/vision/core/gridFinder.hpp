@@ -3,15 +3,16 @@
 #include "vision/core//debugVisualizer.hpp"
 #include "vision/core/boardFinder.hpp"
 
+#include <opencv2/geometry.hpp>
 #include <opencv2/opencv.hpp>
 
 // Rectifying is the first step in the board detection.
 // Motivation: The image of a board is usually messy (contains background and the board in some angle). This makes it hard to analyse the board. This should be
 // fixed before further processing. Goal:       Given a messy image of a board, produce an image where the board is visible from a top-down view without
 // background and perfectly square edges. Process:
-//   1) We detect a rough outline of the board (function warpToBoard) and warp to top-down view. Here, it's not yet clear if the border of the produced image is
-//   correct. 2) We analyse the board geometry (function analyseGeometry). Using the projected board image, we detect grid lines, crop the image to the edge
-//   grid lines + padding of a half stone and compute the homography for the final image transform.
+//   1) We detect a rough outline of the board (function warpToBoard) and warp to top-down view. Here, it's not yet clear if the border of the produced image is correct.
+//   2) We analyse the board geometry (function analyseGeometry). Using the projected board image, we detect grid lines, crop the image to the edge
+//      grid lines + padding of a half stone and compute the homography for the final image transform.
 namespace tengen::vision::core {
 
 struct BoardGeometry {

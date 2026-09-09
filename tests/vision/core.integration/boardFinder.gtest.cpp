@@ -18,7 +18,7 @@ void runTest(const std::string& testSetName) {
 	for (unsigned i = 1u; i <= IMG_COUNT; ++i) {
 		std::string fileName = std::format("angle_{}.jpeg", i);
 
-		cv::Mat image = cv::imread(TEST_PATH / fileName);
+		cv::Mat image = cv::imread((TEST_PATH / fileName).string());
 		ASSERT_FALSE(image.empty());
 
 		const auto warpResult = warpToBoard(image);
