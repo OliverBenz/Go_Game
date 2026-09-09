@@ -248,7 +248,8 @@ BoardGeometry analyseGeometry(const WarpResult& input, DebugVisualizer* debugger
 		// Debug: Verify if the grid is found with a second algorithm.
 		std::vector<double> vGridTest{}, hGridTest{};
 		const std::vector<std::size_t> validationNs = {Nv};
-		const bool validated                        = findGrid(vGrid, hGrid, vGridTest, hGridTest, validationNs);
+		const bool validated =
+		        findGrid(vGrid, hGrid, vGridTest, hGridTest, validationNs, static_cast<double>(input.imageB0.cols), static_cast<double>(input.imageB0.rows));
 		if (!validated) {
 			std::cerr << "DEBUG: Could not validate the detected grid with the second algorithm for N=" << Nv << ".\n";
 		} else if (vGridTest.size() != hGridTest.size() || vGridTest.size() != vGrid.size() || hGridTest.size() != hGrid.size()) {
@@ -260,7 +261,7 @@ BoardGeometry analyseGeometry(const WarpResult& input, DebugVisualizer* debugger
 
 		std::vector<double> vGridAttempt{};
 		std::vector<double> hGridAttempt{};
-		if (!findGrid(vGrid, hGrid, vGridAttempt, hGridAttempt)) {
+		if (!findGrid(vGrid, hGrid, vGridAttempt, hGridAttempt, static_cast<double>(input.imageB0.cols), static_cast<double>(input.imageB0.rows))) {
 			std::cerr << "Could not detect a valid grid. Stopping!\n";
 			return {};
 		}

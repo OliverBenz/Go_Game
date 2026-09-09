@@ -465,9 +465,23 @@ static bool selectGridByLatticeFit(const std::vector<double>& centersSorted, con
 }
 
 bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hCenters, std::vector<double>& vGrid, std::vector<double>& hGrid,
-              const std::vector<std::size_t>& candidateNs) {
+              const std::vector<std::size_t>& candidateNs, double expectedExtentV, double expectedExtentH) {
 	auto isValidN = [](std::size_t n) { // helper: is n a legal board size?
 		return n == 9u || n == 13u || n == 19u;
+	};
+
+	// Score how well a candidate's implied physical span (its outermost fitted grid lines) matches the
+	// known/expected axis extent (e.g. the B_0 canvas size, which the board is warped to fill). 1.0 = perfect
+	// match, falling off symmetrically as the candidate over- or under-shoots. This is what lets us reject a
+	// smaller N that "fully explains" a reduced set of detections (e.g. because many stones occluded some grid
+	// lines) in favor of the true, larger N whose implied span actually matches the physical board.
+	// expectedExtent <= 0 disables the check (returns a neutral 1.0), e.g. for callers without extent knowledge.
+	auto extentFitScore = [](double span, double expectedExtent) -> double {
+		if (!(expectedExtent > 0.0) || !std::isfinite(span)) {
+			return 1.0;
+		}
+		const double ratio = span / expectedExtent;
+		return 1.0 / (1.0 + std::abs(ratio - 1.0));
 	};
 
 #ifndef NDEBUG
@@ -503,6 +517,7 @@ bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hC
 		double completeness{0.0};                            //!< InliersTotal / (2*N)
 		double coverage{0.0};                                //!< InliersTotal / (vCenters+hCenters)
 		double balanced{0.0};                                //!< Harmonic mean of completeness+coverage
+		double extentFit{1.0};                               //!< How well this N's implied span matches the known board extent (1.0 = neutral/perfect)
 		double rms{std::numeric_limits<double>::infinity()}; //!< Combined weighted RMS (px)
 		std::vector<double> v;                               //!< Fitted vertical grid for this N
 		std::vector<double> h;                               //!< Fitted horizontal grid for this N
@@ -521,6 +536,12 @@ bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hC
 		static constexpr double SCORE_EPS = 1e-12; //!< Epsilon for score comparisons.
 		static constexpr double RMS_EPS   = 1e-6;  //!< Epsilon for RMS comparisons.
 
+		// Physical plausibility comes first: a candidate N whose implied board span badly over- or
+		// undershoots the known canvas extent is very likely wrong, even if it "completely" explains a
+		// reduced, occlusion-shrunk set of detections (see extentFitScore() above).
+		const bool betterExtent = lhs.extentFit > rhs.extentFit + SCORE_EPS;            //!< Prefer a physically plausible board size first.
+		const bool equalExtent  = std::abs(lhs.extentFit - rhs.extentFit) <= SCORE_EPS; //!< Tie on extent fit.
+
 		const bool betterBalanced = lhs.balanced > rhs.balanced + SCORE_EPS;                    //!< Prefer jointly balanced fit quality.
 		const bool equalBalanced  = std::abs(lhs.balanced - rhs.balanced) <= SCORE_EPS;         //!< Tie on balanced score.
 		const bool betterComp     = lhs.completeness > rhs.completeness + SCORE_EPS;            //!< Prefer covering required lattice lines.
@@ -533,10 +554,12 @@ bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hC
 		const bool equalInliers   = lhs.inliersTotal == rhs.inliersTotal;                       //!< Tie on inliers.
 		const bool preferSmallerN = (rhs.N == 0u) ? true : (lhs.N < rhs.N);                     //!< Deterministic tie-break.
 
-		return betterBalanced ||
-		       (equalBalanced &&
-		        (betterComp ||
-		         (equalComp && (betterCover || (equalCover && (betterRms || (equalRms && (betterInliers || (equalInliers && preferSmallerN)))))))));
+		return betterExtent ||
+		       (equalExtent &&
+		        (betterBalanced ||
+		         (equalBalanced &&
+		          (betterComp ||
+		           (equalComp && (betterCover || (equalCover && (betterRms || (equalRms && (betterInliers || (equalInliers && preferSmallerN)))))))))));
 	};
 
 	JointCandidate best{}; // best joint candidate so far
@@ -577,15 +600,22 @@ bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hC
 		const double balanced     = harmonicMean(completeness, coverage);                       //!< Joint quality (avoid N-size bias).
 		const double rms          = (totalInliers > 0)                                          //!< Combined weighted RMS (px)
 		                                    ? std::sqrt((scoreV.rms * scoreV.rms * static_cast<double>(scoreV.inliers) +
-                                                scoreH.rms * scoreH.rms * static_cast<double>(scoreH.inliers)) /
+		                                                 scoreH.rms * scoreH.rms * static_cast<double>(scoreH.inliers)) /
 		                                                static_cast<double>(totalInliers))
 		                                    : std::numeric_limits<double>::infinity();
+
+		// This N's implied physical span (outermost fitted lines), compared against the known board extent.
+		const double spanV     = vTmp.back() - vTmp.front();
+		const double spanH     = hTmp.back() - hTmp.front();
+		const double extentFit = harmonicMean(extentFitScore(spanV, expectedExtentV), extentFitScore(spanH, expectedExtentH));
+
 		JointCandidate current{};
 		current.N            = N;
 		current.inliersTotal = totalInliers;
 		current.completeness = completeness;
 		current.coverage     = coverage;
 		current.balanced     = balanced;
+		current.extentFit    = extentFit;
 		current.rms          = rms;
 		current.v            = std::move(vTmp);
 		current.h            = std::move(hTmp);
@@ -610,9 +640,10 @@ bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hC
 	return isValidN(vGrid.size()) && isValidN(hGrid.size()) && vGrid.size() == hGrid.size();
 }
 
-bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hCenters, std::vector<double>& vGrid, std::vector<double>& hGrid) {
+bool findGrid(const std::vector<double>& vCenters, const std::vector<double>& hCenters, std::vector<double>& vGrid, std::vector<double>& hGrid,
+              double expectedExtentV, double expectedExtentH) {
 	static const std::vector<std::size_t> kDefaultNs = {19u, 13u, 9u};
-	return findGrid(vCenters, hCenters, vGrid, hGrid, kDefaultNs);
+	return findGrid(vCenters, hCenters, vGrid, hGrid, kDefaultNs, expectedExtentV, expectedExtentH);
 }
 
 } // namespace tengen::vision::core
