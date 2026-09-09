@@ -1,3 +1,4 @@
+#include "core/serializer.hpp"
 #include "vision/core/boardFinder.hpp"
 #include "vision/core/gridFinder.hpp"
 #include "vision/core/stoneFinder.hpp"
@@ -63,6 +64,41 @@ std::size_t stoneCount(const std::vector<StoneState>& stones) {
 	return blackStoneCount(stones) + whiteStoneCount(stones);
 }
 
+//! Map a ground truth board stone to the vision StoneState it corresponds to.
+StoneState toStoneState(const Board::Stone stone) {
+	switch (stone) {
+	case Board::Stone::Black:
+		return StoneState::Black;
+	case Board::Stone::White:
+		return StoneState::White;
+	case Board::Stone::Empty:
+		return StoneState::Empty;
+	}
+	return StoneState::Empty;
+}
+
+//! Load the dotBW ground truth board matching an image path (same file name, ".txt" extension).
+Board loadExpectedBoard(const std::filesystem::path& imagePath) {
+	Board expected(0u);
+	std::filesystem::path txtPath = imagePath;
+	txtPath.replace_extension(".txt");
+	EXPECT_TRUE(readBoard(txtPath, expected)) << txtPath.string();
+	return expected;
+}
+
+//! Check every board coordinate (not just aggregate counts) against a ground truth board.
+void expectStonesMatchBoard(const std::vector<StoneState>& stones, unsigned boardSize, const Board& expected) {
+	ASSERT_EQ(stones.size(), static_cast<std::size_t>(boardSize) * boardSize);
+	ASSERT_EQ(expected.size(), boardSize);
+
+	for (unsigned x = 0; x < boardSize; ++x) {
+		for (unsigned y = 0; y < boardSize; ++y) {
+			const std::size_t index = static_cast<std::size_t>(x) * boardSize + y;
+			EXPECT_EQ(stones[index], toStoneState(expected.get({x, y}))) << "Mismatch at (" << x << ", " << y << ")";
+		}
+	}
+}
+
 // Test the full image processing pipeline with stone detection at the end.
 TEST(Process, Game_Simple_Size9) {
 	const auto TEST_PATH = std::filesystem::path(PATH_TEST_IMG) / "game_simple/size_9";
@@ -84,7 +120,8 @@ TEST(Process, Game_Simple_Size9) {
 		EXPECT_EQ(blackStoneCount(result.stoneStep.stones), std::floor(static_cast<double>(i) / 2.));
 		EXPECT_EQ(whiteStoneCount(result.stoneStep.stones), std::ceil(static_cast<double>(i) / 2.));
 
-		// TODO: Check coordinates
+		const Board expected = loadExpectedBoard(TEST_PATH / fileName);
+		expectStonesMatchBoard(result.stoneStep.stones, BOARD_SIZE, expected);
 	}
 }
 
@@ -108,7 +145,9 @@ TEST(Process, Game_Simple_Size13) {
 		EXPECT_EQ(stoneCount(result.stoneStep.stones), i);
 		EXPECT_EQ(blackStoneCount(result.stoneStep.stones), std::ceil(static_cast<double>(i) / 2.));
 		EXPECT_EQ(whiteStoneCount(result.stoneStep.stones), std::floor(static_cast<double>(i) / 2.));
-		// TODO: Check and coordinates
+
+		const Board expected = loadExpectedBoard(TEST_PATH / fileName);
+		expectStonesMatchBoard(result.stoneStep.stones, BOARD_SIZE, expected);
 	}
 }
 
@@ -119,6 +158,10 @@ TEST(Process, Board_Detect_Easy) {
 	static constexpr unsigned IMG_COUNT  = 6u;
 	static constexpr unsigned BOARD_SIZE = 13u;
 
+	// All angle images show the same physical board, so they share one ground truth file.
+	Board expected(0u);
+	ASSERT_TRUE(readBoard(TEST_PATH / "board.txt", expected));
+
 	for (unsigned i = 1u; i <= IMG_COUNT; ++i) {
 		std::string fileName = std::format("angle_{}.jpeg", i);
 		TestResult result    = runPipeline(TEST_PATH / fileName);
@@ -127,9 +170,7 @@ TEST(Process, Board_Detect_Easy) {
 		// EXPECT_NEAR(result.rectified.geometry.spacing, SPACING, SPACING * 0.1); // Allow 5% deviation from expected spacing.
 
 		EXPECT_TRUE(result.stoneStep.success);
-		EXPECT_EQ(stoneCount(result.stoneStep.stones), 10u);
-		EXPECT_EQ(blackStoneCount(result.stoneStep.stones), 5u);
-		EXPECT_EQ(whiteStoneCount(result.stoneStep.stones), 5u);
+		expectStonesMatchBoard(result.stoneStep.stones, BOARD_SIZE, expected);
 	}
 }
 
