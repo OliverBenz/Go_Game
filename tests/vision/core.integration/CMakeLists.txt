@@ -3,6 +3,8 @@ include_guard(GLOBAL)
 set(targetName visionCore.integration)
 
 add_executable(${targetName}
+  "${CMAKE_CURRENT_LIST_DIR}/testDataHelpers.hpp"
+  "${CMAKE_CURRENT_LIST_DIR}/testDataHelpers.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/rectifier.gtest.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/process.gtest.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/boardFinder.gtest.cpp"
@@ -13,6 +15,7 @@ target_link_libraries(${targetName}
   PRIVATE
     tengen::vision::core
     tengen::game::core
+    nlohmann_json::nlohmann_json
     GTest::gtest_main
 )
 set_target_properties(${targetName}
