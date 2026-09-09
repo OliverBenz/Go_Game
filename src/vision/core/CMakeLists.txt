@@ -2,7 +2,14 @@ include_guard(GLOBAL)
 
 set(targetName visionCore)
 
-find_package(OpenCV REQUIRED)
+find_package(OpenCV REQUIRED COMPONENTS
+	core
+	imgproc
+	imgcodecs
+	videoio
+	highgui
+	geometry
+)
 
 # Get files to build
 set(headers
