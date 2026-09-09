@@ -11,6 +11,9 @@
     in {
       devShells.${system}.default =
         let
+          # NOTE: OpenCV5 is not available in nixpkgs yet. So we cannot use nix flake.
+          # We could locally compile but this takes too long. Just install system wide for now.
+          # We will fix this in the future.
           opencvWithGui = pkgs.opencv4.override {
             enableGtk3 = true;
           };

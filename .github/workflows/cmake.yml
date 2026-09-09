@@ -8,33 +8,32 @@ env:
 jobs:
   Build_And_Test:
     runs-on: ubuntu-latest
+    # OpenCV 5 is required (<opencv2/geometry.hpp>) and Ubuntu still ships 4.x,
+    # so build inside Arch, which packages OpenCV 5 and matches the dev setup.
+    container: archlinux:base-devel
 
     steps:
+    # git must exist before checkout, otherwise submodules are skipped.
+    - name: Install dependencies
+      run: |
+        pacman -Syu --noconfirm --needed \
+          git cmake ninja opencv qt6-base
+
     - uses: actions/checkout@v4
       with:
         submodules: recursive
-    
-    - name: Install Nix
-      uses: cachix/install-nix-action@v27
-      with:
-        nix_path: nixpkgs=channel:nixos-unstable
-        extra_nix_config: |
-          experimental-features = nix-command flakes
-    
+
+    - name: Trust workspace
+      run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
     - name: Configure CMake
       run: |
-        nix develop --command bash -c "
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTENGEN_BUILD_TESTS=ON
-        "
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTENGEN_BUILD_TESTS=ON
 
     - name: Build
       run: |
-        nix develop --command bash -c "
-          cmake --build build --config $BUILD_TYPE -j
-        "
+        cmake --build build --config $BUILD_TYPE -j$(nproc)
 
     - name: Run Tests
       run: |
-        nix develop --command bash -c "
-          ctest --test-dir build --output-on-failure --parallel
-        "
+        ctest --test-dir build --output-on-failure --parallel
