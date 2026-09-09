@@ -152,9 +152,9 @@ std::vector<cv::Point2f> orderCorners(const std::vector<cv::Point2f>& quad) {
 	if (unique) {
 		return {
 		        quad[static_cast<std::size_t>(idxMinSum)],
-		        quad[static_cast<std::size_t>(idxMinDiff)],
-		        quad[static_cast<std::size_t>(idxMaxSum)],
 		        quad[static_cast<std::size_t>(idxMaxDiff)],
+		        quad[static_cast<std::size_t>(idxMaxSum)],
+		        quad[static_cast<std::size_t>(idxMinDiff)],
 		};
 	}
 
