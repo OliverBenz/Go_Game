@@ -1,24 +1,46 @@
 #include "vision/core/gridFinder.hpp"
 
+#include <array>
+#include <filesystem>
+#include <format>
 #include <gtest/gtest.h>
 #include <opencv2/opencv.hpp>
-
-#include <filesystem>
 
 namespace tengen::vision::core {
 namespace gtest {
 
-TEST(Rectifier, RectifyImage) {
-	// // Load Image
-	// cv::Mat image9  = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "straight_easy/size_9.jpeg");
-	// cv::Mat image13 = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "straight_easy/size_13.jpeg");
-	// cv::Mat image19 = cv::imread(std::filesystem::path(PATH_TEST_IMG) / "straight_easy/size_19.jpeg");
+// Check that simple boards (single image per board size) can be rectified and the board size is correctly detected.
+void runRectifyTest(const std::string& testSetName) {
+	const auto TEST_PATH = std::filesystem::path(PATH_TEST_IMG) / testSetName;
 
-	// auto rect9  = camera::rectifyImage(image9);
-	// auto rect13 = camera::rectifyImage(image13);
-	// auto rect19 = camera::rectifyImage(image19);
+	static constexpr std::array<unsigned, 3> BOARD_SIZES = {9u, 13u, 19u};
+
+	for (const unsigned boardSize: BOARD_SIZES) {
+		std::string fileName = std::format("size_{}.jpeg", boardSize);
+
+		cv::Mat image = cv::imread(TEST_PATH / fileName);
+		ASSERT_FALSE(image.empty());
+
+		const auto warpResult = warpToBoard(image);
+		EXPECT_FALSE(warpResult.imageB0.empty());
+		EXPECT_FALSE(warpResult.H0.empty());
+
+		const auto geometry  = analyseGeometry(warpResult);
+		const auto rectified = transformImage(image, geometry);
+		EXPECT_FALSE(rectified.imageB.empty());
+		EXPECT_FALSE(rectified.geometry.H.empty());
+		EXPECT_EQ(rectified.geometry.intersections.size(), boardSize * boardSize);
+		EXPECT_EQ(rectified.geometry.boardSize, boardSize);
+	}
 }
 
+TEST(Rectifier, RectifyImage_Straight) {
+	runRectifyTest("straight_easy");
+}
+
+TEST(Rectifier, RectifyImage_SmallAngle) {
+	runRectifyTest("easy_small_angle");
+}
 
 } // namespace gtest
 } // namespace tengen::vision::core
