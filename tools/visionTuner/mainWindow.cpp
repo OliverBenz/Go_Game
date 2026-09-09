@@ -126,11 +126,13 @@ void MainWindow::buildLayout() {
 	m_sourceCombo->setCurrentIndex(0);
 
 	m_captureButton   = new QPushButton("Capture");
+	m_loadImageButton = new QPushButton("Load Image...");
 	m_saveImageButton = new QPushButton("Save Image");
 
 	sourceRow->addWidget(sourceLabel);
 	sourceRow->addWidget(m_sourceCombo);
 	sourceRow->addWidget(m_captureButton);
+	sourceRow->addWidget(m_loadImageButton);
 	sourceRow->addWidget(m_saveImageButton);
 	sourceRow->addStretch(1);
 
@@ -152,6 +154,7 @@ void MainWindow::buildLayout() {
 	rootLayout->addWidget(m_matrixView, 1);
 
 	connect(m_captureButton, &QPushButton::clicked, this, [this]() { emit videoCaptureClicked(); });
+	connect(m_loadImageButton, &QPushButton::clicked, this, [this]() { emit loadImageClicked(); });
 	connect(m_saveImageButton, &QPushButton::clicked, this, [this]() { emit onSaveClicked(); });
 	connect(m_sourceCombo, &QComboBox::currentIndexChanged, this, &MainWindow::onSourceChange);
 	connect(m_stepCombo, &QComboBox::currentIndexChanged, this, &MainWindow::onPipelineStepChange);

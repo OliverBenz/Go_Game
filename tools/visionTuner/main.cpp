@@ -4,6 +4,7 @@
 #include "webcam.hpp"
 
 #include <QApplication>
+#include <QFileDialog>
 #include <opencv2/opencv.hpp>
 
 #include <filesystem>
@@ -33,14 +34,42 @@ int run(int argc, char** argv) {
 
 	MainWindow window;
 	window.resize(1400, 900);
-	cv::Mat fallbackImage;
 
 	PipelineStep currentStep{PipelineStep::FindBoard};
+	cv::Mat currentImage = loadFallbackImage(argc, argv);
 
-	Webcam webcam(0, [&](const cv::Mat& frame) { window.setImage(vision::analyse(frame, currentStep)); });
+	// Re-run the selected pipeline step on whatever image is currently loaded (webcam frame or file).
+	const auto refresh = [&] {
+		if (!currentImage.empty()) {
+			window.setImage(vision::analyse(currentImage, currentStep));
+		}
+	};
+
+	Webcam webcam(0, [&](const cv::Mat& frame) {
+		currentImage = frame;
+		refresh();
+	});
 	webcam.setCaptureRate(1000); // TODO: Use chrono ms
 
 	QObject::connect(&window, &MainWindow::videoCaptureClicked, [&] { webcam.capture(); });
+	QObject::connect(&window, &MainWindow::loadImageClicked, [&] {
+		const QString fileName = QFileDialog::getOpenFileName(&window, "Open Image", QString::fromStdString(std::filesystem::path(PATH_TEST_IMG).string()),
+		                                                      "Images (*.png *.jpg *.jpeg *.bmp)");
+		if (fileName.isEmpty()) {
+			return;
+		}
+		if (webcam.isRunning()) {
+			webcam.stopLive();
+		}
+
+		cv::Mat image = cv::imread(fileName.toStdString(), cv::IMREAD_COLOR);
+		if (image.empty()) {
+			std::cerr << "Failed to load image: " << fileName.toStdString() << "\n";
+			return;
+		}
+		currentImage = image;
+		refresh();
+	});
 	QObject::connect(&window, &MainWindow::imageSourceChanged, [&](const ImageSource source) {
 		switch (source) {
 		case ImageSource::Photo:
@@ -58,8 +87,12 @@ int run(int argc, char** argv) {
 			break;
 		}
 	});
-	QObject::connect(&window, &MainWindow::pipelineStepChanged, [&](const PipelineStep step) { currentStep = step; });
+	QObject::connect(&window, &MainWindow::pipelineStepChanged, [&](const PipelineStep step) {
+		currentStep = step;
+		refresh();
+	});
 
+	refresh(); // Show the fallback image right away.
 	window.show();
 
 	const int exitCode = application.exec();

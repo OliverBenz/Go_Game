@@ -43,6 +43,7 @@ signals:
 	void videoCaptureClicked();
 	void videoModeChanged(VideoMode mode);
 	void pipelineStepChanged(PipelineStep step);
+	void loadImageClicked();
 
 private slots:
 	void onPipelineStepChange();
@@ -56,6 +57,7 @@ private:
 	CvMatrixView* m_matrixView{nullptr};
 	QComboBox* m_sourceCombo{nullptr};
 	QPushButton* m_captureButton{nullptr};
+	QPushButton* m_loadImageButton{nullptr};
 	QPushButton* m_saveImageButton{nullptr};
 
 	QComboBox* m_stepCombo{nullptr};
