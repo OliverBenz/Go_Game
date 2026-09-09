@@ -35,11 +35,11 @@ void runRectifyTest(const std::string& testSetName) {
 }
 
 TEST(Rectifier, RectifyImage_Straight) {
-	runRectifyTest("straight_easy");
+	runRectifyTest("empty_angle_none");
 }
 
 TEST(Rectifier, RectifyImage_SmallAngle) {
-	runRectifyTest("easy_small_angle");
+	runRectifyTest("empty_angle_small");
 }
 
 } // namespace gtest

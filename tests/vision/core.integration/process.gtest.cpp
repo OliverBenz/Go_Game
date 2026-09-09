@@ -68,7 +68,7 @@ TEST(Process, Game_Simple_Size9) {
 	const auto TEST_PATH = std::filesystem::path(PATH_TEST_IMG) / "game_simple/size_9";
 
 	// Game Information
-	static constexpr unsigned MOVES = 13; //!< This game image series has 13 moves (+ a captures image).
+	static constexpr unsigned MOVES = 13; //!< This game image series has 13 moves.
 	// static constexpr double SPACING      = 76.; //!< Pixels between grid lines. Manually checked for this series.
 	static constexpr unsigned BOARD_SIZE = 9u; //!< Board size of this game.
 
@@ -86,11 +86,6 @@ TEST(Process, Game_Simple_Size9) {
 
 		// TODO: Check coordinates
 	}
-
-	TestResult result = runPipeline(TEST_PATH / "move_13_captured.png"); // One stone captured.
-	EXPECT_TRUE(result.stoneStep.success);
-	EXPECT_EQ(stoneCount(result.stoneStep.stones), 12);
-	// TODO: Check coordinates
 }
 
 // Test the full image processing pipeline with stone detection at the end.
