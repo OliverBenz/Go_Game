@@ -5,6 +5,7 @@
 #include <optional>
 #include <vector>
 
+#include <opencv2/geometry.hpp>
 #include <opencv2/opencv.hpp>
 
 #if defined(VISION_DEBUG_LOGGING) && defined(VISION_LOG_BOARDFINDER)
